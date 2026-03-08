@@ -1,6 +1,8 @@
 {
   "expo": {
-    "name": "smart-kitchen-vn",
+    "name": "Bếp thông minh",
+    "currentFullName": "Bếp thông minh",
+    "originalFullName": "Bếp thông minh",
     "slug": "smart-kitchen-vn",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -8,23 +10,30 @@
     "scheme": "smart-kitchen-vn",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
-    "splash": {
-      "image": "./assets/images/splash.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
-    },
     "assetBundlePatterns": [
       "**/*"
     ],
+    "splash": {
+      "image": "./assets/images/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#FEF0F0"
+    },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.anonymous.smartkitchenvn"
     },
     "android": {
       "edgeToEdgeEnabled": true,
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
-      }
+        "backgroundColor": "#FEF0F0"
+      },
+      "splash": {
+        "image": "./assets/images/splash.png",
+        "resizeMode": "contain",
+        "backgroundColor": "#FEF0F0"
+      },
+      "package": "com.anonymous.smartkitchenvn"
     },
     "web": {
       "bundler": "metro",
@@ -34,7 +43,19 @@
     "plugins": [
       "expo-router",
       "expo-secure-store",
-      "expo-web-browser"
+      "expo-web-browser",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#FEF0F0",
+          "image": "./assets/images/splash.png",
+          "dark": {
+            "backgroundColor": "#FEF0F0",
+            "image": "./assets/images/splash.png"
+          },
+          "resizeMode": "contain"
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true

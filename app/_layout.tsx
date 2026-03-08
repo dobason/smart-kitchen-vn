@@ -31,6 +31,10 @@ export default function RootLayout() {
 }
 
 SplashScreen.preventAutoHideAsync();
+SplashScreen.setOptions({
+  duration: 1000,
+  fade: true,
+});
 
 function Routes() {
   const { isSignedIn, isLoaded } = useAuth();
