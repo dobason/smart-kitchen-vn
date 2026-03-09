@@ -1,8 +1,8 @@
 import { Button } from '@/components/ui/button';
+import { Text } from '@/components/ui/text';
 import { cn } from '@/lib/utils';
 import { useSSO, type StartSSOFlowParams } from '@clerk/clerk-expo';
 import * as AuthSession from 'expo-auth-session';
-import { router } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import { useColorScheme } from 'nativewind';
 import * as React from 'react';
@@ -19,21 +19,13 @@ const SOCIAL_CONNECTION_STRATEGIES: {
   type: SocialConnectionStrategy;
   source: ImageSourcePropType;
   useTint?: boolean;
+  label: string;
 }[] = [
-  {
-    type: 'oauth_apple',
-    source: { uri: 'https://img.clerk.com/static/apple.png?width=160' },
-    useTint: true,
-  },
   {
     type: 'oauth_google',
     source: { uri: 'https://img.clerk.com/static/google.png?width=160' },
     useTint: false,
-  },
-  {
-    type: 'oauth_github',
-    source: { uri: 'https://img.clerk.com/static/github.png?width=160' },
-    useTint: true,
+    label: 'Tiếp tục với Google',
   },
 ];
 
@@ -89,6 +81,7 @@ export function SocialConnections() {
               })}
               source={strategy.source}
             />
+            <Text>{strategy.label}</Text>
           </Button>
         );
       })}

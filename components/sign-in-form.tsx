@@ -6,9 +6,10 @@ import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Text } from '@/components/ui/text';
 import { useSignIn } from '@clerk/clerk-expo';
-import { Link, router } from 'expo-router';
+import { Link } from 'expo-router';
 import * as React from 'react';
-import { type TextInput, View } from 'react-native';
+import { type TextInput, View, Image } from 'react-native';
+import { cn } from '@/lib/utils';
 
 export function SignInForm() {
   const { signIn, setActive, isLoaded } = useSignIn();
@@ -57,11 +58,14 @@ export function SignInForm() {
 
   return (
     <View className="gap-6">
-      <Card className="border-border/0 shadow-none sm:border-border sm:shadow-sm sm:shadow-black/5">
+      <Card className="border-border/0 bg-gray-50 bg-secondary shadow-none sm:border-border sm:shadow-sm sm:shadow-black/5">
         <CardHeader>
-          <CardTitle className="text-center text-xl sm:text-left">Sign in to smart-kitchen-vn</CardTitle>
+          <View className="flex-row justify-center">
+            <Image className="size-24" source={require('@/assets/images/icon.png')} />
+          </View>
+          <CardTitle className="text-center text-xl sm:text-left">BẾP THÔNG MINH</CardTitle>
           <CardDescription className="text-center sm:text-left">
-            Welcome back! Please sign in to continue
+            Đăng nhập hoặc đăng ký để lưu công thức của bạn
           </CardDescription>
         </CardHeader>
         <CardContent className="gap-6">
@@ -70,7 +74,7 @@ export function SignInForm() {
               <Label htmlFor="email">Email</Label>
               <Input
                 id="email"
-                placeholder="m@example.com"
+                placeholder="Email của bạn"
                 keyboardType="email-address"
                 autoComplete="email"
                 autoCapitalize="none"
@@ -85,18 +89,19 @@ export function SignInForm() {
             </View>
             <View className="gap-1.5">
               <View className="flex-row items-center">
-                <Label htmlFor="password">Password</Label>
+                <Label htmlFor="password">Mật khẩu</Label>
                 <Link asChild href={`/(auth)/forgot-password?email=${email}`}>
                   <Button
                     variant="link"
                     size="sm"
                     className="ml-auto h-4 px-1 py-0 web:h-fit sm:h-4">
-                    <Text className="font-normal leading-4">Forgot your password?</Text>
+                    <Text className="font-normal leading-4">Quên mật khẩu?</Text>
                   </Button>
                 </Link>
               </View>
               <Input
                 ref={passwordInputRef}
+                placeholder="Mật khẩu của bạn"
                 id="password"
                 secureTextEntry
                 onChangeText={setPassword}
@@ -108,18 +113,18 @@ export function SignInForm() {
               ) : null}
             </View>
             <Button className="w-full" onPress={onSubmit}>
-              <Text>Continue</Text>
+              <Text>Đăng nhập</Text>
             </Button>
           </View>
           <Text className="text-center text-sm">
-            Don&apos;t have an account?{' '}
+            Chưa có tài khoản?{' '}
             <Link href="/(auth)/sign-up" className="text-sm underline underline-offset-4">
-              Sign up
+              Đăng ký
             </Link>
           </Text>
           <View className="flex-row items-center">
             <Separator className="flex-1" />
-            <Text className="px-4 text-sm text-muted-foreground">or</Text>
+            <Text className="px-4 text-sm text-muted-foreground">Hoặc</Text>
             <Separator className="flex-1" />
           </View>
           <SocialConnections />
