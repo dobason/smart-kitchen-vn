@@ -77,7 +77,9 @@ export function SignInForm() {
           <SocialConnections />
           <View className="flex-row items-center">
             <Separator className="flex-1" />
-            <VietnamText className="px-4 text-sm text-muted-foreground">{t('signIn.or')}</VietnamText>
+            <VietnamText className="px-4 text-sm text-muted-foreground">
+              {t('signIn.or')}
+            </VietnamText>
             <Separator className="flex-1" />
           </View>
           <View className="gap-6">
@@ -108,7 +110,9 @@ export function SignInForm() {
                     variant="link"
                     size="sm"
                     className="ml-auto h-4 px-1 py-0 web:h-fit sm:h-4">
-                    <VietnamText className="font-normal leading-4">{t('signIn.forgotPassword')}</VietnamText>
+                    <VietnamText className="font-normal leading-4">
+                      {t('signIn.forgotPassword')}
+                    </VietnamText>
                   </Button>
                 </Link>
               </View>
