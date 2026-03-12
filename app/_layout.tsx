@@ -10,6 +10,8 @@ import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useColorScheme } from 'nativewind';
 import * as React from 'react';
+import { BeVietnamPro_400Regular, useFonts } from '@expo-google-fonts/be-vietnam-pro';
+import { LocaleProvider } from '@/providers/locale-provider';
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -20,13 +22,15 @@ export default function RootLayout() {
   const { colorScheme } = useColorScheme();
 
   return (
-    <ClerkProvider tokenCache={tokenCache}>
-      <ThemeProvider value={NAV_THEME[colorScheme ?? 'light']}>
-        <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
-        <Routes />
-        <PortalHost />
-      </ThemeProvider>
-    </ClerkProvider>
+    <LocaleProvider>
+      <ClerkProvider tokenCache={tokenCache}>
+        <ThemeProvider value={NAV_THEME[colorScheme ?? 'light']}>
+          <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
+          <Routes />
+          <PortalHost />
+        </ThemeProvider>
+      </ClerkProvider>
+    </LocaleProvider>
   );
 }
 
@@ -38,14 +42,17 @@ SplashScreen.setOptions({
 
 function Routes() {
   const { isSignedIn, isLoaded } = useAuth();
+  const [isLoadedFont, errorFont] = useFonts({
+    BeVietnamPro_400Regular,
+  });
 
   React.useEffect(() => {
-    if (isLoaded) {
+    if (isLoaded && (isLoadedFont || errorFont)) {
       SplashScreen.hideAsync();
     }
-  }, [isLoaded]);
+  }, [isLoaded, isLoadedFont, errorFont]);
 
-  if (!isLoaded) {
+  if (!isLoaded && !isLoadedFont && !errorFont) {
     return null;
   }
 

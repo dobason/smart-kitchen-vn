@@ -2,7 +2,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Text } from '@/components/ui/text';
+import { VietnamText } from '@/components/in-app-ui/vietnam-text';
+import { useLocale } from '@/hooks/use-locale';
 import { useSignUp } from '@clerk/clerk-expo';
 import { router, useLocalSearchParams } from 'expo-router';
 import * as React from 'react';
@@ -13,6 +14,7 @@ const RESEND_CODE_INTERVAL_SECONDS = 30;
 const TABULAR_NUMBERS_STYLE: TextStyle = { fontVariant: ['tabular-nums'] };
 
 export function VerifyEmailForm() {
+  const { t } = useLocale();
   const { signUp, setActive, isLoaded } = useSignUp();
   const { email = '' } = useLocalSearchParams<{ email?: string }>();
   const [code, setCode] = React.useState('');
@@ -68,15 +70,15 @@ export function VerifyEmailForm() {
     <View className="gap-6">
       <Card className="border-border/0 shadow-none sm:border-border sm:shadow-sm sm:shadow-black/5">
         <CardHeader>
-          <CardTitle className="text-center text-xl sm:text-left">Verify your email</CardTitle>
+          <CardTitle className="text-center text-xl sm:text-left">{t('verifyEmail.title')}</CardTitle>
           <CardDescription className="text-center sm:text-left">
-            Enter the verification code sent to {email || 'your email'}
+            {t('verifyEmail.description', { email: email || 'your email' })}
           </CardDescription>
         </CardHeader>
         <CardContent className="gap-6">
           <View className="gap-6">
             <View className="gap-1.5">
-              <Label htmlFor="code">Verification code</Label>
+              <Label htmlFor="code">{t('verifyEmail.codeLabel')}</Label>
               <Input
                 id="code"
                 autoCapitalize="none"
@@ -88,25 +90,25 @@ export function VerifyEmailForm() {
                 onSubmitEditing={onSubmit}
               />
               {!error ? null : (
-                <Text className="text-sm font-medium text-destructive">{error}</Text>
+                <VietnamText className="text-sm font-medium text-destructive">{error}</VietnamText>
               )}
               <Button variant="link" size="sm" disabled={countdown > 0} onPress={onResendCode}>
-                <Text className="text-center text-xs">
-                  Didn&apos;t receive the code? Resend{' '}
+                <VietnamText className="text-center text-xs">
+                  {t('verifyEmail.resend')}{' '}
                   {countdown > 0 ? (
-                    <Text className="text-xs" style={TABULAR_NUMBERS_STYLE}>
+                    <VietnamText className="text-xs" style={TABULAR_NUMBERS_STYLE}>
                       ({countdown})
-                    </Text>
+                    </VietnamText>
                   ) : null}
-                </Text>
+                </VietnamText>
               </Button>
             </View>
             <View className="gap-3">
               <Button className="w-full" onPress={onSubmit}>
-                <Text>Continue</Text>
+                <VietnamText>{t('verifyEmail.submit')}</VietnamText>
               </Button>
               <Button variant="link" className="mx-auto" onPress={router.back}>
-                <Text>Cancel</Text>
+                <VietnamText>{t('verifyEmail.cancel')}</VietnamText>
               </Button>
             </View>
           </View>

@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button';
-import { Text } from '@/components/ui/text';
+import { VietnamText } from '@/components/in-app-ui/vietnam-text';
 import { cn } from '@/lib/utils';
 import { useSSO, type StartSSOFlowParams } from '@clerk/clerk-expo';
 import * as AuthSession from 'expo-auth-session';
@@ -7,6 +7,7 @@ import * as WebBrowser from 'expo-web-browser';
 import { useColorScheme } from 'nativewind';
 import * as React from 'react';
 import { Image, Platform, View, type ImageSourcePropType } from 'react-native';
+import { useLocale } from '@/hooks/use-locale';
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -25,12 +26,13 @@ const SOCIAL_CONNECTION_STRATEGIES: {
     type: 'oauth_google',
     source: { uri: 'https://img.clerk.com/static/google.png?width=160' },
     useTint: false,
-    label: 'Tiếp tục với Google',
+    label: 'Google',
   },
 ];
 
 export function SocialConnections() {
   useWarmUpBrowser();
+  const { t } = useLocale();
   const { colorScheme } = useColorScheme();
   const { startSSOFlow } = useSSO();
 
@@ -71,7 +73,7 @@ export function SocialConnections() {
           <Button
             key={strategy.type}
             variant="outline"
-            size="sm"
+            size="lg"
             className="sm:flex-1"
             onPress={onSocialLoginPress(strategy.type)}>
             <Image
@@ -81,7 +83,7 @@ export function SocialConnections() {
               })}
               source={strategy.source}
             />
-            <Text>{strategy.label}</Text>
+            <VietnamText>{t(`socialConnections.signInWith`) + ' ' + strategy.label}</VietnamText>
           </Button>
         );
       })}

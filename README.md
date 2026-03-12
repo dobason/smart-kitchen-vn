@@ -15,7 +15,7 @@ Before running the app, make sure to:
 1. [Set up your Clerk account](https://go.clerk.com/blVsQlm)
 2. In the instance setup, leave the default option selected: **Email, phone, username**
 3. Enable Apple, GitHub, and Google as sign-in options under SSO Connections
-4. Rename `.env.example` to `.env.local` and paste your `EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY` from [your API keys](https://go.clerk.com/u8KAui7)
+4. Rename `env.example` to `.env.local` and paste your `EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY` from [your API keys](https://go.clerk.com/u8KAui7)
 
 Then start the development server:
 

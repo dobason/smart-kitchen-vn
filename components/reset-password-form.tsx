@@ -2,13 +2,14 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Text } from '@/components/ui/text';
+import { VietnamText } from '@/components/in-app-ui/vietnam-text';
+import { useLocale } from '@/hooks/use-locale';
 import { useSignIn } from '@clerk/clerk-expo';
-import { router } from 'expo-router';
 import * as React from 'react';
 import { TextInput, View } from 'react-native';
 
 export function ResetPasswordForm() {
+  const { t } = useLocale();
   const { signIn, setActive, isLoaded } = useSignIn();
   const [password, setPassword] = React.useState('');
   const [code, setCode] = React.useState('');
@@ -52,16 +53,18 @@ export function ResetPasswordForm() {
     <View className="gap-6">
       <Card className="border-border/0 shadow-none sm:border-border sm:shadow-sm sm:shadow-black/5">
         <CardHeader>
-          <CardTitle className="text-center text-xl sm:text-left">Reset password</CardTitle>
+          <CardTitle className="text-center text-xl sm:text-left">
+            {t('resetPassword.title')}
+          </CardTitle>
           <CardDescription className="text-center sm:text-left">
-            Enter the code sent to your email and set a new password
+            {t('resetPassword.description')}
           </CardDescription>
         </CardHeader>
         <CardContent className="gap-6">
           <View className="gap-6">
             <View className="gap-1.5">
               <View className="flex-row items-center">
-                <Label htmlFor="password">New password</Label>
+                <Label htmlFor="password">{t('resetPassword.newPasswordLabel')}</Label>
               </View>
               <Input
                 id="password"
@@ -72,11 +75,13 @@ export function ResetPasswordForm() {
                 onSubmitEditing={onPasswordSubmitEditing}
               />
               {error.password ? (
-                <Text className="text-sm font-medium text-destructive">{error.password}</Text>
+                <VietnamText className="text-sm font-medium text-destructive">
+                  {error.password}
+                </VietnamText>
               ) : null}
             </View>
             <View className="gap-1.5">
-              <Label htmlFor="code">Verification code</Label>
+              <Label htmlFor="code">{t('resetPassword.codeLabel')}</Label>
               <Input
                 id="code"
                 autoCapitalize="none"
@@ -88,11 +93,13 @@ export function ResetPasswordForm() {
                 onSubmitEditing={onSubmit}
               />
               {error.code ? (
-                <Text className="text-sm font-medium text-destructive">{error.code}</Text>
+                <VietnamText className="text-sm font-medium text-destructive">
+                  {error.code}
+                </VietnamText>
               ) : null}
             </View>
             <Button className="w-full" onPress={onSubmit}>
-              <Text>Reset Password</Text>
+              <VietnamText>{t('resetPassword.submit')}</VietnamText>
             </Button>
           </View>
         </CardContent>

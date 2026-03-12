@@ -4,13 +4,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
-import { Text } from '@/components/ui/text';
+import { VietnamText } from '@/components/in-app-ui/vietnam-text';
+import { useLocale } from '@/hooks/use-locale';
 import { useSignUp } from '@clerk/clerk-expo';
 import { Link, router } from 'expo-router';
 import * as React from 'react';
 import { TextInput, View } from 'react-native';
 
 export function SignUpForm() {
+  const { t } = useLocale();
   const { signUp, isLoaded } = useSignUp();
   const [email, setEmail] = React.useState('');
   const [password, setPassword] = React.useState('');
@@ -52,18 +54,18 @@ export function SignUpForm() {
     <View className="gap-6">
       <Card className="border-border/0 shadow-none sm:border-border sm:shadow-sm sm:shadow-black/5">
         <CardHeader>
-          <CardTitle className="text-center text-xl sm:text-left">Create your account</CardTitle>
+          <CardTitle className="text-center text-xl sm:text-left">{t('signUp.title')}</CardTitle>
           <CardDescription className="text-center sm:text-left">
-            Welcome! Please fill in the details to get started.
+            {t('signUp.description')}
           </CardDescription>
         </CardHeader>
         <CardContent className="gap-6">
           <View className="gap-6">
             <View className="gap-1.5">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">{t('signUp.emailLabel')}</Label>
               <Input
                 id="email"
-                placeholder="m@example.com"
+                placeholder={t('signUp.emailPlaceholder')}
                 keyboardType="email-address"
                 autoComplete="email"
                 autoCapitalize="none"
@@ -73,38 +75,43 @@ export function SignUpForm() {
                 submitBehavior="submit"
               />
               {error.email ? (
-                <Text className="text-sm font-medium text-destructive">{error.email}</Text>
+                <VietnamText className="text-sm font-medium text-destructive">
+                  {error.email}
+                </VietnamText>
               ) : null}
             </View>
             <View className="gap-1.5">
               <View className="flex-row items-center">
-                <Label htmlFor="password">Password</Label>
+                <Label htmlFor="password">{t('signUp.passwordLabel')}</Label>
               </View>
               <Input
                 ref={passwordInputRef}
                 id="password"
+                placeholder={t('signUp.passwordPlaceholder')}
                 secureTextEntry
                 onChangeText={setPassword}
                 returnKeyType="send"
                 onSubmitEditing={onSubmit}
               />
               {error.password ? (
-                <Text className="text-sm font-medium text-destructive">{error.password}</Text>
+                <VietnamText className="text-sm font-medium text-destructive">
+                  {error.password}
+                </VietnamText>
               ) : null}
             </View>
             <Button className="w-full" onPress={onSubmit}>
-              <Text>Continue</Text>
+              <VietnamText>{t('signUp.submit')}</VietnamText>
             </Button>
           </View>
-          <Text className="text-center text-sm">
-            Already have an account?{' '}
+          <VietnamText className="text-center text-sm">
+            {t('signUp.hasAccount')}{' '}
             <Link href="/(auth)/sign-in" dismissTo className="text-sm underline underline-offset-4">
-              Sign in
+              {t('signUp.signIn')}
             </Link>
-          </Text>
+          </VietnamText>
           <View className="flex-row items-center">
             <Separator className="flex-1" />
-            <Text className="px-4 text-sm text-muted-foreground">or</Text>
+            <VietnamText className="px-4 text-sm text-muted-foreground">{t('signUp.or')}</VietnamText>
             <Separator className="flex-1" />
           </View>
           <SocialConnections />

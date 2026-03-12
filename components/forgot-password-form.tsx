@@ -2,7 +2,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Text } from '@/components/ui/text';
+import { VietnamText } from '@/components/in-app-ui/vietnam-text';
+import { useLocale } from '@/hooks/use-locale';
 import { useSignIn } from '@clerk/clerk-expo';
 import { router } from 'expo-router';
 import { useLocalSearchParams } from 'expo-router/build/hooks';
@@ -10,6 +11,7 @@ import * as React from 'react';
 import { View } from 'react-native';
 
 export function ForgotPasswordForm() {
+  const { t } = useLocale();
   const { email: emailParam = '' } = useLocalSearchParams<{ email?: string }>();
   const [email, setEmail] = React.useState(emailParam);
   const { signIn, isLoaded } = useSignIn();
@@ -45,19 +47,19 @@ export function ForgotPasswordForm() {
     <View className="gap-6">
       <Card className="border-border/0 shadow-none sm:border-border sm:shadow-sm sm:shadow-black/5">
         <CardHeader>
-          <CardTitle className="text-center text-xl sm:text-left">Forgot password?</CardTitle>
+          <CardTitle className="text-center text-xl sm:text-left">{t('forgotPassword.title')}</CardTitle>
           <CardDescription className="text-center sm:text-left">
-            Enter your email to reset your password
+            {t('forgotPassword.description')}
           </CardDescription>
         </CardHeader>
         <CardContent className="gap-6">
           <View className="gap-6">
             <View className="gap-1.5">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">{t('forgotPassword.emailLabel')}</Label>
               <Input
                 id="email"
                 defaultValue={email}
-                placeholder="m@example.com"
+                placeholder={t('forgotPassword.emailPlaceholder')}
                 keyboardType="email-address"
                 autoComplete="email"
                 autoCapitalize="none"
@@ -66,11 +68,11 @@ export function ForgotPasswordForm() {
                 returnKeyType="send"
               />
               {error.email ? (
-                <Text className="text-sm font-medium text-destructive">{error.email}</Text>
+                <VietnamText className="text-sm font-medium text-destructive">{error.email}</VietnamText>
               ) : null}
             </View>
             <Button className="w-full" onPress={onSubmit}>
-              <Text>Reset your password</Text>
+              <VietnamText>{t('forgotPassword.submit')}</VietnamText>
             </Button>
           </View>
         </CardContent>
