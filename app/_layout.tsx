@@ -59,17 +59,17 @@ function Routes() {
   return (
     <Stack>
       {/* Screens only shown when the user is NOT signed in */}
-      {/* <Stack.Protected guard={!isSignedIn}>
+      <Stack.Protected guard={!isSignedIn}>
         <Stack.Screen name="(auth)/sign-in" options={SIGN_IN_SCREEN_OPTIONS} />
         <Stack.Screen name="(auth)/sign-up" options={SIGN_UP_SCREEN_OPTIONS} />
         <Stack.Screen name="(auth)/reset-password" options={DEFAULT_AUTH_SCREEN_OPTIONS} />
         <Stack.Screen name="(auth)/forgot-password" options={DEFAULT_AUTH_SCREEN_OPTIONS} />
-      </Stack.Protected> */}
+      </Stack.Protected>
 
       {/* Screens only shown when the user IS signed in */}
-      {/* <Stack.Protected guard={isSignedIn === true}> */}
-      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-      {/* </Stack.Protected> */}
+      <Stack.Protected guard={isSignedIn === true}>
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+      </Stack.Protected>
 
       {/* Screens outside the guards are accessible to everyone (e.g. not found) */}
     </Stack>

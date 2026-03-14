@@ -1,7 +1,10 @@
 import * as React from 'react';
 import { View } from 'react-native';
+import { Icon } from '@/components/ui/icon';
+import { PlusIcon } from 'lucide-react-native';
 import { LogoWithText } from '@/components/in-app-ui/logo-with-text';
 import { RoundedButton } from '@/components/in-app-ui/rounded-button';
+import { ShinyButton } from '@/components/in-app-ui/shiny-button';
 import { VietnamText } from '@/components/in-app-ui/vietnam-text';
 import { LanguageToggle } from '@/components/in-app-ui/language-toggle';
 import { UserMenu } from '@/components/user-menu';
@@ -33,16 +36,17 @@ export default function ExploreScreen() {
           className="w-full max-w-sm"
         />
         <RoundedButton variant="outline">
+          <Icon as={PlusIcon} size={16} className="text-primary" />
           <VietnamText className="font-semibold text-primary">
             {t('home.addIngredients')}
           </VietnamText>
         </RoundedButton>
         <View className="flex-1 items-center justify-center gap-4 p-4">
-          <RoundedButton className="h-14 w-full">
-            <VietnamText className="w-full flex-row text-center text-lg font-semibold">
+          <ShinyButton className="h-14 w-full">
+            <VietnamText className="w-full flex-row text-center text-lg font-semibold text-white">
               {t('home.search')}
             </VietnamText>
-          </RoundedButton>
+          </ShinyButton>
           <RoundedButton className="h-14 w-full" variant="outline">
             <VietnamText className="w-full flex-row text-center text-lg font-semibold">
               {t('home.generateRecipesVia')}{' '}
