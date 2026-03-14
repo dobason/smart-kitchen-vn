@@ -52,6 +52,7 @@ export function TagsSearch({
       <View className="flex-row flex-wrap justify-center gap-2 px-8">
         {filteredOptions.map((opt) => (
           <Tag
+            key={opt.value}
             label={opt.label}
             icon={opt.icon}
             active={selectedTags.includes(opt.value)}
