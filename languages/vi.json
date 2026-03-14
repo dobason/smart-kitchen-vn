@@ -1,4 +1,6 @@
 {
+  "appName": "BẾP THÔNG MINH",
+  "AI": "AI",
   "signIn": {
     "appName": "BẾP THÔNG MINH",
     "description": "Đăng nhập hoặc đăng ký để lưu công thức của bạn",
@@ -46,8 +48,18 @@
     "codeLabel": "Mã xác minh",
     "submit": "Đặt lại mật khẩu"
   },
+  "tabs": {
+    "explore": "Khám phá",
+    "recipe": "Công thức",
+    "account": "Tài khoản"
+  },
   "socialConnections": {
     "signInWith": "Tiếp tục với",
     "signUpWith": "Tiếp tục với"
+  },
+  "home": {
+    "search": "Tìm kiếm",
+    "generateRecipesVia": "Tạo công thức bằng",
+    "addIngredients": "Thêm nguyên liệu"
   }
 }
