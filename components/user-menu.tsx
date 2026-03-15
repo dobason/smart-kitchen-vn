@@ -2,7 +2,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Icon } from '@/components/ui/icon';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Text } from '@/components/ui/text';
+import { VietnamText } from '@/components/in-app-ui/vietnam-text';
 import { useAuth, useUser } from '@clerk/clerk-expo';
 import type { TriggerRef } from '@rn-primitives/popover';
 import { LogOutIcon, PlusIcon, SettingsIcon } from 'lucide-react-native';
@@ -31,13 +31,13 @@ export function UserMenu() {
           <View className="flex-row items-center gap-3">
             <UserAvatar className="size-10" />
             <View className="flex-1">
-              <Text className="font-medium leading-5">
+              <VietnamText className="font-medium leading-5">
                 {user?.fullName || user?.emailAddresses[0]?.emailAddress}
-              </Text>
+              </VietnamText>
               {user?.fullName?.length ? (
-                <Text className="text-sm font-normal leading-4 text-muted-foreground">
+                <VietnamText className="text-sm font-normal leading-4 text-muted-foreground">
                   {user?.username || user?.emailAddresses[0]?.emailAddress}
-                </Text>
+                </VietnamText>
               ) : null}
             </View>
           </View>
@@ -49,11 +49,11 @@ export function UserMenu() {
                 // TODO: Navigate to account settings screen
               }}>
               <Icon as={SettingsIcon} className="size-4" />
-              <Text>Manage Account</Text>
+              <VietnamText>Manage Account</VietnamText>
             </Button>
             <Button variant="outline" size="sm" className="flex-1" onPress={onSignOut}>
               <Icon as={LogOutIcon} className="size-4" />
-              <Text>Sign Out</Text>
+              <VietnamText>Sign Out</VietnamText>
             </Button>
           </View>
         </View>
@@ -69,7 +69,7 @@ export function UserMenu() {
               <Icon as={PlusIcon} className="size-5" />
             </View>
           </View>
-          <Text>Add account</Text>
+          <VietnamText>Add account</VietnamText>
         </Button>
       </PopoverContent>
     </Popover>
@@ -94,7 +94,7 @@ function UserAvatar(props: Omit<React.ComponentProps<typeof Avatar>, 'alt'>) {
     <Avatar alt={`${userName}'s avatar`} {...props}>
       <AvatarImage source={imageSource} />
       <AvatarFallback>
-        <Text>{initials}</Text>
+        <VietnamText>{initials}</VietnamText>
       </AvatarFallback>
     </Avatar>
   );

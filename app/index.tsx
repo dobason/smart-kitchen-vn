@@ -1,6 +1,6 @@
 import { Button } from '@/components/ui/button';
 import { Icon } from '@/components/ui/icon';
-import { Text } from '@/components/ui/text';
+import { VietnamText } from '@/components/in-app-ui/vietnam-text';
 import { UserMenu } from '@/components/user-menu';
 import { useUser } from '@clerk/clerk-expo';
 import { Link, Stack } from 'expo-router';
@@ -51,17 +51,17 @@ export default function Screen() {
           <Image source={LOGO[colorScheme ?? 'light']} style={LOGO_STYLE} resizeMode="contain" />
         </View>
         <View className="max-w-sm gap-2 px-4">
-          <Text variant="h1" className="text-3xl font-medium">
+          <VietnamText variant="h1" className="text-3xl font-medium">
             Make it yours{user?.firstName ? `, ${user.firstName}` : ''}.
-          </Text>
-          <Text className="ios:text-foreground text-center font-mono text-sm text-muted-foreground">
+          </VietnamText>
+          <VietnamText className="ios:text-foreground text-center font-mono text-sm text-muted-foreground">
             Update the screens and components to match your design and logic.
-          </Text>
+          </VietnamText>
         </View>
         <View className="gap-2">
           <Link href="https://go.clerk.com/8e6CCee" asChild>
             <Button size="sm">
-              <Text>Explore Clerk Docs</Text>
+              <VietnamText>Explore Clerk Docs</VietnamText>
             </Button>
           </Link>
         </View>

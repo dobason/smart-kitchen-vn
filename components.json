@@ -13,7 +13,11 @@
     "components": "@/components",
     "utils": "@/lib/utils",
     "ui": "@/components/ui",
+    "in-app-ui": "@/components/in-app-ui",
     "lib": "@/lib",
-    "hooks": "@/hooks"
+    "hooks": "@/hooks",
+    "languages": "@/languages",
+    "context": "@/context",
+    "providers": "@/providers"
   }
 }

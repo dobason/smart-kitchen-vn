@@ -1,16 +1,16 @@
 import { Link, Stack } from 'expo-router';
 import { View } from 'react-native';
-import { Text } from '@/components/ui/text';
+import { VietnamText } from '@/components/in-app-ui/vietnam-text';
 
 export default function NotFoundScreen() {
   return (
     <>
       <Stack.Screen options={{ title: 'Oops!' }} />
       <View>
-        <Text>This screen doesn't exist.</Text>
+        <VietnamText>This screen doesn't exist.</VietnamText>
 
         <Link href="/">
-          <Text>Go to home screen!</Text>
+          <VietnamText>Go to home screen!</VietnamText>
         </Link>
       </View>
     </>

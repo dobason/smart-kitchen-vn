@@ -1,0 +1,53 @@
+{
+  "signIn": {
+    "appName": "SMART KITCHEN",
+    "description": "Sign in or sign up to save your recipes",
+    "or": "Or",
+    "emailLabel": "Email",
+    "emailPlaceholder": "Your email",
+    "passwordLabel": "Password",
+    "passwordPlaceholder": "Your password",
+    "forgotPassword": "Forgot password?",
+    "submit": "Sign in",
+    "noAccount": "Don't have an account?",
+    "signUp": "Sign up"
+  },
+  "signUp": {
+    "title": "Create an account",
+    "description": "Sign up to save your recipes and more",
+    "emailLabel": "Email",
+    "emailPlaceholder": "Your email",
+    "passwordLabel": "Password",
+    "passwordPlaceholder": "Your password",
+    "submit": "Continue",
+    "or": "Or",
+    "hasAccount": "Already have an account?",
+    "signIn": "Sign in"
+  },
+  "verifyEmail": {
+    "title": "Verify your email",
+    "description": "Enter the verification code sent to %{email}",
+    "codeLabel": "Verification code",
+    "resend": "Didn't receive the code? Resend",
+    "submit": "Continue",
+    "cancel": "Cancel"
+  },
+  "forgotPassword": {
+    "title": "Forgot password?",
+    "description": "Enter your email to reset your password",
+    "emailLabel": "Email",
+    "emailPlaceholder": "Your email",
+    "submit": "Reset your password"
+  },
+  "resetPassword": {
+    "title": "Reset password",
+    "description": "Enter the code sent to your email and set a new password",
+    "newPasswordLabel": "New password",
+    "codeLabel": "Verification code",
+    "submit": "Reset Password"
+  },
+  "socialConnections": {
+    "signInWith": "Continue with",
+    "signUpWith": "Continue with"
+  }
+}

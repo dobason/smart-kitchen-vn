@@ -4,13 +4,16 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
-import { Text } from '@/components/ui/text';
+import { VietnamText } from '@/components/in-app-ui/vietnam-text';
+import { LanguageToggle } from '@/components/in-app-ui/language-toggle';
 import { useSignIn } from '@clerk/clerk-expo';
-import { Link, router } from 'expo-router';
+import { Link } from 'expo-router';
 import * as React from 'react';
-import { type TextInput, View } from 'react-native';
+import { type TextInput, View, Image } from 'react-native';
+import { useLocale } from '@/hooks/use-locale';
 
 export function SignInForm() {
+  const { t } = useLocale();
   const { signIn, setActive, isLoaded } = useSignIn();
   const [email, setEmail] = React.useState('');
   const [password, setPassword] = React.useState('');
@@ -57,20 +60,32 @@ export function SignInForm() {
 
   return (
     <View className="gap-6">
-      <Card className="border-border/0 shadow-none sm:border-border sm:shadow-sm sm:shadow-black/5">
+      <Card className="border-border/0 bg-gray-50 bg-secondary shadow-none sm:border-border sm:shadow-sm sm:shadow-black/5">
         <CardHeader>
-          <CardTitle className="text-center text-xl sm:text-left">Sign in to smart-kitchen-vn</CardTitle>
+          <View className="flex-row items-center justify-end">
+            <LanguageToggle />
+          </View>
+          <View className="flex-row justify-center">
+            <Image className="size-24" source={require('@/assets/images/icon.png')} />
+          </View>
+          <CardTitle className="text-center text-xl sm:text-left">{t('signIn.appName')}</CardTitle>
           <CardDescription className="text-center sm:text-left">
-            Welcome back! Please sign in to continue
+            {t('signIn.description')}
           </CardDescription>
         </CardHeader>
         <CardContent className="gap-6">
+          <SocialConnections />
+          <View className="flex-row items-center">
+            <Separator className="flex-1" />
+            <VietnamText className="px-4 text-sm text-muted-foreground">{t('signIn.or')}</VietnamText>
+            <Separator className="flex-1" />
+          </View>
           <View className="gap-6">
             <View className="gap-1.5">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">{t('signIn.emailLabel')}</Label>
               <Input
                 id="email"
-                placeholder="m@example.com"
+                placeholder={t('signIn.emailPlaceholder')}
                 keyboardType="email-address"
                 autoComplete="email"
                 autoCapitalize="none"
@@ -80,23 +95,26 @@ export function SignInForm() {
                 submitBehavior="submit"
               />
               {error.email ? (
-                <Text className="text-sm font-medium text-destructive">{error.email}</Text>
+                <VietnamText className="text-sm font-medium text-destructive">
+                  {error.email}
+                </VietnamText>
               ) : null}
             </View>
             <View className="gap-1.5">
               <View className="flex-row items-center">
-                <Label htmlFor="password">Password</Label>
+                <Label htmlFor="password">{t('signIn.passwordLabel')}</Label>
                 <Link asChild href={`/(auth)/forgot-password?email=${email}`}>
                   <Button
                     variant="link"
                     size="sm"
                     className="ml-auto h-4 px-1 py-0 web:h-fit sm:h-4">
-                    <Text className="font-normal leading-4">Forgot your password?</Text>
+                    <VietnamText className="font-normal leading-4">{t('signIn.forgotPassword')}</VietnamText>
                   </Button>
                 </Link>
               </View>
               <Input
                 ref={passwordInputRef}
+                placeholder={t('signIn.passwordPlaceholder')}
                 id="password"
                 secureTextEntry
                 onChangeText={setPassword}
@@ -104,25 +122,21 @@ export function SignInForm() {
                 onSubmitEditing={onSubmit}
               />
               {error.password ? (
-                <Text className="text-sm font-medium text-destructive">{error.password}</Text>
+                <VietnamText className="text-sm font-medium text-destructive">
+                  {error.password}
+                </VietnamText>
               ) : null}
             </View>
             <Button className="w-full" onPress={onSubmit}>
-              <Text>Continue</Text>
+              <VietnamText>{t('signIn.submit')}</VietnamText>
             </Button>
           </View>
-          <Text className="text-center text-sm">
-            Don&apos;t have an account?{' '}
+          <VietnamText className="text-center text-sm">
+            {t('signIn.noAccount')}{' '}
             <Link href="/(auth)/sign-up" className="text-sm underline underline-offset-4">
-              Sign up
+              {t('signIn.signUp')}
             </Link>
-          </Text>
-          <View className="flex-row items-center">
-            <Separator className="flex-1" />
-            <Text className="px-4 text-sm text-muted-foreground">or</Text>
-            <Separator className="flex-1" />
-          </View>
-          <SocialConnections />
+          </VietnamText>
         </CardContent>
       </Card>
     </View>

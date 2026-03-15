@@ -1,0 +1,53 @@
+{
+  "signIn": {
+    "appName": "BẾP THÔNG MINH",
+    "description": "Đăng nhập hoặc đăng ký để lưu công thức của bạn",
+    "or": "Hoặc",
+    "emailLabel": "Email",
+    "emailPlaceholder": "Email của bạn",
+    "passwordLabel": "Mật khẩu",
+    "passwordPlaceholder": "Mật khẩu của bạn",
+    "forgotPassword": "Quên mật khẩu?",
+    "submit": "Đăng nhập",
+    "noAccount": "Chưa có tài khoản?",
+    "signUp": "Đăng ký"
+  },
+  "signUp": {
+    "title": "Đăng ký tài khoản",
+    "description": "Dăng ký để lưu công thức của bạn và nhiều hơn nữa",
+    "emailLabel": "Email",
+    "emailPlaceholder": "Email của bạn",
+    "passwordLabel": "Mật khẩu",
+    "passwordPlaceholder": "Mật khẩu của bạn",
+    "submit": "Tiếp tục",
+    "or": "Hoặc",
+    "hasAccount": "Đã có tài khoản?",
+    "signIn": "Đăng nhập"
+  },
+  "verifyEmail": {
+    "title": "Xác minh email",
+    "description": "Nhập mã xác minh đã gửi đến %{email}",
+    "codeLabel": "Mã xác minh",
+    "resend": "Chưa nhận được mã? Gửi lại",
+    "submit": "Tiếp tục",
+    "cancel": "Hủy"
+  },
+  "forgotPassword": {
+    "title": "Quên mật khẩu?",
+    "description": "Nhập email của bạn để đặt lại mật khẩu",
+    "emailLabel": "Email",
+    "emailPlaceholder": "Email của bạn",
+    "submit": "Đặt lại mật khẩu"
+  },
+  "resetPassword": {
+    "title": "Đặt lại mật khẩu",
+    "description": "Nhập mã đã gửi đến email và đặt mật khẩu mới",
+    "newPasswordLabel": "Mật khẩu mới",
+    "codeLabel": "Mã xác minh",
+    "submit": "Đặt lại mật khẩu"
+  },
+  "socialConnections": {
+    "signInWith": "Tiếp tục với",
+    "signUpWith": "Tiếp tục với"
+  }
+}

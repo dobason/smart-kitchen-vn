@@ -55,7 +55,8 @@
           },
           "resizeMode": "contain"
         }
-      ]
+      ],
+      "expo-localization"
     ],
     "experiments": {
       "typedRoutes": true
