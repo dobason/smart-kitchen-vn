@@ -1,7 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "Bash(ls /Users/tonlee/Documents/vibes/smart-kitchen-vn/lib/use-locale*)"
-    ]
-  }
-}

@@ -1,4 +1,6 @@
 {
+  "appName": "SMART KITCHEN",
+  "AI": "AI",
   "signIn": {
     "appName": "SMART KITCHEN",
     "description": "Sign in or sign up to save your recipes",
@@ -46,8 +48,18 @@
     "codeLabel": "Verification code",
     "submit": "Reset Password"
   },
+  "tabs": {
+    "explore": "Explore",
+    "recipe": "Recipe",
+    "account": "Account"
+  },
   "socialConnections": {
     "signInWith": "Continue with",
     "signUpWith": "Continue with"
+  },
+  "home": {
+    "search": "Search",
+    "generateRecipesVia": "Generate recipes via",
+    "addIngredients": "Add ingredients"
   }
 }

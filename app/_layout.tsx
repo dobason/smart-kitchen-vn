@@ -67,8 +67,8 @@ function Routes() {
       </Stack.Protected>
 
       {/* Screens only shown when the user IS signed in */}
-      <Stack.Protected guard={isSignedIn}>
-        <Stack.Screen name="index" />
+      <Stack.Protected guard={isSignedIn === true}>
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       </Stack.Protected>
 
       {/* Screens outside the guards are accessible to everyone (e.g. not found) */}
