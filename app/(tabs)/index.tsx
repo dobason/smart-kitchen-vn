@@ -8,12 +8,24 @@ import { ShinyButton } from '@/components/in-app-ui/shiny-button';
 import { VietnamText } from '@/components/in-app-ui/vietnam-text';
 import { LanguageToggle } from '@/components/in-app-ui/language-toggle';
 import { UserMenu } from '@/components/user-menu';
+import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { TagsSearch } from '@/components/tags-search';
 import { useLocale } from '@/hooks/use-locale';
 
 export default function ExploreScreen() {
   const { t } = useLocale();
+  const router = useRouter();
+  const [selectedTags, setSelectedTags] = React.useState<string[]>(['Tag 1']);
+  const [searchText, setSearchText] = React.useState('');
+
+  function handleSearch() {
+    const query = searchText.trim() || selectedTags[0] || String(t('searchResults.defaultKeyword'));
+    router.push({
+      pathname: '/search-results',
+      params: { q: query },
+    });
+  }
 
   return (
     <SafeAreaView className="flex-1 bg-background">
@@ -32,7 +44,10 @@ export default function ExploreScreen() {
             { label: 'Tag 5', value: 'Tag 5' },
             { label: 'Tag 6', value: 'Tag 6' },
           ]}
-          selectedTags={['Tag 1']}
+          selectedTags={selectedTags}
+          onSelectedTagsChange={setSelectedTags}
+          onInputChange={setSearchText}
+          placeholder={String(t('searchResults.searchPlaceholder'))}
           className="w-full max-w-sm"
         />
         <RoundedButton variant="outline">
@@ -42,7 +57,7 @@ export default function ExploreScreen() {
           </VietnamText>
         </RoundedButton>
         <View className="flex-1 items-center justify-center gap-4 p-4">
-          <ShinyButton className="h-14 w-full">
+          <ShinyButton className="h-14 w-full" onPress={handleSearch}>
             <VietnamText className="w-full flex-row text-center text-lg font-semibold text-white">
               {t('home.search')}
             </VietnamText>

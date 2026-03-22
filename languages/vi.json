@@ -61,5 +61,14 @@
     "search": "Tìm kiếm",
     "generateRecipesVia": "Tạo công thức bằng",
     "addIngredients": "Thêm nguyên liệu"
+  },
+  "searchResults": {
+    "searchPlaceholder": "Tìm món hoặc nguyên liệu",
+    "defaultKeyword": "Phở",
+    "tagFilter": "Thẻ +",
+    "timeFilter": "Thời gian +",
+    "results": "Kết quả tìm kiếm %{count}",
+    "cal": "Cal",
+    "minute": "phút"
   }
 }

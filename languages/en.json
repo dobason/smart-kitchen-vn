@@ -61,5 +61,14 @@
     "search": "Search",
     "generateRecipesVia": "Generate recipes via",
     "addIngredients": "Add ingredients"
+  },
+  "searchResults": {
+    "searchPlaceholder": "Search dishes or ingredients",
+    "defaultKeyword": "Pho",
+    "tagFilter": "Tag +",
+    "timeFilter": "Time +",
+    "results": "Search results %{count}",
+    "cal": "Cal",
+    "minute": "min"
   }
 }

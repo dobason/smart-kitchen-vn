@@ -20,10 +20,15 @@ export {
 
 export default function RootLayout() {
   const { colorScheme } = useColorScheme();
+  const clerkPublishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY;
+
+  if (!clerkPublishableKey) {
+    throw new Error('Missing EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY in environment variables.');
+  }
 
   return (
     <LocaleProvider>
-      <ClerkProvider tokenCache={tokenCache}>
+      <ClerkProvider publishableKey={clerkPublishableKey} tokenCache={tokenCache}>
         <ThemeProvider value={NAV_THEME[colorScheme ?? 'light']}>
           <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
           <Routes />
@@ -42,6 +47,9 @@ SplashScreen.setOptions({
 
 function Routes() {
   const { isSignedIn, isLoaded } = useAuth();
+  const bypassAuthInDev =
+    __DEV__ && process.env.EXPO_PUBLIC_BYPASS_AUTH_IN_DEV?.toLowerCase() === 'true';
+  const effectiveIsSignedIn = isSignedIn === true || bypassAuthInDev;
   const [isLoadedFont, errorFont] = useFonts({
     BeVietnamPro_400Regular,
   });
@@ -59,7 +67,7 @@ function Routes() {
   return (
     <Stack>
       {/* Screens only shown when the user is NOT signed in */}
-      <Stack.Protected guard={!isSignedIn}>
+      <Stack.Protected guard={!effectiveIsSignedIn}>
         <Stack.Screen name="(auth)/sign-in" options={SIGN_IN_SCREEN_OPTIONS} />
         <Stack.Screen name="(auth)/sign-up" options={SIGN_UP_SCREEN_OPTIONS} />
         <Stack.Screen name="(auth)/reset-password" options={DEFAULT_AUTH_SCREEN_OPTIONS} />
@@ -67,8 +75,9 @@ function Routes() {
       </Stack.Protected>
 
       {/* Screens only shown when the user IS signed in */}
-      <Stack.Protected guard={isSignedIn === true}>
+      <Stack.Protected guard={effectiveIsSignedIn}>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="search-results" options={{ headerShown: false }} />
       </Stack.Protected>
 
       {/* Screens outside the guards are accessible to everyone (e.g. not found) */}
