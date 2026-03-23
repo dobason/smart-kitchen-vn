@@ -1,0 +1,190 @@
+import { SearchFilterChip } from '@/components/in-app-ui/search-filter-chip';
+import { SearchQueryBar } from '@/components/in-app-ui/search-query-bar';
+import { SearchRecipeCard, type SearchRecipeItem } from '@/components/in-app-ui/search-recipe-card';
+import { VietnamText } from '@/components/in-app-ui/vietnam-text';
+import { Icon } from '@/components/ui/icon';
+import { useLocale } from '@/hooks/use-locale';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { BrushCleaning } from 'lucide-react-native';
+import * as React from 'react';
+import { Pressable, ScrollView, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+
+const SEARCH_RECIPES: SearchRecipeItem[] = [
+  {
+    id: 'pho-bo',
+    name: 'Súp phở',
+    description: '600ml nước,100g bánh phở...',
+    calories: 300,
+    timeMinutes: 15,
+    imageUrl:
+      'https://images.unsplash.com/photo-1582878826629-29b7ad1cdc43?auto=format&fit=crop&w=1000&q=80',
+    tags: ['pho', 'bo', 'nuoc dung'],
+  },
+  {
+    id: 'bo-mong-co',
+    name: 'Thịt bò Mông Cổ và Hành lá',
+    description: '2 thìa cà phê dầu thực vật...',
+    calories: 391,
+    timeMinutes: 20,
+    imageUrl:
+      'https://images.unsplash.com/photo-1601050690597-df0568f70950?auto=format&fit=crop&w=1000&q=80',
+    tags: ['bo', 'hanh la', 'xao'],
+  },
+  {
+    id: 'banh-xa-lach-cuon',
+    name: 'Bánh xá lách cuộn kiểu Á nhanh',
+    description: '4 cốc nước,2 cốc gạo trắng...',
+    calories: 245,
+    timeMinutes: 25,
+    imageUrl:
+      'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=1000&q=80',
+    tags: ['xa lach', 'salad', 'nhanh'],
+  },
+  {
+    id: 'salad-ga-kieu-a',
+    name: 'Salad Gà Kiểu Á',
+    description: '1/4 cốc dầu thực vật,3 muỗng...',
+    calories: 180,
+    timeMinutes: 10,
+    imageUrl:
+      'https://images.unsplash.com/photo-1546793665-c74683f339c1?auto=format&fit=crop&w=1000&q=80',
+    tags: ['salad', 'ga', 'healthy'],
+  },
+  {
+    id: 'bun-thit-nuong',
+    name: 'Bún thịt nướng',
+    description: 'Bún tươi, thịt heo ướp sả...',
+    calories: 420,
+    timeMinutes: 30,
+    imageUrl:
+      'https://images.unsplash.com/photo-1559847844-5315695dadae?auto=format&fit=crop&w=1000&q=80',
+    tags: ['bun', 'nuong', 'heo'],
+  },
+];
+
+export function SearchResultsContainer() {
+  const router = useRouter();
+  const { t } = useLocale();
+  const params = useLocalSearchParams<{ q?: string | string[] }>();
+
+  const initialQuery = React.useMemo(() => {
+    if (Array.isArray(params.q)) {
+      return params.q[0] ?? '';
+    }
+    return params.q ?? '';
+  }, [params.q]);
+
+  const [query, setQuery] = React.useState(initialQuery || String(t('searchResults.defaultKeyword')));
+  const [selectedTags, setSelectedTags] = React.useState<string[]>(
+    initialQuery ? [initialQuery] : []
+  );
+  const [savedIds, setSavedIds] = React.useState<Set<string>>(new Set());
+
+  React.useEffect(() => {
+    if (initialQuery) {
+      setQuery(initialQuery);
+      setSelectedTags([initialQuery]);
+    }
+  }, [initialQuery]);
+
+  const filteredRecipes = React.useMemo(() => {
+    const keyword = query.trim().toLowerCase();
+    const normalizedTags = selectedTags.map((tag) => tag.trim().toLowerCase()).filter(Boolean);
+
+    if (!keyword && normalizedTags.length === 0) {
+      return SEARCH_RECIPES;
+    }
+
+    return SEARCH_RECIPES.filter((item) => {
+      const content = `${item.name} ${item.description} ${item.tags.join(' ')}`.toLowerCase();
+      const matchQuery = keyword.length === 0 || content.includes(keyword);
+      const matchTag =
+        normalizedTags.length === 0 || normalizedTags.some((tag) => content.includes(tag));
+      return matchQuery && matchTag;
+    });
+  }, [query, selectedTags]);
+
+  function toggleSave(id: string) {
+    setSavedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  }
+
+  function handleClose() {
+    if (router.canGoBack()) {
+      router.back();
+      return;
+    }
+    router.replace('/(tabs)');
+  }
+
+  function handleClearAllTags() {
+    setSelectedTags([]);
+    setQuery('');
+  }
+
+  return (
+    <SafeAreaView className="flex-1 bg-[#F5F5F6]">
+      <View className="flex-1 px-3 pt-1">
+        <SearchQueryBar
+          query={query}
+          onQueryChange={setQuery}
+          placeholder={String(t('searchResults.searchPlaceholder'))}
+          onClose={handleClose}
+        />
+
+        <View className="mt-2 flex-row items-center">
+          <SearchFilterChip
+            className="mr-2"
+            label={`${String(t('searchResults.tagFilter'))}${
+              selectedTags.length > 0 ? ` (${selectedTags.length})` : ''
+            }`}
+            left={<View className="h-3.5 w-3.5 rounded-[4px] bg-[#F3BA1B]" />}
+          />
+
+          <SearchFilterChip
+            label={String(t('searchResults.timeFilter'))}
+            left={<VietnamText className="text-sm">⌛</VietnamText>}
+          />
+
+          <Pressable
+            onPress={handleClearAllTags}
+            disabled={selectedTags.length === 0}
+            className="ml-auto h-9 w-9 items-center justify-center">
+            <Icon
+              as={BrushCleaning}
+              size={16}
+              className={selectedTags.length === 0 ? 'text-[#BFC0C4]' : 'text-[#CE232A]'}
+            />
+          </Pressable>
+        </View>
+
+        <VietnamText className="mb-3 mt-3 text-base text-[#66666D]">
+          {t('searchResults.results', { count: filteredRecipes.length })}
+        </VietnamText>
+
+        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 28 }}>
+          <View className="flex-row flex-wrap justify-between">
+            {filteredRecipes.map((item) => (
+              <SearchRecipeCard
+                key={item.id}
+                item={item}
+                isSaved={savedIds.has(item.id)}
+                onToggleSave={toggleSave}
+                calUnit={String(t('searchResults.cal'))}
+                minuteUnit={String(t('searchResults.minute'))}
+              />
+            ))}
+          </View>
+        </ScrollView>
+      </View>
+    </SafeAreaView>
+  );
+}

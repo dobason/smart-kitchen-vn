@@ -67,6 +67,7 @@
     "defaultKeyword": "Pho",
     "tagFilter": "Tag +",
     "timeFilter": "Time +",
+    "clearAllTags": "Clear tags",
     "results": "Search results %{count}",
     "cal": "Cal",
     "minute": "min"

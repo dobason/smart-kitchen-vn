@@ -67,6 +67,7 @@
     "defaultKeyword": "Phở",
     "tagFilter": "Thẻ +",
     "timeFilter": "Thời gian +",
+    "clearAllTags": "Xóa tag",
     "results": "Kết quả tìm kiếm %{count}",
     "cal": "Cal",
     "minute": "phút"
