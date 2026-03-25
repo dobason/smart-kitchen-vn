@@ -61,5 +61,26 @@
     "search": "Search",
     "generateRecipesVia": "Generate recipes via",
     "addIngredients": "Add ingredients"
+  },
+  "recipe": {
+    "tabRecipes": "RECIPES",
+    "tabCookbooks": "COOKBOOKS",
+    "addCookbook": "Add Cookbook",
+    "createCookbookTitle": "Create New Cookbook",
+    "cookbookNamePlaceholder": "Enter cookbook name...",
+    "cancel": "Cancel",
+    "create": "Create",
+    "editName": "Edit name",
+    "deleteCookbook": "Delete cookbook",
+    "errorTitle": "Error",
+    "errorEmptyName": "Cookbook name cannot be empty!",
+    "errorCameraPermission": "Camera access is required.",
+    "errorPhotoPermission": "Photo library access is required.",
+    "successTitle": "Success!",
+    "successAnalyzed": "Analysis complete from %{source}.",
+    "aiSourceCamera": "Camera photo",
+    "aiSourcePhotoLibrary": "Photo library",
+    "notifyTitle": "Notice",
+    "renameComingSoon": "The rename feature will be available in a future update."
   }
 }

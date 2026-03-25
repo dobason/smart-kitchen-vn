@@ -5,7 +5,7 @@ import { Search, SlidersHorizontal, ChevronRight, Plus, ChefHat, ArrowDown10, Ed
 import { Icon } from '@/components/ui/icon';
 import { VietnamText } from '@/components/in-app-ui/vietnam-text';
 import * as ImagePicker from 'expo-image-picker';
-
+import i18n from '@/lib/i18n';
 import { RecipeCard } from '@/components/in-app-ui/recipe-card';
 import { CookbookCard } from '@/components/in-app-ui/cookbook-card';
 import { ImportBottomSheet } from '@/components/import-bottom-sheet';
@@ -34,7 +34,7 @@ export default function RecipeScreen() {
   const [isLoadingAI, setIsLoadingAI] = React.useState(false);
 
   const handleCreateCookbook = () => {
-    if (!newBookName.trim()) { Alert.alert("Lỗi", "Tên sổ tay không được để trống!"); return; }
+    if (!newBookName.trim()) { Alert.alert(i18n.t('recipe.errorTitle'), i18n.t('recipe.errorEmptyName')); return; }
     const newBook = { id: Date.now().toString(), name: newBookName, count: 0, image: 'https://images.unsplash.com/photo-1547592180-85f173990554?w=500&q=80' };
     setCookbooks([...cookbooks, newBook]);
     setNewBookName('');
@@ -51,22 +51,22 @@ export default function RecipeScreen() {
     setTimeout(() => {
       setIsLoadingAI(false);
       setIsImportVisible(false); 
-      Alert.alert("Thành công!", `Đã phân tích xong từ ${actionName}.`);
+      Alert.alert(i18n.t('recipe.successTitle'), i18n.t('recipe.successAnalyzed', { source: actionName }));
     }, 3000);
   };
 
   const handleCameraPress = async () => {
     const permission = await ImagePicker.requestCameraPermissionsAsync();
-    if (!permission.granted) { Alert.alert("Lỗi", "Cần quyền truy cập Camera."); return; }
+    if (!permission.granted) { Alert.alert(i18n.t('recipe.errorTitle'), i18n.t('recipe.errorCameraPermission')); return; }
     const result = await ImagePicker.launchCameraAsync({ allowsEditing: true, aspect: [4, 3], quality: 0.8 });
-    if (!result.canceled) simulateAILoading("ảnh chụp Camera");
+    if (!result.canceled) simulateAILoading(i18n.t('recipe.aiSourceCamera'));
   };
 
   const handlePhotoPress = async () => {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!permission.granted) { Alert.alert("Lỗi", "Cần quyền truy cập Thư viện ảnh."); return; }
+    if (!permission.granted) { Alert.alert(i18n.t('recipe.errorTitle'), i18n.t('recipe.errorPhotoPermission')); return; }
     const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images, allowsEditing: true, aspect: [4, 3], quality: 0.8 });
-    if (!result.canceled) simulateAILoading("ảnh từ Thư viện");
+    if (!result.canceled) simulateAILoading(i18n.t('recipe.aiSourcePhotoLibrary'));
   };
 
   return (
@@ -75,10 +75,10 @@ export default function RecipeScreen() {
       <View className="flex-row items-center justify-between px-4 py-3 bg-white border-b border-gray-100">
         <View className="flex-row gap-6">
           <Pressable onPress={() => setActiveTab('recipe')} className={activeTab === 'recipe' ? "border-b-4 border-red-600 pb-1" : "pb-1"}>
-            <VietnamText className={`text-xl font-bold ${activeTab === 'recipe' ? 'text-gray-900' : 'text-gray-400'}`}>CÔNG THỨC</VietnamText>
+            <VietnamText className={`text-xl font-bold ${activeTab === 'recipe' ? 'text-gray-900' : 'text-gray-400'}`}>{i18n.t('recipe.tabRecipes')}</VietnamText>
           </Pressable>
           <Pressable onPress={() => setActiveTab('cookbook')} className={activeTab === 'cookbook' ? "border-b-4 border-red-600 pb-1" : "pb-1"}>
-            <VietnamText className={`text-xl font-bold ${activeTab === 'cookbook' ? 'text-gray-900' : 'text-gray-400'}`}>SỔ TAY</VietnamText>
+            <VietnamText className={`text-xl font-bold ${activeTab === 'cookbook' ? 'text-gray-900' : 'text-gray-400'}`}>{i18n.t('recipe.tabCookbooks')}</VietnamText>
           </Pressable>
         </View>
         <Pressable className="bg-red-600 p-2 rounded-full"><Icon as={ChefHat} size={20} className="text-white" /></Pressable>
@@ -131,7 +131,7 @@ export default function RecipeScreen() {
 
             <Pressable onPress={() => setIsAddModalVisible(true)} className="w-[48%] aspect-[4/5] border-2 border-dashed border-red-300 bg-red-50/50 rounded-2xl items-center justify-center overflow-hidden">
               <View className="bg-red-100 p-4 rounded-full mb-3 shadow-inner shadow-red-200/50"><Icon as={Plus} size={28} className="text-red-600" /></View>
-              <VietnamText className="text-red-600 font-medium text-base">Thêm Sổ Tay</VietnamText>
+              <VietnamText className="text-red-600 font-medium text-base">{i18n.t('recipe.addCookbook')}</VietnamText>
             </Pressable>
           </View>
         </ScrollView>
@@ -149,11 +149,11 @@ export default function RecipeScreen() {
       <Modal visible={isAddModalVisible} transparent animationType="fade">
         <View className="flex-1 bg-black/50 justify-center items-center px-6">
           <View className="bg-white w-full rounded-[24px] p-6 shadow-2xl">
-            <VietnamText className="text-xl font-bold text-gray-900 mb-4 text-center">Tạo Sổ Tay Mới</VietnamText>
-            <TextInput className="bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-base font-medium text-gray-900 mb-6" placeholder="Nhập tên sổ tay..." value={newBookName} onChangeText={setNewBookName} autoFocus />
+            <VietnamText className="text-xl font-bold text-gray-900 mb-4 text-center">{i18n.t('recipe.createCookbookTitle')}</VietnamText>
+            <TextInput className="bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-base font-medium text-gray-900 mb-6" placeholder={i18n.t('recipe.cookbookNamePlaceholder')} value={newBookName} onChangeText={setNewBookName} autoFocus />
             <View className="flex-row gap-4">
-              <Pressable onPress={() => setIsAddModalVisible(false)} className="flex-1 bg-gray-100 py-3.5 rounded-xl items-center"><VietnamText className="font-semibold text-gray-600 text-base">Hủy</VietnamText></Pressable>
-              <Pressable onPress={handleCreateCookbook} className="flex-1 bg-red-600 py-3.5 rounded-xl items-center"><VietnamText className="font-semibold text-white text-base">Tạo mới</VietnamText></Pressable>
+              <Pressable onPress={() => setIsAddModalVisible(false)} className="flex-1 bg-gray-100 py-3.5 rounded-xl items-center"><VietnamText className="font-semibold text-gray-600 text-base">{i18n.t('recipe.cancel')}</VietnamText></Pressable>
+              <Pressable onPress={handleCreateCookbook} className="flex-1 bg-red-600 py-3.5 rounded-xl items-center"><VietnamText className="font-semibold text-white text-base">{i18n.t('recipe.create')}</VietnamText></Pressable>
             </View>
           </View>
         </View>
@@ -166,11 +166,11 @@ export default function RecipeScreen() {
               <VietnamText className="font-bold text-gray-900 text-lg line-clamp-1 flex-1">{selectedBook?.name}</VietnamText>
               <Icon as={X} size={20} className="text-gray-400" />
             </View>
-            <Pressable onPress={() => { Alert.alert('Thông báo', 'Tính năng đổi tên sẽ có trong bản cập nhật sau.'); setIsMenuVisible(false); }} className="flex-row items-center gap-3 p-4 border-b border-gray-50">
-              <Icon as={Edit2} size={20} className="text-gray-600" /><VietnamText className="font-medium text-gray-800 text-base">Chỉnh sửa tên</VietnamText>
+            <Pressable onPress={() => { Alert.alert(i18n.t('recipe.notifyTitle'), i18n.t('recipe.renameComingSoon')); setIsMenuVisible(false); }} className="flex-row items-center gap-3 p-4 border-b border-gray-50">
+              <Icon as={Edit2} size={20} className="text-gray-600" /><VietnamText className="font-medium text-gray-800 text-base">{i18n.t('recipe.editName')}</VietnamText>
             </Pressable>
             <Pressable onPress={handleDeleteCookbook} className="flex-row items-center gap-3 p-4">
-              <Icon as={Trash2} size={20} className="text-red-600" /><VietnamText className="font-medium text-red-600 text-base">Xóa sổ tay</VietnamText>
+              <Icon as={Trash2} size={20} className="text-red-600" /><VietnamText className="font-medium text-red-600 text-base">{i18n.t('recipe.deleteCookbook')}</VietnamText>
             </Pressable>
           </View>
         </Pressable>
