@@ -2,6 +2,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { VietnamText } from '@/components/in-app-ui/vietnam-text';
 import { useAuth, useUser } from '@clerk/clerk-expo';
+import i18n from '@/lib/i18n';
 import { RefreshCwIcon } from 'lucide-react-native';
 import * as React from 'react';
 import { View } from 'react-native';
@@ -14,7 +15,7 @@ export default function AccountScreen() {
 
   const { initials, imageSource, displayName, userId } = React.useMemo(() => {
     const displayName =
-      user?.fullName || user?.emailAddresses[0]?.emailAddress || 'Khách';
+      user?.fullName || user?.emailAddresses[0]?.emailAddress || i18n.t('account.guest') || '';
     const initials = displayName
       .split(' ')
       .map((n) => n[0])
@@ -52,7 +53,7 @@ export default function AccountScreen() {
             className="mt-2 self-start"
             onPress={handleSync}>
             <Icon as={RefreshCwIcon} className="size-3.5" />
-            <VietnamText className="text-sm">Đăng nhập để đồng bộ</VietnamText>
+            <VietnamText className="text-sm">{i18n.t('account.syncButton')}</VietnamText>
           </Button>
         </View>
       </View>
