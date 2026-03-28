@@ -61,5 +61,26 @@
     "search": "Tìm kiếm",
     "generateRecipesVia": "Tạo công thức bằng",
     "addIngredients": "Thêm nguyên liệu"
+  },
+  "recipe": {
+    "tabRecipes": "CÔNG THỨC",
+    "tabCookbooks": "SỔ TAY",
+    "addCookbook": "Thêm Sổ Tay",
+    "createCookbookTitle": "Tạo Sổ Tay Mới",
+    "cookbookNamePlaceholder": "Nhập tên sổ tay...",
+    "cancel": "Hủy",
+    "create": "Tạo mới",
+    "editName": "Chỉnh sửa tên",
+    "deleteCookbook": "Xóa sổ tay",
+    "errorTitle": "Lỗi",
+    "errorEmptyName": "Tên sổ tay không được để trống!",
+    "errorCameraPermission": "Cần quyền truy cập Camera.",
+    "errorPhotoPermission": "Cần quyền truy cập Thư viện ảnh.",
+    "successTitle": "Thành công!",
+    "successAnalyzed": "Đã phân tích xong từ %{source}.",
+    "aiSourceCamera": "ảnh chụp Camera",
+    "aiSourcePhotoLibrary": "ảnh từ Thư viện",
+    "notifyTitle": "Thông báo",
+    "renameComingSoon": "Tính năng đổi tên sẽ có trong bản cập nhật sau."
   }
 }
