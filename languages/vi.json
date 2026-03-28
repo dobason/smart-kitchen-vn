@@ -62,6 +62,10 @@
     "generateRecipesVia": "Tạo công thức bằng",
     "addIngredients": "Thêm nguyên liệu"
   },
+  "account": {
+    "guest": "Khách",
+    "syncButton": "Đăng nhập để đồng bộ"
+  },
   "recipe": {
     "tabRecipes": "CÔNG THỨC",
     "tabCookbooks": "SỔ TAY",

@@ -62,6 +62,10 @@
     "generateRecipesVia": "Generate recipes via",
     "addIngredients": "Add ingredients"
   },
+  "account": {
+    "guest": "Guest",
+    "syncButton": "Sign in to sync"
+  },
   "recipe": {
     "tabRecipes": "RECIPES",
     "tabCookbooks": "COOKBOOKS",
