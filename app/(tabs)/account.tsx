@@ -8,14 +8,17 @@ import * as React from 'react';
 import { View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Icon } from '@/components/ui/icon';
+import { useLocale } from '@/hooks/use-locale';
 
 export default function AccountScreen() {
   const { user } = useUser();
   const { signOut } = useAuth();
+  const { t } = useLocale();
+
 
   const { initials, imageSource, displayName, userId } = React.useMemo(() => {
     const displayName =
-      user?.fullName || user?.emailAddresses[0]?.emailAddress || i18n.t('account.guest') || '';
+      user?.fullName || user?.emailAddresses[0]?.emailAddress || t('account.guest') || '';
     const initials = displayName
       .split(' ')
       .map((n) => n[0])
@@ -25,7 +28,7 @@ export default function AccountScreen() {
     const imageSource = user?.imageUrl ? { uri: user.imageUrl } : undefined;
     const userId = user?.id ?? '';
     return { initials, imageSource, displayName, userId };
-  }, [user]);
+  }, [user, t]);
 
   async function handleSync() {
     await user?.reload();
@@ -53,7 +56,7 @@ export default function AccountScreen() {
             className="mt-2 self-start"
             onPress={handleSync}>
             <Icon as={RefreshCwIcon} className="size-3.5" />
-            <VietnamText className="text-sm">{i18n.t('account.syncButton')}</VietnamText>
+            <VietnamText className="text-sm">{t('account.syncButton')}</VietnamText>
           </Button>
         </View>
       </View>
