@@ -12,7 +12,7 @@ import { useLocale } from '@/hooks/use-locale';
 
 export default function AccountScreen() {
   const { user } = useUser();
-  const { signOut } = useAuth();
+  const { signOut, isSignedIn } = useAuth();
   const { t } = useLocale();
 
 
@@ -50,14 +50,14 @@ export default function AccountScreen() {
           {userId ? (
             <VietnamText className="text-xs text-muted-foreground">UID: {userId}</VietnamText>
           ) : null}
-          <Button
+          {!isSignedIn && <Button
             variant="outline"
             size="sm"
             className="mt-2 self-start"
             onPress={handleSync}>
             <Icon as={RefreshCwIcon} className="size-3.5" />
             <VietnamText className="text-sm">{t('account.syncButton')}</VietnamText>
-          </Button>
+          </Button>}
         </View>
       </View>
     </SafeAreaView>

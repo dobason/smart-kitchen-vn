@@ -9,10 +9,11 @@ import i18n from '@/lib/i18n';
 import { RecipeCard } from '@/components/in-app-ui/recipe-card';
 import { CookbookCard } from '@/components/in-app-ui/cookbook-card';
 import { ImportBottomSheet } from '@/components/import-bottom-sheet';
+import { useLocale } from '@/hooks/use-locale';
 
 // --- DATA MẪU ---
 const staticRecipes = [
-  { id: '1', title: 'Súp phở', ingredients: '600ml nước, 100g bánh phở...', calories: 300, time: 15, imageUrl: 'https://images.squarespace-cdn.com/content/v1/66628bdc6b0b0d52d914a921/1752754499896-E9EAAEK78ESN8KAJV33G/unsplash-image-_33r6H_hiz4.jpg?format=1500w' }
+  { id: '1', name: 'Súp phở', description: '600ml nước, 100g bánh phở...', calories: 300, timeMinutes: 15, imageUrl: 'https://images.squarespace-cdn.com/content/v1/66628bdc6b0b0d52d914a921/1752754499896-E9EAAEK78ESN8KAJV33G/unsplash-image-_33r6H_hiz4.jpg?format=1500w', tags: [] }
 ];
 
 const initialCookbooks = [
@@ -32,6 +33,8 @@ export default function RecipeScreen() {
 
   const [isImportVisible, setIsImportVisible] = React.useState(false);
   const [isLoadingAI, setIsLoadingAI] = React.useState(false);
+
+  const { t } = useLocale();
 
   const handleCreateCookbook = () => {
     if (!newBookName.trim()) { Alert.alert(i18n.t('recipe.errorTitle'), i18n.t('recipe.errorEmptyName')); return; }
@@ -91,7 +94,7 @@ export default function RecipeScreen() {
           <View className="flex-row items-center px-4 py-3 gap-3">
             <View className="flex-1 flex-row items-center bg-gray-50 border border-gray-200 rounded-full px-4 py-2">
               <Icon as={Search} size={20} className="text-gray-400" />
-              <TextInput placeholder="Search in my recipes" className="flex-1 ml-2 text-base font-medium text-gray-900" placeholderTextColor="#9ca3af" />
+              <TextInput placeholder={t("recipe.searchInMyRecipes")} className="flex-1 ml-2 text-base font-medium text-gray-900" placeholderTextColor="#9ca3af" />
             </View>
             <Pressable><Icon as={SlidersHorizontal} size={24} className="text-gray-600" /></Pressable>
           </View>
@@ -106,7 +109,7 @@ export default function RecipeScreen() {
                     <VietnamText className="text-[8px] font-bold text-white">↓</VietnamText>
                   </View>
                 </View>
-                <VietnamText className="text-gray-800 font-medium text-base">Today's remaining imports: <VietnamText className="text-red-600 font-bold">10</VietnamText></VietnamText>
+                <VietnamText className="text-gray-800 font-medium text-base">{t("recipe.todayRemainingImports")}:  <VietnamText className="text-red-600 font-bold">10</VietnamText></VietnamText>
               </View>
               <Icon as={ChevronRight} size={20} className="text-gray-400" />
             </View>
@@ -115,7 +118,7 @@ export default function RecipeScreen() {
           {/* Dùng RecipeCard Component */}
           <View className="px-4 mt-4 flex-row flex-wrap justify-between gap-y-6">
             {staticRecipes.map(recipe => (
-              <RecipeCard key={recipe.id} title={recipe.title} ingredients={recipe.ingredients} calories={recipe.calories} time={recipe.time} imageUrl={recipe.imageUrl} />
+              <RecipeCard key={recipe.id} item={recipe} isSaved={false} onToggleSave={() => {}} />
             ))}
           </View>
         </ScrollView>

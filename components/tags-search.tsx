@@ -14,6 +14,7 @@ type TagsSearchProps = {
   options: TagOption[];
   selectedTags?: string[];
   onSelectedTagsChange?: (tags: string[]) => void;
+  onInputChange?: (value: string) => void;
   className?: string;
   placeholder?: string;
 };
@@ -22,10 +23,16 @@ export function TagsSearch({
   options,
   selectedTags = [],
   onSelectedTagsChange,
+  onInputChange,
   className,
   placeholder,
 }: TagsSearchProps) {
   const [inputValue, setInputValue] = React.useState('');
+
+  function handleInputChange(value: string) {
+    setInputValue(value);
+    onInputChange?.(value);
+  }
 
   function toggleTag(value: string) {
     if (selectedTags.includes(value)) {
@@ -45,7 +52,7 @@ export function TagsSearch({
         tags={selectedTags}
         onTagsChange={(tags) => onSelectedTagsChange?.(tags)}
         inputValue={inputValue}
-        onInputChange={setInputValue}
+        onInputChange={handleInputChange}
         placeholder={placeholder}
       />
 

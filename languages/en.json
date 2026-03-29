@@ -62,6 +62,16 @@
     "generateRecipesVia": "Generate recipes via",
     "addIngredients": "Add ingredients"
   },
+  "searchResults": {
+    "searchPlaceholder": "Search dishes or ingredients",
+    "defaultKeyword": "Pho",
+    "tagFilter": "Tag +",
+    "timeFilter": "Time +",
+    "clearAllTags": "Clear tags",
+    "results": "Search results %{count}",
+    "cal": "Cal",
+    "minute": "min"
+  },
   "account": {
     "guest": "Guest",
     "syncButton": "Sign in to sync"
@@ -76,6 +86,8 @@
     "create": "Create",
     "editName": "Edit name",
     "deleteCookbook": "Delete cookbook",
+    "todayRemainingImports": "Today's remaining imports",
+    "searchInMyRecipes": "Search in my recipes",
     "errorTitle": "Error",
     "errorEmptyName": "Cookbook name cannot be empty!",
     "errorCameraPermission": "Camera access is required.",

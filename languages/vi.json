@@ -62,6 +62,16 @@
     "generateRecipesVia": "Tạo công thức bằng",
     "addIngredients": "Thêm nguyên liệu"
   },
+  "searchResults": {
+    "searchPlaceholder": "Tìm món hoặc nguyên liệu",
+    "defaultKeyword": "Phở",
+    "tagFilter": "Thẻ +",
+    "timeFilter": "Thời gian +",
+    "clearAllTags": "Xóa tag",
+    "results": "Kết quả tìm kiếm %{count}",
+    "cal": "Cal",
+    "minute": "phút"
+  },
   "account": {
     "guest": "Khách",
     "syncButton": "Đăng nhập để đồng bộ"
@@ -72,6 +82,8 @@
     "addCookbook": "Thêm Sổ Tay",
     "createCookbookTitle": "Tạo Sổ Tay Mới",
     "cookbookNamePlaceholder": "Nhập tên sổ tay...",
+    "todayRemainingImports": "Số lần nhập còn lại hôm nay",
+    "searchInMyRecipes": "Tìm trong công thức của tôi",
     "cancel": "Hủy",
     "create": "Tạo mới",
     "editName": "Chỉnh sửa tên",
