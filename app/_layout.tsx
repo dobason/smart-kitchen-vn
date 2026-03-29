@@ -19,7 +19,8 @@ export {
 } from 'expo-router';
 
 export default function RootLayout() {
-  const { colorScheme } = useColorScheme();
+  const { setColorScheme } = useColorScheme();
+  React.useEffect(() => { setColorScheme('light'); }, []);
   const clerkPublishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY;
 
   if (!clerkPublishableKey) {
@@ -29,8 +30,8 @@ export default function RootLayout() {
   return (
     <LocaleProvider>
       <ClerkProvider publishableKey={clerkPublishableKey} tokenCache={tokenCache}>
-        <ThemeProvider value={NAV_THEME[colorScheme ?? 'light']}>
-          <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
+        <ThemeProvider value={NAV_THEME['light']}>
+          <StatusBar style="dark" />
           <Routes />
           <PortalHost />
         </ThemeProvider>

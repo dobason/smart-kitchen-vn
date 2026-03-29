@@ -4,15 +4,16 @@ import { Bookmark, ChefHat, Clock3, Flame } from 'lucide-react-native';
 import * as React from 'react';
 import { Image, Pressable, View } from 'react-native';
 import { SearchRecipeItem } from "@/types/recipe"; //Import Type here
+import { useLocale } from '@/hooks/use-locale';
 
 type RecipeCardProps = {
     item: SearchRecipeItem;
     isSaved: boolean;
     onToggleSave: (id: string) => void;
-    t: any; // Lưu ý: 'any' ở đây là tạm thời cho hàm dịch ngôn ngữ
 };
 
-export function RecipeCard({ item, isSaved, onToggleSave, t}: RecipeCardProps) {
+export function RecipeCard({ item, isSaved, onToggleSave }: RecipeCardProps) {
+    const { t } = useLocale();
     return (
     <View className="mb-4 overflow-hidden rounded-[16px] border border-[#E4E5E8] bg-white" style={{ width: '48.6%' }}>
       <View className="relative">

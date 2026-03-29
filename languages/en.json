@@ -86,6 +86,8 @@
     "create": "Create",
     "editName": "Edit name",
     "deleteCookbook": "Delete cookbook",
+    "todayRemainingImports": "Today's remaining imports",
+    "searchInMyRecipes": "Search in my recipes",
     "errorTitle": "Error",
     "errorEmptyName": "Cookbook name cannot be empty!",
     "errorCameraPermission": "Camera access is required.",
