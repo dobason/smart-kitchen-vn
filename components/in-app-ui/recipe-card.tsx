@@ -1,43 +1,66 @@
+import { VietnamText } from "./vietnam-text";
+import { Icon } from "../ui/icon";
+import { Bookmark, ChefHat, Clock3, Flame } from 'lucide-react-native';
 import * as React from 'react';
-import { View, Pressable, Image } from 'react-native';
-import { Flame, Clock, ImagePlus } from 'lucide-react-native';
-import { Icon } from '@/components/ui/icon';
-import { VietnamText } from '@/components/in-app-ui/vietnam-text';
+import { Image, Pressable, View } from 'react-native';
+import { SearchRecipeItem } from "@/types/recipe"; //Import Type here
+import { useLocale } from '@/hooks/use-locale';
 
-interface RecipeCardProps {
-  title: string;
-  ingredients: string;
-  calories: number;
-  time: number;
-  imageUrl: string;
-}
+type RecipeCardProps = {
+    item: SearchRecipeItem;
+    isSaved: boolean;
+    onToggleSave: (id: string) => void;
+};
 
-export function RecipeCard({ title, ingredients, calories, time, imageUrl }: RecipeCardProps) {
-  return (
-    <Pressable className="w-[48%] bg-white rounded-[20px] overflow-hidden border border-gray-100 shadow-sm pb-4">
+export function RecipeCard({ item, isSaved, onToggleSave }: RecipeCardProps) {
+    const { t } = useLocale();
+    return (
+    <View className="mb-4 overflow-hidden rounded-[16px] border border-[#E4E5E8] bg-white" style={{ width: '48.6%' }}>
       <View className="relative">
-        <Image source={{ uri: imageUrl }} className="w-full aspect-square" />
-        <View className="absolute -bottom-3 right-3 bg-white p-1 rounded-full shadow-sm">
-          <View className="bg-red-600 p-1.5 rounded-full">
-            <Icon as={ImagePlus} size={14} className="text-white" />
+        <Image source={{ uri: item.imageUrl }} className="h-32 w-full" resizeMode="cover" />
+
+        <Pressable
+          onPress={() => onToggleSave(item.id)}
+          className="absolute right-2 top-2 h-7 w-7 items-center justify-center rounded-[9px] bg-white">
+          <Icon as={Bookmark} size={14} className={isSaved ? 'text-[#CE232A]' : 'text-[#111111]'} />
+        </Pressable>
+
+        <View className="absolute bottom-2 right-2 h-7 w-7 items-center justify-center rounded-full bg-[#CE232A]">
+          <Icon as={ChefHat} size={13} className="text-white" />
+        </View>
+      </View>
+
+      <View className="p-3">
+        <VietnamText className="min-h-[48px] text-[20px] font-semibold leading-6 text-[#121212]" numberOfLines={2}>
+          {item.name}
+        </VietnamText>
+
+        <VietnamText className="mt-1 min-h-[34px] text-xs text-[#777780]" numberOfLines={2}>
+          {item.description}
+        </VietnamText>
+
+        <View className="mt-2 gap-1.5">
+          <View className="self-start rounded-full bg-[#FFF5E8] px-2.5 py-1">
+            <View className="flex-row items-center gap-1.5">
+              <Icon as={Flame} size={12} className="text-[#F08C2E]" />
+              <VietnamText className="text-xs font-semibold text-[#232326]">
+                {item.calories} {t('searchResults.cal')}
+              </VietnamText>
+            </View>
+          </View>
+
+          <View className="self-start rounded-full bg-[#EEF5FF] px-2.5 py-1">
+            <View className="flex-row items-center gap-1.5">
+              <Icon as={Clock3} size={12} className="text-[#3A7AF6]" />
+              <VietnamText className="text-xs font-semibold text-[#232326]">
+                {item.timeMinutes} {t('searchResults.minute')}
+              </VietnamText>
+            </View>
           </View>
         </View>
       </View>
-      <View className="px-3 mt-4">
-        <VietnamText className="text-lg font-bold text-gray-900" numberOfLines={2}>{title}</VietnamText>
-        <VietnamText className="text-gray-400 text-xs mt-1" numberOfLines={1}>{ingredients}</VietnamText>
-        
-        <View className="flex-row items-center justify-between mt-3">
-          <View className="flex-row items-center bg-orange-50 px-2 py-1 rounded-md gap-1">
-            <Icon as={Flame} size={12} className="text-orange-500" />
-            <VietnamText className="font-bold text-gray-800 text-[10px]">{calories} Cal</VietnamText>
-          </View>
-          <View className="flex-row items-center bg-gray-50 px-2 py-1 rounded-md gap-1">
-            <Icon as={Clock} size={12} className="text-gray-400" />
-            <VietnamText className="font-bold text-gray-600 text-[10px]">{time} min</VietnamText>
-          </View>
-        </View>
-      </View>
-    </Pressable>
+    </View>
   );
-}
+};
+
+

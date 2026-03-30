@@ -61,5 +61,42 @@
     "search": "Search",
     "generateRecipesVia": "Generate recipes via",
     "addIngredients": "Add ingredients"
+  },
+  "searchResults": {
+    "searchPlaceholder": "Search dishes or ingredients",
+    "defaultKeyword": "Pho",
+    "tagFilter": "Tag +",
+    "timeFilter": "Time +",
+    "clearAllTags": "Clear tags",
+    "results": "Search results %{count}",
+    "cal": "Cal",
+    "minute": "min"
+  },
+  "account": {
+    "guest": "Guest",
+    "syncButton": "Sign in to sync"
+  },
+  "recipe": {
+    "tabRecipes": "RECIPES",
+    "tabCookbooks": "COOKBOOKS",
+    "addCookbook": "Add Cookbook",
+    "createCookbookTitle": "Create New Cookbook",
+    "cookbookNamePlaceholder": "Enter cookbook name...",
+    "cancel": "Cancel",
+    "create": "Create",
+    "editName": "Edit name",
+    "deleteCookbook": "Delete cookbook",
+    "todayRemainingImports": "Today's remaining imports",
+    "searchInMyRecipes": "Search in my recipes",
+    "errorTitle": "Error",
+    "errorEmptyName": "Cookbook name cannot be empty!",
+    "errorCameraPermission": "Camera access is required.",
+    "errorPhotoPermission": "Photo library access is required.",
+    "successTitle": "Success!",
+    "successAnalyzed": "Analysis complete from %{source}.",
+    "aiSourceCamera": "Camera photo",
+    "aiSourcePhotoLibrary": "Photo library",
+    "notifyTitle": "Notice",
+    "renameComingSoon": "The rename feature will be available in a future update."
   }
 }
