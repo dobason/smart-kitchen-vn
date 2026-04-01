@@ -15,7 +15,6 @@ export default function AccountScreen() {
   const { signOut, isSignedIn } = useAuth();
   const { t } = useLocale();
 
-
   const { initials, imageSource, displayName, userId } = React.useMemo(() => {
     const displayName =
       user?.fullName || user?.emailAddresses[0]?.emailAddress || t('account.guest') || '';
@@ -50,14 +49,12 @@ export default function AccountScreen() {
           {userId ? (
             <VietnamText className="text-xs text-muted-foreground">UID: {userId}</VietnamText>
           ) : null}
-          {!isSignedIn && <Button
-            variant="outline"
-            size="sm"
-            className="mt-2 self-start"
-            onPress={handleSync}>
-            <Icon as={RefreshCwIcon} className="size-3.5" />
-            <VietnamText className="text-sm">{t('account.syncButton')}</VietnamText>
-          </Button>}
+          {!isSignedIn && (
+            <Button variant="outline" size="sm" className="mt-2 self-start" onPress={handleSync}>
+              <Icon as={RefreshCwIcon} className="size-3.5" />
+              <VietnamText className="text-sm">{t('account.syncButton')}</VietnamText>
+            </Button>
+          )}
         </View>
       </View>
     </SafeAreaView>

@@ -97,6 +97,28 @@
     "aiSourceCamera": "Camera photo",
     "aiSourcePhotoLibrary": "Photo library",
     "notifyTitle": "Notice",
-    "renameComingSoon": "The rename feature will be available in a future update."
+    "renameComingSoon": "The rename feature will be available in a future update.",
+    "notCooked": "Not Cooked",
+    "addIntoCookbook": "Add into cookbook",
+    "startCooking": "Start Cooking"
+  },
+  "steps": {
+    "STEPS": "STEPS",
+    "optimizeSteps": "Optimize Steps"
+  },
+  "ingredient": {
+    "INGREDIENTS": "INGREDIENTS",
+    "swapIngredients": "Swap ingredient"
+  },
+  "cookbook": {
+    "COOKBOOK": "COOKBOOK"
+  },
+  "other": {
+    "time": "Time",
+    "cost": "Cost",
+    "note": "Note",
+    "tips": "Tips",
+    "serves": "Serves",
+    "addNote": "Add a note to this recipe"
   }
 }

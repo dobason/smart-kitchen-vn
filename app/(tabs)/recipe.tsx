@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { Link } from 'expo-router';
 import { View, ScrollView, Pressable, TextInput, Alert, Modal } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Search, SlidersHorizontal, ChevronRight, Plus, ChefHat, ArrowDown10, Edit2, Trash2, X, BookOpen } from 'lucide-react-native';
@@ -116,9 +117,13 @@ export default function RecipeScreen() {
           </View>
 
           {/* Dùng RecipeCard Component */}
-          <View className="px-4 mt-4 flex-row flex-wrap justify-between gap-y-6">
+          <View className="px-4 mt-4">
             {staticRecipes.map(recipe => (
-              <RecipeCard key={recipe.id} item={recipe} isSaved={false} onToggleSave={() => {}} />
+              <Link key={recipe.id} href="/(tabs)/recipe-detail" asChild>
+                <Pressable>
+                  <RecipeCard item={recipe} isSaved={false} onToggleSave={() => {}} />
+                </Pressable>
+              </Link>
             ))}
           </View>
         </ScrollView>
