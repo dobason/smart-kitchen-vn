@@ -275,6 +275,7 @@ export default function RecipeDetailScreen() {
 
         {/* Start Cooking button */}
         <Button
+          onPress={() => router.push('/(tabs)/cooking-ingredients')}
           className="flex-1 flex-row items-center justify-center gap-1 rounded-full py-1"
           style={{ backgroundColor: BRAND } as any}>
           <View className="h-8 w-8 items-center justify-center rounded-full">

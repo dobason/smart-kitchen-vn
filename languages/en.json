@@ -106,9 +106,10 @@
     "STEPS": "STEPS",
     "optimizeSteps": "Optimize Steps"
   },
-  "ingredient": {
+  "ingredients": {
     "INGREDIENTS": "INGREDIENTS",
-    "swapIngredients": "Swap ingredient"
+    "swapIngredients": "Swap ingredient",
+    "mainIngredients": "Main ingredients"
   },
   "cookbook": {
     "COOKBOOK": "COOKBOOK"
@@ -119,6 +120,10 @@
     "note": "Note",
     "tips": "Tips",
     "serves": "Serves",
-    "addNote": "Add a note to this recipe"
+    "addNote": "Add a note to this recipe",
+    "next": "Next",
+    "back": "Back",
+    "success": "Success!",
+    "congratulations": "Congratulations"
   }
 }
