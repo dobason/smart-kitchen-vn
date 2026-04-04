@@ -60,7 +60,18 @@
   "home": {
     "search": "Tìm kiếm",
     "generateRecipesVia": "Tạo công thức bằng",
-    "addIngredients": "Thêm nguyên liệu"
+    "addIngredients": "Thêm nguyên liệu",
+    "searchPlaceholder": "Tìm thứ bạn muốn trong CookGo",
+    "moreIngredients": "Thêm nguyên liệu",
+    "generateWith": "Tạo với",
+    "generateWithAI": "Tạo với AI"
+  },
+  "ingredientsPicker": {
+    "title": "Chọn nguyên liệu của bạn",
+    "searchPlaceholder": "Nhập nguyên liệu để thêm",
+    "youMightHave": "Bạn có thể có",
+    "selected": "Đã chọn %{count}",
+    "confirm": "XÁC NHẬN"
   },
   "searchResults": {
     "searchPlaceholder": "Tìm món hoặc nguyên liệu",
@@ -98,5 +109,75 @@
     "aiSourcePhotoLibrary": "ảnh từ Thư viện",
     "notifyTitle": "Thông báo",
     "renameComingSoon": "Tính năng đổi tên sẽ có trong bản cập nhật sau."
+  },
+  "aiRecipe": {
+    "title": "Công thức AI",
+    "ingredient": "Nguyên liệu",
+    "add": "Thêm",
+    "selectCookware": "Chọn dụng cụ nấu",
+    "dishType": "Loại món",
+    "diet": "Chế độ ăn",
+    "cuisine": "Ẩm thực",
+    "time": "Thời gian",
+    "allergenFree": "Không dị ứng",
+    "extraCommand": "Yêu cầu thêm",
+    "extraPlaceholder": "Bạn muốn thêm gì nữa? Hãy nhập ở đây",
+    "generate": "Tạo công thức",
+    "generatingTitle": "Đang tạo công thức",
+    "generatingDescription": "AI đang chuẩn bị công thức theo các lựa chọn của bạn.",
+    "ingredientLimitTitle": "Danh sách nguyên liệu đã đầy",
+    "ingredientLimitDescription": "Nhấn vào chip nguyên liệu để xóa rồi thêm mới.",
+    "options": {
+      "cookware": {
+        "fryingPan": "Chảo rán",
+        "skillet": "Chảo sâu",
+        "microwave": "Lò vi sóng",
+        "airFryer": "Nồi chiên không dầu",
+        "oven": "Lò nướng",
+        "blender": "Máy xay",
+        "slowCooker": "Nồi nấu chậm"
+      },
+      "dishType": {
+        "breakfast": "Bữa sáng",
+        "lunch": "Bữa trưa",
+        "dinner": "Bữa tối",
+        "snack": "Ăn vặt",
+        "dessert": "Tráng miệng",
+        "drink": "Đồ uống"
+      },
+      "diet": {
+        "vegan": "Thuần chay",
+        "vegetarian": "Ăn chay",
+        "ketoFriendly": "Thân thiện Keto",
+        "lowCarb": "Ít tinh bột",
+        "lowCalorie": "Ít calo",
+        "lowFat": "Ít béo",
+        "highProtein": "Giàu đạm",
+        "highFiber": "Giàu chất xơ",
+        "petFood": "Thức ăn thú cưng"
+      },
+      "cuisine": {
+        "american": "Mỹ",
+        "mexican": "Mexico",
+        "chinese": "Trung Hoa",
+        "italian": "Ý",
+        "japanese": "Nhật Bản",
+        "korean": "Hàn Quốc",
+        "spicy": "Cay",
+        "sweet": "Ngọt",
+        "savory": "Đậm vị"
+      },
+      "allergenFree": {
+        "nutFree": "Không hạt",
+        "eggFree": "Không trứng",
+        "soyFree": "Không đậu nành",
+        "shellfishFree": "Không hải sản vỏ"
+      },
+      "time": {
+        "lt15": "< 15 phút",
+        "lt30": "< 30 phút",
+        "lt60": "< 60 phút"
+      }
+    }
   }
 }

@@ -12,6 +12,7 @@ import { useColorScheme } from 'nativewind';
 import * as React from 'react';
 import { BeVietnamPro_400Regular, useFonts } from '@expo-google-fonts/be-vietnam-pro';
 import { LocaleProvider } from '@/providers/locale-provider';
+import { IngredientsProvider } from '@/providers/ingredients-provider';
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -29,13 +30,15 @@ export default function RootLayout() {
 
   return (
     <LocaleProvider>
-      <ClerkProvider publishableKey={clerkPublishableKey} tokenCache={tokenCache}>
-        <ThemeProvider value={NAV_THEME['light']}>
-          <StatusBar style="dark" />
-          <Routes />
-          <PortalHost />
-        </ThemeProvider>
-      </ClerkProvider>
+      <IngredientsProvider>
+        <ClerkProvider publishableKey={clerkPublishableKey} tokenCache={tokenCache}>
+          <ThemeProvider value={NAV_THEME['light']}>
+            <StatusBar style="dark" />
+            <Routes />
+            <PortalHost />
+          </ThemeProvider>
+        </ClerkProvider>
+      </IngredientsProvider>
     </LocaleProvider>
   );
 }
@@ -79,6 +82,8 @@ function Routes() {
       <Stack.Protected guard={effectiveIsSignedIn}>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="search-results" options={{ headerShown: false }} />
+        <Stack.Screen name="ai-recipe" options={{ headerShown: false }} />
+        <Stack.Screen name="ingredients-picker" options={{ headerShown: false }} />
       </Stack.Protected>
 
       {/* Screens outside the guards are accessible to everyone (e.g. not found) */}

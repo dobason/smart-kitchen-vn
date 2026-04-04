@@ -17,5 +17,6 @@
   "prettier.vueIndentScriptAndStyle": true,
   "prettier.htmlWhitespaceSensitivity": "css",
   "prettier.embeddedLanguageFormatting": "off",
-  "prettier.proseWrap": "preserve"
+  "prettier.proseWrap": "preserve",
+  "java.compile.nullAnalysis.mode": "automatic"
 }
