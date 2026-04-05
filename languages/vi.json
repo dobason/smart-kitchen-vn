@@ -102,9 +102,10 @@
     "addIntoCookbook": "Thêm vào sổ nấu ăn",
     "startCooking": "Bắt đầu nấu"
   },
-  "step": {
+  "steps": {
     "STEPS": "CÁC BƯỚC NẤU",
-    "optimizeSteps": "Tối ưu các bước nấu"
+    "optimizeSteps": "Tối ưu các bước nấu",
+    "step": "Bước"
   },
   "ingredients": {
     "INGREDIENTS": "NGUYÊN LIỆU",
@@ -124,6 +125,7 @@
     "next": "Tiếp tục",
     "back": "Trở về",
     "success": "Hoàn thành",
-    "congratulations": "Chúc mừng"
+    "congratulations": "Chúc mừng",
+    "congratulationsMessage": "Chúc mừng bạn đã hoàn thành các bước nấu món ăn! Chúc bạn ngon miệng!"
   }
 }

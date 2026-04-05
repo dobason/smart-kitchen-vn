@@ -6,12 +6,10 @@ import { XIcon, BookOpenCheckIcon, MicIcon, ChevronRightIcon } from 'lucide-reac
 
 import { VietnamText } from '@/components/in-app-ui/vietnam-text';
 import { Icon } from '@/components/ui/icon';
-import { Button } from '@/components/ui/button';
+import { RoundedButton } from '@/components/in-app-ui/rounded-button';
 import { IngredientRow } from '@/components/in-app-ui/ingredient-row';
 import { INGREDIENTS } from '@/constants/ingredientData';
 import { useLocale } from '@/hooks/use-locale';
-
-const BRAND = '#bd375dff';
 
 export default function CookingIngredientsScreen() {
   const router = useRouter();
@@ -23,22 +21,17 @@ export default function CookingIngredientsScreen() {
       <View className="flex-row items-center justify-between border-b border-gray-100 px-5 py-3">
         {/* Close button */}
         <TouchableOpacity
-          className="h-9 w-9 items-center justify-center rounded-full bg-gray-100"
+          className="absolute left-4 h-9 w-9 items-center justify-center rounded-full bg-gray-100"
           onPress={() => router.push('/(tabs)/recipe-detail')}>
           <Icon as={XIcon} size={18} className="text-gray-700" />
         </TouchableOpacity>
 
         {/* Title */}
-        <VietnamText
-          className="text-lg font-bold tracking-widest text-gray-900"
-          style={{ fontFamily: 'BeVietnamPro_700Bold' }}>
-          {t('ingredients.INGREDIENTS')}
-        </VietnamText>
-
-        {/* Recipe icon */}
-        <TouchableOpacity className="h-9 w-9 items-center justify-center rounded-full bg-gray-100">
-          <Icon as={BookOpenCheckIcon} size={18} className="text-gray-700" />
-        </TouchableOpacity>
+        <View className="flex-1 items-center justify-center">
+          <VietnamText className="text-lg font-bold tracking-widest text-gray-900">
+            {t('ingredients.INGREDIENTS')}
+          </VietnamText>
+        </View>
       </View>
 
       {/* ── Content ── */}
@@ -59,17 +52,10 @@ export default function CookingIngredientsScreen() {
       </ScrollView>
       {/* ── Footer NEXT button ── */}
       <View className="absolute bottom-0 left-0 right-0 bg-background px-5 pb-6 pt-3">
-        <Button
-          onPress={() => router.push('/(tabs)/cooking-step')}
-          className="flex-row items-center justify-center gap-2 rounded-full py-1"
-          style={{ backgroundColor: BRAND } as any}>
-          <VietnamText
-            className="text-base font-bold tracking-widest text-white"
-            style={{ fontFamily: 'BeVietnamPro_700Bold' }}>
-            {t('other.next')}
-          </VietnamText>
+        <RoundedButton size="lg" onPress={() => router.push('/(tabs)/cooking-step')}>
+          <VietnamText className="text-base font-bold text-white">{t('other.next')}</VietnamText>
           <Icon as={ChevronRightIcon} size={20} color="white" />
-        </Button>
+        </RoundedButton>
       </View>
     </SafeAreaView>
   );

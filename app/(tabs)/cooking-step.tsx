@@ -13,10 +13,10 @@ import {
 
 import { VietnamText } from '@/components/in-app-ui/vietnam-text';
 import { Icon } from '@/components/ui/icon';
+import { RoundedButton } from '@/components/in-app-ui/rounded-button';
 import { STEPS } from '@/constants/stepData';
 import { useLocale } from '@/hooks/use-locale';
 
-const BRAND = '#bd375dff';
 const TOTAL_STEPS = STEPS.length; // 6
 
 interface CookingStepScreenProps {
@@ -62,12 +62,10 @@ export default function CookingStepScreen({ currentStep = 1 }: CookingStepScreen
 
           {/* Step title */}
           <View className="flex-row items-baseline gap-1">
-            <VietnamText
-              className="text-lg font-bold text-gray-900"
-              style={{ fontFamily: 'BeVietnamPro_700Bold' }}>
-              Step {step}
+            <VietnamText className="text-lg font-bold text-gray-900">
+              {t('steps.step')} {step}
             </VietnamText>
-            <VietnamText className="text-base text-gray-400">of {TOTAL_STEPS}</VietnamText>
+            <VietnamText className="text-lg text-gray-400">/ {TOTAL_STEPS}</VietnamText>
           </View>
 
           {/* Recipe icon */}
@@ -81,11 +79,7 @@ export default function CookingStepScreen({ currentStep = 1 }: CookingStepScreen
           {Array.from({ length: TOTAL_STEPS }).map((_, i) => (
             <View
               key={i}
-              className="flex-1 rounded-full"
-              style={{
-                height: 4,
-                backgroundColor: i < step ? BRAND : '#E5E7EB',
-              }}
+              className={`flex-1 rounded-full ${i < step ? 'bg-primary' : 'bg-[#E5E7EB]'} h-1`}
             />
           ))}
         </View>
@@ -97,9 +91,7 @@ export default function CookingStepScreen({ currentStep = 1 }: CookingStepScreen
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 120 }}>
         {/* Main instruction */}
-        <VietnamText
-          className="mb-6 text-2xl leading-relaxed text-gray-900"
-          style={{ fontFamily: 'BeVietnamPro_700Bold' }}>
+        <VietnamText className="mb-6 text-2xl leading-relaxed text-gray-900">
           {stepData?.text}
         </VietnamText>
 
@@ -115,30 +107,16 @@ export default function CookingStepScreen({ currentStep = 1 }: CookingStepScreen
       {/* ── Footer Navigation ── */}
       <View className="absolute bottom-0 left-0 right-0 flex-row gap-3 bg-background px-5 pb-6 pt-3">
         {/* Back button */}
-        <TouchableOpacity
-          className="flex-1 flex-row items-center justify-center gap-2 rounded-full border-2 py-4"
-          style={{ borderColor: BRAND }}
-          onPress={handleBack}>
-          <Icon as={CornerUpLeftIcon} size={18} color={BRAND} />
-          <VietnamText
-            className="text-base font-semibold"
-            style={{ color: BRAND, fontFamily: 'BeVietnamPro_600SemiBold' }}>
-            {t('other.back')}
-          </VietnamText>
-        </TouchableOpacity>
+        <RoundedButton className="flex-1 flex-row items-center justify-center" onPress={handleBack}>
+          <Icon as={CornerUpLeftIcon} size={18} color="white" />
+          <VietnamText className="text-base text-white">{t('other.back')}</VietnamText>
+        </RoundedButton>
 
         {/* Next button */}
-        <TouchableOpacity
-          className="flex-1 flex-row items-center justify-center gap-2 rounded-full py-4"
-          style={{ backgroundColor: BRAND }}
-          onPress={handleNext}>
-          <VietnamText
-            className="text-base font-bold tracking-widest text-white"
-            style={{ fontFamily: 'BeVietnamPro_700Bold' }}>
-            {t('other.next')}
-          </VietnamText>
-          <Icon as={ChevronRightIcon} size={20} color="white" />
-        </TouchableOpacity>
+        <RoundedButton className="flex-row items-center justify-center" onPress={handleNext}>
+          <VietnamText className="text-base text-white">{t('other.next')}</VietnamText>
+          <Icon as={ChevronRightIcon} size={18} color="white" />
+        </RoundedButton>
       </View>
 
       {/* ── Success Overlay ── */}
@@ -148,7 +126,10 @@ export default function CookingStepScreen({ currentStep = 1 }: CookingStepScreen
           <SafeAreaView edges={['top']}>
             <TouchableOpacity
               className="ml-5 mt-3 h-10 w-10 items-center justify-center rounded-full bg-white/40"
-              onPress={() => { setShowSuccess(false); router.push('/(tabs)/recipe-detail'); }}>
+              onPress={() => {
+                setShowSuccess(false);
+                router.push('/(tabs)/recipe-detail');
+              }}>
               <Icon as={XIcon} size={20} color="#555" />
             </TouchableOpacity>
           </SafeAreaView>
@@ -164,31 +145,21 @@ export default function CookingStepScreen({ currentStep = 1 }: CookingStepScreen
 
           {/* Text & button */}
           <View className="px-8 pb-12" style={{ backgroundColor: '#D6EFE8' }}>
-            <VietnamText
-              className="mb-3 text-center text-3xl font-bold text-gray-900"
-              style={{ fontFamily: 'BeVietnamPro_700Bold' }}>
-               🎉 {t('other.congratulations')}
+            <VietnamText className="mb-3 text-center text-3xl font-bold text-gray-900">
+              {t('other.congratulations')}
             </VietnamText>
-            <VietnamText
-              className="mb-8 text-center text-base text-gray-700"
-              style={{ fontFamily: 'BeVietnamPro_400Regular' }}>
-              You saved{' '}
-              <VietnamText className="font-bold" style={{ color: '#bd375dff' }}>
-                ₫120000
-              </VietnamText>{' '}
-              by skipping takeout! 🏠
+            <VietnamText className="mb-8 text-center text-base text-gray-700">
+              {t('other.congratulationsMessage')}
             </VietnamText>
 
-            <TouchableOpacity
-              className="items-center justify-center rounded-full py-4"
-              style={{ backgroundColor: '#bd375dff' }}
-              onPress={() => { setShowSuccess(false); router.push('/(tabs)/recipe-detail'); }}>
-              <VietnamText
-                className="text-base font-bold text-white"
-                style={{ fontFamily: 'BeVietnamPro_700Bold' }}>
-                {t('other.success')}
-              </VietnamText>
-            </TouchableOpacity>
+            <RoundedButton
+              size="lg"
+              onPress={() => {
+                setShowSuccess(false);
+                router.push('/(tabs)/recipe-detail');
+              }}>
+              <VietnamText className="text-base text-white">{t('other.success')}</VietnamText>
+            </RoundedButton>
           </View>
         </View>
       </Modal>
