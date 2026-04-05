@@ -1,6 +1,6 @@
 import { SearchRecipeItem } from "@/types/recipe";
 
-const SEARCH_RECIPES: SearchRecipeItem[] = [
+export const SEARCH_RECIPES: SearchRecipeItem[] = [
   {
     id: 'pho-bo',
     name: 'Súp phở',

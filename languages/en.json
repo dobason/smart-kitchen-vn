@@ -107,8 +107,11 @@
     "successAnalyzed": "Analysis complete from %{source}.",
     "aiSourceCamera": "Camera photo",
     "aiSourcePhotoLibrary": "Photo library",
-    "notifyTitle": "Notice",
-    "renameComingSoon": "The rename feature will be available in a future update."
+    "notifyTitle": "Notice",    
+    "renameComingSoon": "The rename feature will be available in a future update.",
+    "notCooked": "Not Cooked",
+    "addIntoCookbook": "Add into cookbook",
+    "startCooking": "Start Cooking"
   },
   "aiRecipe": {
     "title": "AI Recipe",
@@ -179,5 +182,31 @@
         "lt60": "< 60 Mins"
       }
     }
+  },
+  "steps": {
+    "STEPS": "STEPS",
+    "optimizeSteps": "Optimize Steps",
+    "step": "Step"
+  },
+  "ingredients": {
+    "INGREDIENTS": "INGREDIENTS",
+    "swapIngredients": "Swap ingredient",
+    "mainIngredients": "Main ingredients"
+  },
+  "cookbook": {
+    "COOKBOOK": "COOKBOOK"
+  },
+  "other": {
+    "time": "Time",
+    "cost": "Cost",
+    "note": "Note",
+    "tips": "Tips",
+    "serves": "Serves",
+    "addNote": "Add a note to this recipe",
+    "next": "Next",
+    "back": "Back",
+    "success": "Success!",
+    "congratulations": "Congratulations",
+    "congratulationsMessage": "Congratulations on completing the cooking steps! Enjoy your meal!"
   }
 }
