@@ -59,6 +59,7 @@ export default function RecipeDetailScreen() {
           {/* Overlay gradient header icons */}
           <View className="absolute left-0 right-0 top-0 flex-row items-center justify-between px-4 pt-2">
             <CircleButton
+              variant="ghost"
               className="h-10 w-10 items-center justify-center rounded-full bg-black/35"
               onPress={() => router.back()}>
               <Icon as={ArrowLeftIcon} size={20} className="text-white" />
@@ -66,6 +67,7 @@ export default function RecipeDetailScreen() {
             <View className="flex-row gap-3">
               {[PencilIcon, Trash2Icon].map((Ic, i) => (
                 <CircleButton
+                  variant="ghost"
                   key={i}
                   className="h-10 w-10 items-center justify-center rounded-full bg-black/35">
                   <Icon as={Ic} size={18} className="text-white" />
@@ -75,7 +77,7 @@ export default function RecipeDetailScreen() {
           </View>
           {/* View button */}
           <View className="absolute bottom-4 right-4">
-            <CircleButton style={{ backgroundColor: 'rgba(30,30,30,0.7)' }}>
+            <CircleButton variant="ghost" style={{ backgroundColor: 'rgba(30,30,30,0.7)' }}>
               <Icon as={MaximizeIcon} size={14} className="text-white" />
             </CircleButton>
           </View>

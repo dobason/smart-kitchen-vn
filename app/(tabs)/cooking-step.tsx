@@ -14,6 +14,7 @@ import {
 import { VietnamText } from '@/components/in-app-ui/vietnam-text';
 import { Icon } from '@/components/ui/icon';
 import { RoundedButton } from '@/components/in-app-ui/rounded-button';
+import { CircleButton } from '@/components/in-app-ui/circle-button';
 import { STEPS } from '@/constants/stepData';
 import { useLocale } from '@/hooks/use-locale';
 
@@ -54,11 +55,12 @@ export default function CookingStepScreen({ currentStep = 1 }: CookingStepScreen
       <View className="px-5 pb-2 pt-3">
         <View className="mb-3 flex-row items-center justify-between">
           {/* Close */}
-          <TouchableOpacity
-            className="h-9 w-9 items-center justify-center rounded-full bg-gray-100"
+          <CircleButton
+            variant="ghost"
+            className="h-9 w-9 items-center justify-center bg-gray-100"
             onPress={() => router.push('/(tabs)/cooking-ingredients')}>
             <Icon as={XIcon} size={18} className="text-gray-700" />
-          </TouchableOpacity>
+          </CircleButton>
 
           {/* Step title */}
           <View className="flex-row items-baseline gap-1">
@@ -69,9 +71,9 @@ export default function CookingStepScreen({ currentStep = 1 }: CookingStepScreen
           </View>
 
           {/* Recipe icon */}
-          <TouchableOpacity className="h-9 w-9 items-center justify-center rounded-full bg-gray-100">
+          <CircleButton className="h-9 w-9 items-center justify-center bg-gray-100" variant="ghost">
             <Icon as={BookOpenCheckIcon} size={18} className="text-gray-700" />
-          </TouchableOpacity>
+          </CircleButton>
         </View>
 
         {/* ── Segment Progress Bar ── */}
@@ -124,21 +126,22 @@ export default function CookingStepScreen({ currentStep = 1 }: CookingStepScreen
         <View className="flex-1" style={{ backgroundColor: '#D6EFE8' }}>
           {/* Close button */}
           <SafeAreaView edges={['top']}>
-            <TouchableOpacity
-              className="ml-5 mt-3 h-10 w-10 items-center justify-center rounded-full bg-white/40"
+            <CircleButton
+              variant="ghost"
+              className="ml-5 mt-5 h-10 w-10 items-center justify-center bg-white/40"
               onPress={() => {
                 setShowSuccess(false);
                 router.push('/(tabs)/recipe-detail');
               }}>
               <Icon as={XIcon} size={20} color="#555" />
-            </TouchableOpacity>
+            </CircleButton>
           </SafeAreaView>
 
           {/* Lottie high-five animation */}
           <LottieView
             source={require('@/assets/lottie-files/success-state.json')}
             autoPlay
-            loop={false}
+            loop={true}
             style={{ flex: 1, width: '100%' }}
             resizeMode="cover"
           />

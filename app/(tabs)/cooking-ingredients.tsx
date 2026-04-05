@@ -1,12 +1,14 @@
 import * as React from 'react';
-import { View, ScrollView, TouchableOpacity } from 'react-native';
+import { View, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { XIcon, BookOpenCheckIcon, MicIcon, ChevronRightIcon } from 'lucide-react-native';
+import { XIcon, ChevronRightIcon } from 'lucide-react-native';
 
 import { VietnamText } from '@/components/in-app-ui/vietnam-text';
 import { Icon } from '@/components/ui/icon';
 import { RoundedButton } from '@/components/in-app-ui/rounded-button';
+import { CircleButton } from '@/components/in-app-ui/circle-button';
+
 import { IngredientRow } from '@/components/in-app-ui/ingredient-row';
 import { INGREDIENTS } from '@/constants/ingredientData';
 import { useLocale } from '@/hooks/use-locale';
@@ -20,11 +22,12 @@ export default function CookingIngredientsScreen() {
       {/* ── Header ── */}
       <View className="flex-row items-center justify-between border-b border-gray-100 px-5 py-3">
         {/* Close button */}
-        <TouchableOpacity
-          className="absolute left-4 h-9 w-9 items-center justify-center rounded-full bg-gray-100"
+        <CircleButton
+          variant="ghost"
+          className="absolute left-4 h-9 w-9 items-center justify-center bg-gray-100"
           onPress={() => router.push('/(tabs)/recipe-detail')}>
           <Icon as={XIcon} size={18} className="text-gray-700" />
-        </TouchableOpacity>
+        </CircleButton>
 
         {/* Title */}
         <View className="flex-1 items-center justify-center">
