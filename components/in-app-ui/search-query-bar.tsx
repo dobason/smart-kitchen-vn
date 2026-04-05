@@ -10,7 +10,12 @@ type SearchQueryBarProps = {
   onClose: () => void;
 };
 
-export function SearchQueryBar({ query, onQueryChange, placeholder, onClose }: SearchQueryBarProps) {
+export function SearchQueryBar({
+  query,
+  onQueryChange,
+  placeholder,
+  onClose,
+}: SearchQueryBarProps) {
   return (
     <View className="flex-row items-center gap-3 pb-2">
       <Pressable onPress={onClose} className="h-9 w-9 items-center justify-center rounded-full">
@@ -23,7 +28,6 @@ export function SearchQueryBar({ query, onQueryChange, placeholder, onClose }: S
           onChangeText={onQueryChange}
           placeholder={placeholder}
           className="flex-1 text-base text-[#222222]"
-          style={{ fontFamily: 'BeVietnamPro_400Regular' }}
           returnKeyType="search"
           onSubmitEditing={() => Keyboard.dismiss()}
         />
