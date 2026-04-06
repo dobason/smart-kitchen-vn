@@ -5,6 +5,14 @@ import { AISelectableChip } from '@/components/in-app-ui/ai-selectable-chip';
 import { AITimeOptionChip } from '@/components/in-app-ui/ai-time-option-chip';
 import { ShinyButton } from '@/components/in-app-ui/shiny-button';
 import { VietnamText } from '@/components/in-app-ui/vietnam-text';
+import {
+  ALLERGEN_FREE_OPTIONS,
+  COOKWARE_OPTIONS,
+  CUISINE_OPTIONS,
+  DIET_OPTIONS,
+  DISH_TYPE_OPTIONS,
+  TIME_OPTIONS,
+} from '@/constants/aiRecipeOptions';
 import { getIngredientDisplayName, getIngredientsByIds } from '@/constants/ingredientData';
 import { Icon } from '@/components/ui/icon';
 import { useIngredients } from '@/hooks/use-ingredients';
@@ -14,72 +22,6 @@ import { X } from 'lucide-react-native';
 import * as React from 'react';
 import { Alert, Pressable, ScrollView, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-
-type AIOption = {
-  id: string;
-  labelKey: string;
-  emoji: string;
-};
-
-const COOKWARE_OPTIONS: AIOption[] = [
-  { id: 'frying-pan', labelKey: 'aiRecipe.options.cookware.fryingPan', emoji: '🍳' },
-  { id: 'skillet', labelKey: 'aiRecipe.options.cookware.skillet', emoji: '🍳' },
-  { id: 'microwave', labelKey: 'aiRecipe.options.cookware.microwave', emoji: '📟' },
-  { id: 'air-fryer', labelKey: 'aiRecipe.options.cookware.airFryer', emoji: '🍟' },
-  { id: 'oven', labelKey: 'aiRecipe.options.cookware.oven', emoji: '♨️' },
-  { id: 'blender', labelKey: 'aiRecipe.options.cookware.blender', emoji: '🥤' },
-  { id: 'slow-cooker', labelKey: 'aiRecipe.options.cookware.slowCooker', emoji: '🍲' },
-];
-
-const DISH_TYPE_OPTIONS: AIOption[] = [
-  { id: 'breakfast', labelKey: 'aiRecipe.options.dishType.breakfast', emoji: '🥐' },
-  { id: 'lunch', labelKey: 'aiRecipe.options.dishType.lunch', emoji: '🥪' },
-  { id: 'dinner', labelKey: 'aiRecipe.options.dishType.dinner', emoji: '🍜' },
-  { id: 'snack', labelKey: 'aiRecipe.options.dishType.snack', emoji: '🍿' },
-  { id: 'dessert', labelKey: 'aiRecipe.options.dishType.dessert', emoji: '🍰' },
-  { id: 'drink', labelKey: 'aiRecipe.options.dishType.drink', emoji: '🍹' },
-];
-
-const DIET_OPTIONS: AIOption[] = [
-  { id: 'vegan', labelKey: 'aiRecipe.options.diet.vegan', emoji: '🥕' },
-  { id: 'vegetarian', labelKey: 'aiRecipe.options.diet.vegetarian', emoji: '🥗' },
-  { id: 'keto', labelKey: 'aiRecipe.options.diet.ketoFriendly', emoji: '🥑' },
-  { id: 'low-carb', labelKey: 'aiRecipe.options.diet.lowCarb', emoji: '🥬' },
-  { id: 'low-calorie', labelKey: 'aiRecipe.options.diet.lowCalorie', emoji: '🥒' },
-  { id: 'low-fat', labelKey: 'aiRecipe.options.diet.lowFat', emoji: '🚫' },
-  { id: 'high-protein', labelKey: 'aiRecipe.options.diet.highProtein', emoji: '💪' },
-  { id: 'high-fiber', labelKey: 'aiRecipe.options.diet.highFiber', emoji: '🌾' },
-  { id: 'pet-food', labelKey: 'aiRecipe.options.diet.petFood', emoji: '🐾' },
-];
-
-const CUISINE_OPTIONS: AIOption[] = [
-  { id: 'american', labelKey: 'aiRecipe.options.cuisine.american', emoji: '🍔' },
-  { id: 'mexican', labelKey: 'aiRecipe.options.cuisine.mexican', emoji: '🌮' },
-  { id: 'chinese', labelKey: 'aiRecipe.options.cuisine.chinese', emoji: '🥟' },
-  { id: 'italian', labelKey: 'aiRecipe.options.cuisine.italian', emoji: '🍕' },
-  { id: 'japanese', labelKey: 'aiRecipe.options.cuisine.japanese', emoji: '🍱' },
-  { id: 'korean', labelKey: 'aiRecipe.options.cuisine.korean', emoji: '🍲' },
-  { id: 'spicy', labelKey: 'aiRecipe.options.cuisine.spicy', emoji: '🌶️' },
-  { id: 'sweet', labelKey: 'aiRecipe.options.cuisine.sweet', emoji: '🍯' },
-  { id: 'savory', labelKey: 'aiRecipe.options.cuisine.savory', emoji: '🧂' },
-];
-
-const ALLERGEN_FREE_OPTIONS: AIOption[] = [
-  { id: 'nut-free', labelKey: 'aiRecipe.options.allergenFree.nutFree', emoji: '🥜' },
-  { id: 'egg-free', labelKey: 'aiRecipe.options.allergenFree.eggFree', emoji: '🥚' },
-  { id: 'soy-free', labelKey: 'aiRecipe.options.allergenFree.soyFree', emoji: '🫛' },
-  {
-    id: 'shellfish-free',
-    labelKey: 'aiRecipe.options.allergenFree.shellfishFree',
-    emoji: '🦐',
-  },
-];
-
-const TIME_OPTIONS = [
-  { id: '15', labelKey: 'aiRecipe.options.time.lt15', emoji: '⏱️' },
-  { id: '30', labelKey: 'aiRecipe.options.time.lt30', emoji: '⏱️' },
-  { id: '60', labelKey: 'aiRecipe.options.time.lt60', emoji: '⏱️' },
-];
 
 function toggleInList(value: string, current: string[]) {
   if (current.includes(value)) {
