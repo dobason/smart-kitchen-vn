@@ -99,7 +99,6 @@ export default function ExploreScreen() {
               ingredient={ingredient}
               selected={exploreIngredientIds.includes(ingredient.id)}
               label={getIngredientDisplayName(ingredient, locale)}
-              className={locale.startsWith('vi') ? 'w-[46%]' : undefined}
             />
           ))}
         </View>
@@ -111,12 +110,13 @@ export default function ExploreScreen() {
               params: { target: 'explore' },
             })
           }
-          className="mt-3 h-11 w-[82%] self-center flex-row items-center justify-center rounded-full border border-[#CE232A] bg-white">
-          <Icon as={Plus} size={16} className="text-[#CE232A]" />
+          className="mt-3 min-h-11 max-w-[92%] self-center items-center justify-center rounded-full border border-[#CE232A] bg-white px-5">
+          <View style={{ position: 'absolute', left: 20, top: 0, bottom: 0, justifyContent: 'center' }}>
+            <Icon as={Plus} size={16} className="text-[#CE232A]" />
+          </View>
           <VietnamText
-            className="ml-2 text-[15px] font-semibold text-[#1F2937]"
-            adjustsFontSizeToFit
-            minimumFontScale={0.88}>
+            className="px-7 text-center text-[15px] font-semibold text-[#1F2937]"
+            numberOfLines={1}>
             {t('home.moreIngredients')}
           </VietnamText>
         </Pressable>

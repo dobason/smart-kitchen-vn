@@ -19,19 +19,19 @@ export function IngredientPillChip({
   return (
     <View
       className={cn(
-        'h-[48px] shrink-0 self-start flex-row items-center rounded-full border bg-white px-3.5',
+        'h-[48px] max-w-[96%] self-start flex-row items-center rounded-full border bg-white pl-3.5 pr-4',
         selected ? 'border-[#CE232A]' : 'border-[#D8DDE3]',
         className
       )}>
       <View
         style={{ backgroundColor: ingredient.bgColor }}
-        className="h-7 w-7 items-center justify-center rounded-full">
+        className="h-7 w-7 shrink-0 items-center justify-center rounded-full">
         <VietnamText className="text-[15px]">{ingredient.emoji}</VietnamText>
       </View>
       <VietnamText
-        className="ml-2 text-[15px] font-semibold text-[#111827]"
-        adjustsFontSizeToFit
-        minimumFontScale={0.88}>
+        className="ml-2 shrink text-[15px] font-semibold text-[#111827]"
+        numberOfLines={1}
+        ellipsizeMode="tail">
         {label ?? ingredient.name}
       </VietnamText>
     </View>
