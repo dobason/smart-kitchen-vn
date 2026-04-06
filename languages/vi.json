@@ -97,6 +97,35 @@
     "aiSourceCamera": "ảnh chụp Camera",
     "aiSourcePhotoLibrary": "ảnh từ Thư viện",
     "notifyTitle": "Thông báo",
-    "renameComingSoon": "Tính năng đổi tên sẽ có trong bản cập nhật sau."
+    "renameComingSoon": "Tính năng đổi tên sẽ có trong bản cập nhật sau.",
+    "notCooked": "Chưa nấu",
+    "addIntoCookbook": "Thêm vào sổ nấu ăn",
+    "startCooking": "Bắt đầu nấu"
+  },
+  "steps": {
+    "STEPS": "CÁC BƯỚC NẤU",
+    "optimizeSteps": "Tối ưu các bước nấu",
+    "step": "Bước"
+  },
+  "ingredients": {
+    "INGREDIENTS": "NGUYÊN LIỆU",
+    "swapIngredients": "Thay thế nguyên liệu khác",
+    "mainIngredients": "Nguyên liệu chính"
+  },
+  "cookbook": {
+    "COOKBOOK": "SỔ TAY"
+  },
+  "other": {
+    "time": "Thời gian",
+    "cost": "Giá",
+    "note": "Ghi chú",
+    "tips": "Mẹo",
+    "serves": "Khẩu phần",
+    "addNote": "Thêm ghi chú cho công thức này",
+    "next": "Tiếp tục",
+    "back": "Trở về",
+    "success": "Hoàn thành",
+    "congratulations": "Chúc mừng",
+    "congratulationsMessage": "Chúc mừng bạn đã hoàn thành các bước nấu món ăn! Chúc bạn ngon miệng!"
   }
 }
