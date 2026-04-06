@@ -1,4 +1,4 @@
-import { IngredientItem } from '@/types/ingredient';
+import { CookingIngredientItem, IngredientItem } from '@/types/ingredient';
 
 const RED = '#F28398';
 const PINK = '#F8D4DC';
@@ -125,7 +125,7 @@ export const INGREDIENT_LIBRARY: IngredientItem[] = [
   { id: 'whitebait', name: 'Whitebait', emoji: '🐟', bgColor: YELLOW },
 ];
 
-export const INGREDIENTS: IngredientItem[] = [
+export const INGREDIENTS: CookingIngredientItem[] = [
     { emoji: '🍕', name: 'bột bánh pizza', qty: '1 cái', bg: '#F5E6D3' },
     { emoji: '🧀', name: 'phô mai bào sợi', qty: '200 g', bg: '#D6EAF8' },
     { emoji: '🍅', name: 'sốt cà chua', qty: '100 ml', bg: '#FADBD8' },

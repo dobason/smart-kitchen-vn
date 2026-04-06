@@ -1,8 +1,8 @@
 import { View } from 'react-native';
 import { VietnamText } from '@/components/in-app-ui/vietnam-text';
-import { IngredientItem } from '@/types';
+import { CookingIngredientItem } from '@/types';
 
-export function IngredientRow({ emoji, name, qty, bg }: IngredientItem) {
+export function IngredientRow({ emoji, name, qty, bg }: CookingIngredientItem) {
   return (
     <View className="flex-row items-center py-3 border-b border-dashed border-gray-200">
       <View
