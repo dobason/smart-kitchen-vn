@@ -94,12 +94,23 @@ export default function ExploreScreen() {
 
         <View className="mt-4 flex-row flex-wrap justify-center gap-x-2.5 gap-y-2.5">
           {sampleIngredients.map((ingredient) => (
-            <IngredientPillChip
+            <Pressable
               key={ingredient.id}
-              ingredient={ingredient}
-              selected={exploreIngredientIds.includes(ingredient.id)}
-              label={getIngredientDisplayName(ingredient, locale)}
-            />
+              className="self-start"
+              onPress={() =>
+                setExploreIngredientIds((prev) =>
+                  prev.includes(ingredient.id)
+                    ? prev.filter((id) => id !== ingredient.id)
+                    : [...prev, ingredient.id]
+                )
+              }>
+              <IngredientPillChip
+                ingredient={ingredient}
+                selected={exploreIngredientIds.includes(ingredient.id)}
+                label={getIngredientDisplayName(ingredient, locale)}
+                className="max-w-none"
+              />
+            </Pressable>
           ))}
         </View>
 
