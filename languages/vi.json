@@ -127,5 +127,27 @@
     "success": "Hoàn thành",
     "congratulations": "Chúc mừng",
     "congratulationsMessage": "Chúc mừng bạn đã hoàn thành các bước nấu món ăn! Chúc bạn ngon miệng!"
+  },
+    "recipePage": {
+      "recipeTab": "Công thức"
+    },
+  "cookbookDetail": {
+    "manageCookbook": "Quản lý sổ tay",
+    "rename": "Đổi tên",
+    "confirm": "Xác nhận",
+    "total": "Tổng",
+    "selectAll": "Chọn tất cả",
+    "moveTo": "Chuyển đến",
+    "addRecipesFrom": "Thêm công thức từ",
+    "myOwnRecipes": "Công thức của tôi",
+    "importNewRecipes": "Nhập công thức mới",
+    "move": "Di chuyển",
+    "uncategorized": "Chưa phân loại",
+    "desserts": "Món tráng miệng",
+    "dinner": "Bữa tối",
+    "camera": "Máy ảnh",
+    "photo": "Ảnh",
+    "instruction": "Hướng dẫn thêm công thức",
+    "aiAnalyzing": "AI đang phân tích dữ liệu..."
   }
 }
