@@ -3,4 +3,7 @@ export type IngredientItem = {
   name: string;
   emoji: string;
   bgColor: string;
+  qty: string;
+  bg: string;
 };
+ 

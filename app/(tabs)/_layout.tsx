@@ -41,6 +41,18 @@ export default function TabsLayout() {
           tabBarIcon: ({ color, size }) => <UserIcon color={color} size={size} />,
         }}
       />
+      <Tabs.Screen
+        name="recipe-detail"
+        options={{ href: null }}
+      />
+      <Tabs.Screen
+        name="cooking-ingredients"
+        options={{ href: null }}
+      />
+      <Tabs.Screen
+        name="cooking-step"
+        options={{ href: null }}
+      />
     </Tabs>
   );
 }
