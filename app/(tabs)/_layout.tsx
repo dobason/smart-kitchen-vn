@@ -53,6 +53,10 @@ export default function TabsLayout() {
         name="cooking-step"
         options={{ href: null }}
       />
+      <Tabs.Screen
+        name="recipe-edit"
+        options={{ href: null }}
+      />
     </Tabs>
   );
 }
