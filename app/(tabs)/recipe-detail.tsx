@@ -3,7 +3,7 @@ import { Icon } from '@/components/ui/icon';
 import { VietnamText } from '@/components/in-app-ui/vietnam-text';
 import * as React from 'react';
 import { useRouter } from 'expo-router';
-import { Image, ScrollView, View, TouchableOpacity } from 'react-native';
+import { Alert, Image, ScrollView, Modal, View, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   ArrowLeftIcon,
@@ -42,6 +42,8 @@ export default function RecipeDetailScreen() {
   const [serves, setServes] = React.useState(4);
   const router = useRouter();
   const { t } = useLocale();
+  const [imageVisible, setImageVisible] = React.useState(false);
+
 
   return (
     <SafeAreaView className="flex-1 bg-background" edges={['top']}>
@@ -61,23 +63,44 @@ export default function RecipeDetailScreen() {
             <CircleButton
               variant="ghost"
               className="h-10 w-10 items-center justify-center rounded-full bg-black/35"
-              onPress={() => router.back()}>
+              onPress={() => router.push('./recipe')}>
               <Icon as={ArrowLeftIcon} size={20} className="text-white" />
             </CircleButton>
             <View className="flex-row gap-3">
-              {[PencilIcon, Trash2Icon].map((Ic, i) => (
-                <CircleButton
-                  variant="ghost"
-                  key={i}
-                  className="h-10 w-10 items-center justify-center rounded-full bg-black/35">
-                  <Icon as={Ic} size={18} className="text-white" />
-                </CircleButton>
-              ))}
+              <CircleButton
+                variant="ghost"
+                className="h-10 w-10 items-center justify-center rounded-full bg-black/35"
+                onPress={() => router.push('./recipe-edit')}>
+                <Icon as={PencilIcon} size={18} className="text-white" />
+              </CircleButton>
+              <CircleButton
+                variant="ghost"
+                className="h-10 w-10 items-center justify-center rounded-full bg-black/35"
+                onPress={() =>
+                  Alert.alert(
+                    t('other.deleteTitle'),
+                    t('other.deleteMessage'),
+                    [
+                      { text: t('other.cancel'),
+                        style: 'cancel' 
+                      },
+                      {
+                        text: t('other.delete'),
+                        style: 'destructive',
+                        onPress: () => {
+                          router.push('./recipe');
+                        },
+                      },
+                    ]
+                  )
+                }>
+                <Icon as={Trash2Icon} size={18} className="text-white" />
+              </CircleButton>
             </View>
           </View>
           {/* View button */}
           <View className="absolute bottom-4 right-4">
-            <CircleButton variant="ghost" style={{ backgroundColor: 'rgba(30,30,30,0.7)' }}>
+            <CircleButton variant="ghost" style={{ backgroundColor: 'rgba(30,30,30,0.7)' }} onPress={() => setImageVisible(true)}>
               <Icon as={MaximizeIcon} size={14} className="text-white" />
             </CircleButton>
           </View>
@@ -173,7 +196,9 @@ export default function RecipeDetailScreen() {
             </View>
           </View>
 
-          <VietnamText className="mb-2 text-sm text-gray-500">Nguyên liệu chính</VietnamText>
+          <VietnamText className="mb-2 text-sm text-gray-500">
+            {t('ingredients.mainIngredients')}
+          </VietnamText>
 
           {/* Ingredient List */}
           {INGREDIENTS.map((ing, i) => (
@@ -259,6 +284,32 @@ export default function RecipeDetailScreen() {
           </VietnamText>
         </RoundedButton>
       </View>
+
+      {/* Full-screen Modal */}
+      <Modal visible={imageVisible} transparent animationType="fade" statusBarTranslucent>
+        <View style={{ flex: 1, backgroundColor: 'black' }}>
+          {/* Close button */}
+          <SafeAreaView style={{ position: 'absolute', top: 0, left: 0, right: 0, zIndex: 10 }}>
+            <View className="flex-row justify-end px-4 pt-2">
+              <CircleButton
+                variant="ghost"
+                className="h-10 w-10 items-center justify-center rounded-full bg-black/50"
+                onPress={() => setImageVisible(false)}>
+                <Icon as={ArrowLeftIcon} size={20} className="text-white" />
+              </CircleButton>
+            </View>
+          </SafeAreaView>
+
+          {/* Full-screen image */}
+          <Image
+            source={{
+              uri: 'https://images.squarespace-cdn.com/content/v1/66628bdc6b0b0d52d914a921/1752754499896-E9EAAEK78ESN8KAJV33G/unsplash-image-_33r6H_hiz4.jpg?format=1500w',
+            }}
+            style={{ flex: 1 }}
+            resizeMode="contain"
+          />
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }

@@ -33,3 +33,31 @@ export const STEPS: StepItem[] = [
       isLast: true,
     },
   ];
+
+export const INITIAL_STEPS: StepItem[] = [
+    {
+      id: 's1',
+      text: 'Luộc mì sợi trong nồi nước sôi đến khi vừa chín, vớt ra xả nhanh với nước lạnh và để ráo.',
+      tip: 'Không luộc mì sợi quá lâu để sợi mì còn dai và không bị bở khi cho vào nước dùng nóng.',
+    },
+    {
+      id: 's2',
+      text: 'Đun nóng dầu ăn trong nồi, cho tỏi băm và hành tây thái lát vào phi thơm trên lửa vừa.',
+      tip: 'Thịt heo thái thật mỏng để chín nhanh và mềm, không xào quá lâu làm thịt khô.',
+    },
+    {
+      id: 's3',
+      text: 'Đổ nước dùng gà vào nồi, thêm sốt cà chua, nước tương, nước mắm, sa tế ớt, muối, đường và tiêu đen, khuấy đều.',
+      tip: 'Nêm nếm lại nước dùng gà cho vừa khẩu vị trước khi đun sôi lâu để tránh bị quá mặn.',
+    },
+    {
+      id: 's4',
+      text: 'Đun sôi nước dùng gà rồi hạ lửa nhỏ, nấu thêm 10 phút cho thịt heo chín mềm và nước dùng đậm vị.',
+      tip: 'Hớt bọt trên mặt nước dùng gà để nước trong và có màu đẹp hơn.',
+    },
+    {
+      id: 's5',
+      text: 'Chia mì sợi vào 2 tô, chan nước dùng gà nóng cùng thịt heo lên trên, rắc hành phi và vắt chanh khi ăn.',
+      tip: 'Chan nước dùng gà thật nóng lên mì sợi để mì ấm đều, thêm sa tế ớt nếu thích ăn cay hơn.',
+    },
+  ];
