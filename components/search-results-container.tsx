@@ -11,6 +11,22 @@ import { Pressable, ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { SEARCH_RECIPES } from '@/constants/recipeData';
 
+function normalizeSearchText(value: string) {
+  return value
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/đ/g, 'd');
+}
+
+function splitSearchTerms(value: string) {
+  return value
+    .split(',')
+    .map((part) => normalizeSearchText(part))
+    .filter(Boolean);
+}
+
 export function SearchResultsContainer() {
   const router = useRouter();
   const { t } = useLocale();
@@ -37,18 +53,23 @@ export function SearchResultsContainer() {
   }, [initialQuery]);
 
   const filteredRecipes = React.useMemo(() => {
-    const keyword = query.trim().toLowerCase();
-    const normalizedTags = selectedTags.map((tag) => tag.trim().toLowerCase()).filter(Boolean);
+    const keywordTerms = splitSearchTerms(query);
+    const normalizedTags = selectedTags.map((tag) => normalizeSearchText(tag)).filter(Boolean);
 
-    if (!keyword && normalizedTags.length === 0) {
+    // When users type in the query bar, avoid stale chip tags from previous searches
+    // interfering with the current text search.
+    const activeTags = keywordTerms.length > 0 ? [] : normalizedTags;
+
+    if (keywordTerms.length === 0 && activeTags.length === 0) {
       return SEARCH_RECIPES;
     }
 
     return SEARCH_RECIPES.filter((item) => {
-      const content = `${item.name} ${item.description} ${item.tags.join(' ')}`.toLowerCase();
-      const matchQuery = keyword.length === 0 || content.includes(keyword);
+      const content = normalizeSearchText(`${item.name} ${item.description} ${item.tags.join(' ')}`);
+      const matchQuery =
+        keywordTerms.length === 0 || keywordTerms.some((term) => content.includes(term));
       const matchTag =
-        normalizedTags.length === 0 || normalizedTags.some((tag) => content.includes(tag));
+        activeTags.length === 0 || activeTags.some((tag) => content.includes(tag));
       return matchQuery && matchTag;
     });
   }, [query, selectedTags]);
