@@ -128,6 +128,10 @@
     "generate": "Tạo công thức",
     "generatingTitle": "Đang tạo công thức",
     "generatingDescription": "AI đang chuẩn bị công thức theo các lựa chọn của bạn.",
+    "generatingStatus": "Recipe generating...",
+    "generatedDoneTitle": "Đã tạo xong công thức",
+    "generatedDoneDescription": "Công thức AI đã sẵn sàng. Nhấn OK để quay về trang chính.",
+    "ok": "OK",
     "ingredientLimitTitle": "Danh sách nguyên liệu đã đầy",
     "ingredientLimitDescription": "Nhấn vào chip nguyên liệu để xóa rồi thêm mới.",
     "options": {

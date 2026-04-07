@@ -83,6 +83,7 @@ function Routes() {
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="search-results" options={{ headerShown: false }} />
         <Stack.Screen name="ai-recipe" options={{ headerShown: false }} />
+        <Stack.Screen name="recipe-generating" options={{ headerShown: false, gestureEnabled: false }} />
         <Stack.Screen name="ingredients-picker" options={{ headerShown: false }} />
       </Stack.Protected>
 

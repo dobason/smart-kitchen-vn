@@ -128,6 +128,10 @@
     "generate": "Generate Recipe",
     "generatingTitle": "Generating recipe",
     "generatingDescription": "AI is preparing your recipe from selected preferences.",
+    "generatingStatus": "Recipe generating...",
+    "generatedDoneTitle": "Recipe is ready",
+    "generatedDoneDescription": "Your AI recipe has been generated. Tap OK to return to home.",
+    "ok": "OK",
     "ingredientLimitTitle": "Ingredient list is full",
     "ingredientLimitDescription": "Tap an ingredient chip to remove it, then add a new one.",
     "options": {

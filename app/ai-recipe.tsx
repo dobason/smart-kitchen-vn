@@ -20,7 +20,7 @@ import { useLocale } from '@/hooks/use-locale';
 import { useRouter } from 'expo-router';
 import { X } from 'lucide-react-native';
 import * as React from 'react';
-import { Alert, Pressable, ScrollView, TextInput, View } from 'react-native';
+import { Pressable, ScrollView, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 function toggleInList(value: string, current: string[]) {
@@ -70,7 +70,7 @@ export default function AIRecipeScreen() {
       return;
     }
 
-    Alert.alert(t('aiRecipe.generatingTitle'), t('aiRecipe.generatingDescription'));
+    router.push('./recipe-generating');
   }
 
   return (

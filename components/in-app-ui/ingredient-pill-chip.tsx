@@ -19,7 +19,7 @@ export function IngredientPillChip({
   return (
     <View
       className={cn(
-        'h-[48px] max-w-[96%] self-start flex-row items-center rounded-full border bg-white pl-3.5 pr-4',
+        'min-h-[48px] max-w-[96%] self-start flex-row items-center rounded-full border bg-white pl-3.5 pr-4 py-1.5',
         selected ? 'border-[#CE232A]' : 'border-[#D8DDE3]',
         className
       )}>
@@ -29,7 +29,7 @@ export function IngredientPillChip({
         <VietnamText className="text-[15px]">{ingredient.emoji}</VietnamText>
       </View>
       <VietnamText
-        className="ml-2 shrink text-[15px] font-semibold text-[#111827]"
+        className="ml-2 text-[15px] leading-5 text-[#111827]"
         numberOfLines={1}
         ellipsizeMode="tail">
         {label ?? ingredient.name}
