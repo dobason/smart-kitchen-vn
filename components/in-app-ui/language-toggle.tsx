@@ -13,9 +13,9 @@ export function LanguageToggle() {
   if (!context) {
     return null;
   }
-  const { locale = 'vi', setLocale } = context;
+  const { locale = 'en', setLocale } = context;
   const next = locale === 'vi' ? 'en' : 'vi';
-  const current = LANGUAGES[locale] ?? LANGUAGES.vi;
+  const current = LANGUAGES[locale] ?? LANGUAGES.en;
 
   return (
     <Button
