@@ -3,7 +3,7 @@ import { Icon } from "../ui/icon";
 import { Bookmark, ChefHat, Clock3, Flame } from 'lucide-react-native';
 import * as React from 'react';
 import { Image, Pressable, View } from 'react-native';
-import { SearchRecipeItem } from "@/types/recipe"; //Import Type here
+import { SearchRecipeItem } from "@/types/recipe"; 
 import { useLocale } from '@/hooks/use-locale';
 
 type RecipeCardProps = {
@@ -15,7 +15,8 @@ type RecipeCardProps = {
 export function RecipeCard({ item, isSaved, onToggleSave }: RecipeCardProps) {
     const { t } = useLocale();
     return (
-    <View className="mb-4 overflow-hidden rounded-[16px] border border-[#E4E5E8] bg-white" style={{ width: '48.6%' }}>
+    // Đã đổi thành w-full để nó tự lấp đầy container cha
+    <View className="mb-4 overflow-hidden rounded-[16px] border border-[#E4E5E8] bg-white w-full">
       <View className="relative">
         <Image source={{ uri: item.imageUrl }} className="h-32 w-full" resizeMode="cover" />
 
@@ -62,5 +63,3 @@ export function RecipeCard({ item, isSaved, onToggleSave }: RecipeCardProps) {
     </View>
   );
 };
-
-

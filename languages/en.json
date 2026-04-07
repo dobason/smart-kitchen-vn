@@ -127,5 +127,26 @@
     "success": "Success!",
     "congratulations": "Congratulations",
     "congratulationsMessage": "Congratulations on completing the cooking steps! Enjoy your meal!"
+  },
+    "recipePage": {
+      "recipeTab": "Recipe"
+    },
+  "cookbookDetail": {
+    "manageCookbook": "Manage Cookbook",
+    "rename": "Rename",
+    "confirm": "Confirm",
+    "total": "Total",
+    "selectAll": "Select All",
+    "moveTo": "Move to",
+    "addRecipesFrom": "Add recipes from",
+    "myOwnRecipes": "My own recipes",
+    "importNewRecipes": "Import new recipes",
+    "move": "Move",
+    "uncategorized": "Uncategorized",
+    "desserts": "Desserts",
+    "dinner": "Dinner",
+    "camera": "Camera",
+    "photo": "Photo",
+    "instruction": "Recipe import guide"
   }
 }
