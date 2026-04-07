@@ -290,7 +290,7 @@ export default function RecipeDetailScreen() {
         <View style={{ flex: 1, backgroundColor: 'black' }}>
           {/* Close button */}
           <SafeAreaView style={{ position: 'absolute', top: 0, left: 0, right: 0, zIndex: 10 }}>
-            <View className="flex-row justify-end px-4">
+            <View className="flex-row justify-end px-4 pt-2">
               <CircleButton
                 variant="ghost"
                 className="h-10 w-10 items-center justify-center rounded-full bg-black/50"
