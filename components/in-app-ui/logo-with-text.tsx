@@ -9,8 +9,8 @@ const LOGO = {
 };
 
 const LOGO_STYLE: ImageStyle = {
-  height: 100,
-  width: 100,
+  height: 84,
+  width: 84,
 };
 
 export function LogoWithText() {
@@ -20,7 +20,7 @@ export function LogoWithText() {
   return (
     <View className="flex-col items-center justify-center gap-1">
       <Image source={LOGO[colorScheme ?? 'light']} style={LOGO_STYLE} resizeMode="contain" />
-      <VietnamText variant="h1" className="text-center text-xl">
+      <VietnamText numberOfLines={1} className="text-center text-[18px] font-bold text-[#333333]">
         {t('appName')}
       </VietnamText>
     </View>

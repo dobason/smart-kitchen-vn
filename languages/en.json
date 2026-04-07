@@ -60,7 +60,18 @@
   "home": {
     "search": "Search",
     "generateRecipesVia": "Generate recipes via",
-    "addIngredients": "Add ingredients"
+    "addIngredients": "Add ingredients",
+    "searchPlaceholder": "Search for what you want",
+    "moreIngredients": "More Ingredients",
+    "generateWith": "Generate with",
+    "generateWithAI": "Generate with AI"
+  },
+  "ingredientsPicker": {
+    "title": "Choose Your Ingredients",
+    "searchPlaceholder": "Type an ingredient to add",
+    "youMightHave": "You Might Have",
+    "selected": "Selected %{count}",
+    "confirm": "CONFIRM"
   },
   "searchResults": {
     "searchPlaceholder": "Search dishes or ingredients",
@@ -97,11 +108,85 @@
     "successAnalyzed": "Analysis complete from %{source}.",
     "aiSourceCamera": "Camera photo",
     "aiSourcePhotoLibrary": "Photo library",
-    "notifyTitle": "Notice",
+    "notifyTitle": "Notice",    
     "renameComingSoon": "The rename feature will be available in a future update.",
     "notCooked": "Not Cooked",
     "addIntoCookbook": "Add into cookbook",
     "startCooking": "Start Cooking"
+  },
+  "aiRecipe": {
+    "title": "AI Recipe",
+    "ingredient": "Ingredient",
+    "add": "Add",
+    "selectCookware": "Select Your Cookware",
+    "dishType": "Dish Type",
+    "diet": "Diet",
+    "cuisine": "Cuisine",
+    "time": "Time",
+    "allergenFree": "Allergen-Free",
+    "extraCommand": "Extra Command",
+    "extraPlaceholder": "Any other requests? Write here",
+    "generate": "Generate Recipe",
+    "generatingTitle": "Generating recipe",
+    "generatingDescription": "AI is preparing your recipe from selected preferences.",
+    "generatingStatus": "Recipe generating...",
+    "generatedDoneTitle": "Recipe is ready",
+    "generatedDoneDescription": "Your AI recipe has been generated. Tap OK to return to home.",
+    "ok": "OK",
+    "ingredientLimitTitle": "Ingredient list is full",
+    "ingredientLimitDescription": "Tap an ingredient chip to remove it, then add a new one.",
+    "options": {
+      "cookware": {
+        "fryingPan": "Frying Pan",
+        "skillet": "Skillet",
+        "microwave": "Microwave",
+        "airFryer": "Air Fryer",
+        "oven": "Oven",
+        "blender": "Blender",
+        "slowCooker": "Slow Cooker"
+      },
+      "dishType": {
+        "breakfast": "Breakfast",
+        "lunch": "Lunch",
+        "dinner": "Dinner",
+        "snack": "Snack",
+        "dessert": "Dessert",
+        "drink": "Drink"
+      },
+      "diet": {
+        "vegan": "Vegan",
+        "vegetarian": "Vegetarian",
+        "ketoFriendly": "Keto-friendly",
+        "lowCarb": "Low-carb",
+        "lowCalorie": "Low-calorie",
+        "lowFat": "Low-fat",
+        "highProtein": "High-protein",
+        "highFiber": "High-fiber",
+        "petFood": "Pet Food"
+      },
+      "cuisine": {
+        "american": "American",
+        "mexican": "Mexican",
+        "chinese": "Chinese",
+        "italian": "Italian",
+        "japanese": "Japanese",
+        "korean": "Korean",
+        "spicy": "Spicy",
+        "sweet": "Sweet",
+        "savory": "Savory"
+      },
+      "allergenFree": {
+        "nutFree": "Nut-Free",
+        "eggFree": "Egg-Free",
+        "soyFree": "Soy-Free",
+        "shellfishFree": "Shellfish-Free"
+      },
+      "time": {
+        "lt15": "< 15 Mins",
+        "lt30": "< 30 Mins",
+        "lt60": "< 60 Mins"
+      }
+    }
   },
   "steps": {
     "STEPS": "STEPS",
@@ -141,5 +226,26 @@
     "successUpdate": "Recipe updated successfully!",
     "congratulations": "Congratulations",
     "congratulationsMessage": "Congratulations on completing the cooking steps! Enjoy your meal!"
+  },
+    "recipePage": {
+      "recipeTab": "Recipe"
+    },
+  "cookbookDetail": {
+    "manageCookbook": "Manage Cookbook",
+    "rename": "Rename",
+    "confirm": "Confirm",
+    "total": "Total",
+    "selectAll": "Select All",
+    "moveTo": "Move to",
+    "addRecipesFrom": "Add recipes from",
+    "myOwnRecipes": "My own recipes",
+    "importNewRecipes": "Import new recipes",
+    "move": "Move",
+    "uncategorized": "Uncategorized",
+    "desserts": "Desserts",
+    "dinner": "Dinner",
+    "camera": "Camera",
+    "photo": "Photo",
+    "instruction": "Recipe import guide"
   }
 }

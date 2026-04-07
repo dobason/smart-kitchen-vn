@@ -1,26 +1,65 @@
-import * as React from 'react';
-import { View } from 'react-native';
-import { Icon } from '@/components/ui/icon';
-import { PlusIcon } from 'lucide-react-native';
+import {
+  INGREDIENT_LIBRARY,
+  getIngredientDisplayName,
+  getIngredientsByIds,
+} from '@/constants/ingredientData';
+import { LanguageToggle } from '@/components/in-app-ui/language-toggle';
+import { IngredientPillChip } from '@/components/in-app-ui/ingredient-pill-chip';
+import { IngredientSearchInput } from '@/components/in-app-ui/ingredient-search-input';
 import { LogoWithText } from '@/components/in-app-ui/logo-with-text';
-import { RoundedButton } from '@/components/in-app-ui/rounded-button';
 import { ShinyButton } from '@/components/in-app-ui/shiny-button';
 import { VietnamText } from '@/components/in-app-ui/vietnam-text';
-import { LanguageToggle } from '@/components/in-app-ui/language-toggle';
 import { UserMenu } from '@/components/user-menu';
-import { useRouter } from 'expo-router';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { TagsSearch } from '@/components/tags-search';
+import { Icon } from '@/components/ui/icon';
+import { useIngredients } from '@/hooks/use-ingredients';
 import { useLocale } from '@/hooks/use-locale';
+import { useRouter } from 'expo-router';
+import { Plus } from 'lucide-react-native';
+import * as React from 'react';
+import { Pressable, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+
+const SAMPLE_INGREDIENT_IDS = [
+  'chicken',
+  'cucumber',
+  'pork',
+  'egg',
+  'tofu',
+  'potato',
+  'ground-meat',
+];
 
 export default function ExploreScreen() {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const router = useRouter();
-  const [selectedTags, setSelectedTags] = React.useState<string[]>(['Tag 1']);
+  const { exploreIngredientIds, setExploreIngredientIds } = useIngredients();
+
+  const selectedIngredients = React.useMemo(
+    () => getIngredientsByIds(exploreIngredientIds),
+    [exploreIngredientIds]
+  );
+
   const [searchText, setSearchText] = React.useState('');
 
+  const sampleIngredients = React.useMemo(
+    () => getIngredientsByIds(SAMPLE_INGREDIENT_IDS),
+    []
+  );
+
+  const selectedIngredientsForTagBar = React.useMemo(
+    () =>
+      selectedIngredients.map((item) => ({
+        ...item,
+        name: getIngredientDisplayName(item, locale),
+      })),
+    [selectedIngredients, locale]
+  );
+
   function handleSearch() {
-    const query = searchText.trim() || selectedTags[0] || String(t('searchResults.defaultKeyword'));
+    const fallback = INGREDIENT_LIBRARY[0]?.name ?? String(t('searchResults.defaultKeyword'));
+    const selectedQuery = selectedIngredientsForTagBar.map((item) => item.name).join(', ');
+    const query = selectedQuery || searchText.trim() || fallback;
+
     router.push({
       pathname: '/search-results',
       params: { q: query },
@@ -28,48 +67,83 @@ export default function ExploreScreen() {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-background">
-      <View className="flex-row items-center justify-between px-4 py-2">
-        <UserMenu />
-        <LanguageToggle />
-      </View>
-      <View className="flex-1 items-center justify-center gap-6 p-4">
-        <LogoWithText />
-        <TagsSearch
-          options={[
-            { label: 'Tag 1', value: 'Tag 1' },
-            { label: 'Tag 2', value: 'Tag 2' },
-            { label: 'Tag 3', value: 'Tag 3' },
-            { label: 'Tag 4', value: 'Tag 4' },
-            { label: 'Tag 5', value: 'Tag 5' },
-            { label: 'Tag 6', value: 'Tag 6' },
-          ]}
-          selectedTags={selectedTags}
-          onSelectedTagsChange={setSelectedTags}
-          onInputChange={setSearchText}
-          placeholder={String(t('searchResults.searchPlaceholder'))}
-          className="w-full max-w-sm"
-        />
-        <RoundedButton variant="outline">
-          <Icon as={PlusIcon} size={16} className="text-primary" />
-          <VietnamText className="font-semibold text-primary">
-            {t('home.addIngredients')}
+    <SafeAreaView className="flex-1 bg-[#F7F4EA]">
+      <View className="flex-1 px-3.5 pb-3">
+        <View className="flex-row items-center justify-between pt-1">
+          <UserMenu />
+          <LanguageToggle />
+        </View>
+
+        <View className="items-center pt-1">
+          <LogoWithText />
+        </View>
+
+        <View className="mt-3">
+          <IngredientSearchInput
+            value={searchText}
+            onChangeText={setSearchText}
+            placeholder={t('home.searchPlaceholder')}
+            selectedIngredients={selectedIngredientsForTagBar}
+            onRemoveIngredient={(ingredientId) =>
+              setExploreIngredientIds((prev) => prev.filter((id) => id !== ingredientId))
+            }
+            onClearSelected={() => setExploreIngredientIds([])}
+            className="h-[54px] border-[#CE232A] bg-[#F6F7F9]"
+          />
+        </View>
+
+        <View className="mt-4 flex-row flex-wrap justify-center gap-x-2.5 gap-y-2.5">
+          {sampleIngredients.map((ingredient) => (
+            <Pressable
+              key={ingredient.id}
+              className="self-start"
+              onPress={() =>
+                setExploreIngredientIds((prev) =>
+                  prev.includes(ingredient.id)
+                    ? prev.filter((id) => id !== ingredient.id)
+                    : [...prev, ingredient.id]
+                )
+              }>
+              <IngredientPillChip
+                ingredient={ingredient}
+                selected={exploreIngredientIds.includes(ingredient.id)}
+                label={getIngredientDisplayName(ingredient, locale)}
+              />
+            </Pressable>
+          ))}
+        </View>
+
+        <Pressable
+          onPress={() =>
+            router.push({
+              pathname: '../ingredients-picker',
+              params: { target: 'explore' },
+            })
+          }
+          className="mt-3 min-h-11 self-center flex-row items-center justify-center gap-2 rounded-full border border-[#CE232A] bg-white px-5">
+          <Icon as={Plus} size={16} className="text-[#CE232A]" />
+          <VietnamText className="text-center text-[15px] leading-5 text-[#1F2937]">
+            {t('home.moreIngredients')}
           </VietnamText>
-        </RoundedButton>
-        <View className="flex-1 items-center justify-center gap-4 p-4">
-          <ShinyButton className="h-14 w-full" onPress={handleSearch}>
-            <VietnamText className="w-full flex-row text-center text-lg font-semibold text-white">
+        </Pressable>
+
+        <View className="mt-6 gap-3 pb-1">
+          <ShinyButton onPress={handleSearch} className="h-14 border-[#CE232A] bg-[#CE232A]">
+            <VietnamText className="w-full text-center text-[18px] font-semibold text-white">
               {t('home.search')}
             </VietnamText>
           </ShinyButton>
-          <RoundedButton className="h-14 w-full" variant="outline">
-            <VietnamText className="w-full flex-row text-center text-lg font-semibold">
-              {t('home.generateRecipesVia')}{' '}
-              <VietnamText className="ml-1 text-lg font-semibold text-orange-500">
-                {t('AI')}
-              </VietnamText>
+
+          <Pressable
+            onPress={() => router.push('../ai-recipe')}
+            className="h-14 flex-row items-center justify-center rounded-full border border-[#CE232A] bg-white">
+            <VietnamText
+              className="text-[18px] font-semibold text-[#CE232A]"
+              adjustsFontSizeToFit
+              minimumFontScale={0.88}>
+              {t('home.generateWithAI')}
             </VietnamText>
-          </RoundedButton>
+          </Pressable>
         </View>
       </View>
     </SafeAreaView>
