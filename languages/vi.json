@@ -78,10 +78,62 @@
     "defaultKeyword": "Phở",
     "tagFilter": "Thẻ +",
     "timeFilter": "Thời gian +",
+    "caloriesFilter": "Calories +",
+    "cookwareFilter": "Dụng cụ +",
+    "tagSheetTitle": "Thẻ",
+    "timeSheetTitle": "Thời gian",
+    "caloriesSheetTitle": "Calories",
+    "cookwareSheetTitle": "Dụng cụ",
+    "apply": "Áp dụng",
     "clearAllTags": "Xóa tag",
+    "noMatches": "Không tìm thấy món phù hợp",
     "results": "Kết quả tìm kiếm %{count}",
     "cal": "Cal",
-    "minute": "phút"
+    "minute": "phút",
+    "options": {
+      "tags": {
+        "lowCalorie": "Ít calo",
+        "highProtein": "Giàu đạm",
+        "lowFat": "Ít béo",
+        "lunch": "Bữa trưa",
+        "dinner": "Bữa tối",
+        "snack": "Ăn vặt",
+        "breakfast": "Bữa sáng",
+        "soup": "Món súp",
+        "highFiber": "Giàu chất xơ",
+        "familyFriendly": "Phù hợp gia đình",
+        "sideDish": "Món ăn kèm",
+        "kidFriendly": "Phù hợp trẻ em",
+        "lazyCook": "Nấu nhanh gọn",
+        "onePot": "Một nồi",
+        "glutenFree": "Không gluten",
+        "ketoFriendly": "Thân thiện Keto",
+        "vegan": "Thuần chay",
+        "vegetarian": "Ăn chay",
+        "eggFree": "Không trứng",
+        "shellfishFree": "Không hải sản có vỏ"
+      },
+      "time": {
+        "under5": "Dưới 5 phút",
+        "under10": "Dưới 10 phút",
+        "under20": "Dưới 20 phút",
+        "under30": "Dưới 30 phút"
+      },
+      "calories": {
+        "lt200": "< 200 Cal",
+        "lt500": "< 500 Cal",
+        "lt1000": "< 1000 Cal"
+      },
+      "cookware": {
+        "fryingPan": "Chảo rán",
+        "skillet": "Chảo sâu",
+        "microwave": "Lò vi sóng",
+        "airFryer": "Nồi chiên không dầu",
+        "oven": "Lò nướng",
+        "blender": "Máy xay",
+        "slowCooker": "Nồi nấu chậm"
+      }
+    }
   },
   "account": {
     "guest": "Khách",

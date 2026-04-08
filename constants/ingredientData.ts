@@ -1,4 +1,4 @@
-import { IngredientItem, IngredientGroup } from "@/types/ingredient";
+import { CookingIngredientItem, IngredientItem } from '@/types/ingredient';
 
 const RED = '#F28398';
 const PINK = '#F8D4DC';
@@ -132,43 +132,141 @@ export const INGREDIENTS: CookingIngredientItem[] = [
     { emoji: '🫑', name: '1/2 quả ớt chuông thái nhỏ', qty: '...', bg: '#FEF9E7' },
   ];
 
-export const INITIAL_GROUPS: IngredientGroup[] = [
-  {
-    id: 'g1',
-    label: 'Nguyên liệu chính',
-    items: [
-      { id: 'i1', qty: '200', unit: 'g', name: 'mì sợi' },
-      { id: 'i2', qty: '150', unit: 'g', name: 'thịt heo thái mỏng' },
-      { id: 'i3', qty: '0,5', unit: 'củ', name: 'hành tây thái lát' },
-      { id: 'i4', qty: '3', unit: 'tép', name: 'tỏi băm nhỏ' },
-    ],
-  },
-  {
-    id: 'g2',
-    label: 'Nước dùng',
-    items: [
-      { id: 'i5', qty: '800', unit: 'ml', name: 'nước dùng gà' },
-      { id: 'i6', qty: '2', unit: 'muỗng c...', name: 'nước tương' },
-      { id: 'i7', qty: '1', unit: 'muỗng c...', name: 'nước mắm' },
-      { id: 'i8', qty: '1', unit: 'muỗng c...', name: 'sa tế ớt' },
-    ],
-  },
-  {
-    id: 'g3',
-    label: 'Gia vị khác',
-    items: [
-      { id: 'i9', qty: '0,5', unit: 'muỗng c...', name: 'muối' },
-      { id: 'i10', qty: '1', unit: 'muỗng c...', name: 'đường' },
-      { id: 'i11', qty: '0,5', unit: 'muỗng c...', name: 'tiêu đen nghiền' },
-      { id: 'i12', qty: '1', unit: 'muỗng c...', name: 'dầu ăn' },
-    ],
-  },
-  {
-    id: 'g4',
-    label: 'Ăn kèm',
-    items: [
-      { id: 'i13', qty: '1', unit: 'quả', name: 'chanh cắt miếng' },
-      { id: 'i14', qty: '2', unit: 'muỗng c...', name: 'hành phi' },
-    ],
-  },
-];
+const INGREDIENT_NAME_VI: Record<string, string> = {
+  chicken: 'Gà',
+  egg: 'Trứng',
+  milk: 'Sữa',
+  bread: 'Bánh mì',
+  cheese: 'Phô mai',
+  rice: 'Gạo',
+  pasta: 'Pasta',
+  potato: 'Khoai tây',
+  onion: 'Hành tây',
+  tomato: 'Cà chua',
+  lettuce: 'Rau xà lách',
+  'ground-meat': 'Thịt băm',
+  beef: 'Thịt bò',
+  bacon: 'Thịt xông khói',
+  sausage: 'Xúc xích',
+  carrot: 'Cà rốt',
+  apple: 'Táo',
+  banana: 'Chuối',
+  orange: 'Cam',
+  strawberry: 'Dâu tây',
+  blueberry: 'Việt quất',
+  spinach: 'Rau bina',
+  cucumber: 'Dưa chuột',
+  avocado: 'Bơ',
+  'sweet-potato': 'Khoai lang',
+  corn: 'Bắp',
+  yogurt: 'Sữa chua',
+  salmon: 'Cá hồi',
+  turkey: 'Gà tây',
+  ham: 'Giăm bông',
+  shrimp: 'Tôm',
+  pork: 'Thịt lợn',
+  tofu: 'Đậu phụ',
+  almond: 'Hạnh nhân',
+  'cashew-nuts': 'Hạt điều',
+  mushroom: 'Nấm',
+  'green-bean': 'Đậu que',
+  zucchini: 'Bí ngòi',
+  grape: 'Nho',
+  pear: 'Lê',
+  peach: 'Đào',
+  mango: 'Xoài',
+  lemon: 'Chanh',
+  'chia-seed': 'Hạt chia',
+  'black-bean': 'Đậu đen',
+  chickpea: 'Đậu gà',
+  kale: 'Cải xoăn',
+  cauliflower: 'Súp lơ trắng',
+  'bell-pepper': 'Ớt chuông',
+  pumpkin: 'Bí đỏ',
+  radish: 'Củ cải đỏ',
+  'red-cabbage': 'Bắp cải tím',
+  'red-leaf-lettuce': 'Xà lách đỏ',
+  kiwi: 'Kiwi',
+  artichoke: 'Atiso',
+  asparagus: 'Măng tây',
+  'crab-meat': 'Thịt cua',
+  clam: 'Nghêu',
+  cod: 'Cá tuyết',
+  mussel: 'Vẹm',
+  squid: 'Mực',
+  oyster: 'Hàu',
+  noodles: 'Mì',
+  flour: 'Bột mì',
+  water: 'Nước',
+  basil: 'Húng quế',
+  cilantro: 'Rau mùi',
+  cherry: 'Cherry',
+  'honeydew-melon': 'Dưa lưới xanh',
+  'lamb-chop': 'Sườn cừu',
+  'bean-sprouts': 'Giá đỗ',
+  'beef-bone': 'Xương bò',
+  'beef-short-ribs': 'Sườn bò ngắn',
+  'blood-sausage': 'Dồi huyết',
+  chikuwa: 'Chikuwa',
+  'deep-fried-tofu': 'Đậu phụ chiên',
+  eel: 'Lươn',
+  'enoki-mushroom': 'Nấm kim châm',
+  'fish-cake': 'Chả cá',
+  'fish-tofu': 'Đậu phụ cá',
+  'gimbap-seaweed': 'Rong biển kimbap',
+  'glutinous-rice': 'Gạo nếp',
+  'instant-noodles': 'Mì ăn liền',
+  kamaboko: 'Kamaboko',
+  'king-oyster-mushroom': 'Nấm đùi gà',
+  kombu: 'Rong biển kombu',
+  'matsutake-mushroom': 'Nấm tùng nhung',
+  'pacific-saury': 'Cá thu đao',
+  'perilla-leaves': 'Lá tía tô',
+  'pork-belly': 'Ba chỉ heo',
+  soju: 'Soju',
+  tteok: 'Bánh gạo',
+  'udon-noodles': 'Mì udon',
+  'water-dropwort': 'Rau cần nước',
+  yam: 'Khoai từ',
+  abalone: 'Bào ngư',
+  chestnut: 'Hạt dẻ',
+  'chicken-gizzards': 'Mề gà',
+  chives: 'Hẹ',
+  'dried-pollack': 'Cá minh thái khô',
+  eggplant: 'Cà tím',
+  'fish-ball': 'Viên cá',
+  'glass-noodles': 'Miến',
+  jujube: 'Táo tàu',
+  kimchi: 'Kimchi',
+  'korean-beef': 'Bò Hàn',
+  'koya-dofu': 'Đậu phụ koya',
+  natto: 'Natto',
+  scallops: 'Sò điệp',
+  seaweed: 'Rong biển',
+  shirataki: 'Mì shirataki',
+  'short-neck-clams': 'Nghêu cổ ngắn',
+  whitebait: 'Cá cơm trắng',
+};
+
+const ingredientMap = new Map(INGREDIENT_LIBRARY.map((item) => [item.id, item]));
+
+function isIngredientItem(item: IngredientItem | undefined): item is IngredientItem {
+  return item !== undefined;
+}
+
+export function getIngredientById(id: string) {
+  return ingredientMap.get(id);
+}
+
+export function getIngredientsByIds(ids: string[]) {
+  return ids.map((id) => ingredientMap.get(id)).filter(isIngredientItem);
+}
+
+export function getIngredientDisplayName(ingredient: IngredientItem, locale: string) {
+  if (locale.toLowerCase().startsWith('vi')) {
+    return INGREDIENT_NAME_VI[ingredient.id] ?? ingredient.name;
+  }
+
+  return ingredient.name;
+}
+

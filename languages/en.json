@@ -78,10 +78,62 @@
     "defaultKeyword": "Pho",
     "tagFilter": "Tag +",
     "timeFilter": "Time +",
+    "caloriesFilter": "Calories +",
+    "cookwareFilter": "Cookware +",
+    "tagSheetTitle": "Tag",
+    "timeSheetTitle": "Time",
+    "caloriesSheetTitle": "Calories",
+    "cookwareSheetTitle": "Cookware",
+    "apply": "Apply",
     "clearAllTags": "Clear tags",
+    "noMatches": "No matches found",
     "results": "Search results %{count}",
     "cal": "Cal",
-    "minute": "min"
+    "minute": "min",
+    "options": {
+      "tags": {
+        "lowCalorie": "Low Calorie",
+        "highProtein": "High Protein",
+        "lowFat": "Low Fat",
+        "lunch": "Lunch",
+        "dinner": "Dinner",
+        "snack": "Snack",
+        "breakfast": "Breakfast",
+        "soup": "Soup",
+        "highFiber": "High Fiber",
+        "familyFriendly": "Family Friendly",
+        "sideDish": "Side Dish",
+        "kidFriendly": "Kid Friendly",
+        "lazyCook": "Lazy Cook",
+        "onePot": "One Pot",
+        "glutenFree": "Gluten Free",
+        "ketoFriendly": "Keto Friendly",
+        "vegan": "Vegan",
+        "vegetarian": "Vegetarian",
+        "eggFree": "Egg Free",
+        "shellfishFree": "Shellfish Free"
+      },
+      "time": {
+        "under5": "Under 5 min",
+        "under10": "Under 10 min",
+        "under20": "Under 20 min",
+        "under30": "Under 30 min"
+      },
+      "calories": {
+        "lt200": "< 200 Cal",
+        "lt500": "< 500 Cal",
+        "lt1000": "< 1000 Cal"
+      },
+      "cookware": {
+        "fryingPan": "Frying Pan",
+        "skillet": "Skillet",
+        "microwave": "Microwave",
+        "airFryer": "Air Fryer",
+        "oven": "Oven",
+        "blender": "Blender",
+        "slowCooker": "Slow Cooker"
+      }
+    }
   },
   "account": {
     "guest": "Guest",

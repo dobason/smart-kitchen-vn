@@ -1,14 +1,14 @@
 export type IngredientItem = {
-  id?: string;
-  emoji?: string;
+  id: string;
   name: string;
-  qty?: string;
-  unit?: string;
-  bg?: string;
+  emoji: string;
+  bgColor: string;
 };
 
-export type IngredientGroup = {
-  id: string;
-  label: string;
-  items: IngredientItem[];
+export type CookingIngredientItem = {
+  emoji: string;
+  name: string;
+  qty: string;
+  bg: string;
 };
+ 
