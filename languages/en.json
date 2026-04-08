@@ -60,17 +60,80 @@
   "home": {
     "search": "Search",
     "generateRecipesVia": "Generate recipes via",
-    "addIngredients": "Add ingredients"
+    "addIngredients": "Add ingredients",
+    "searchPlaceholder": "Search for what you want",
+    "moreIngredients": "More Ingredients",
+    "generateWith": "Generate with",
+    "generateWithAI": "Generate with AI"
+  },
+  "ingredientsPicker": {
+    "title": "Choose Your Ingredients",
+    "searchPlaceholder": "Type an ingredient to add",
+    "youMightHave": "You Might Have",
+    "selected": "Selected %{count}",
+    "confirm": "CONFIRM"
   },
   "searchResults": {
     "searchPlaceholder": "Search dishes or ingredients",
     "defaultKeyword": "Pho",
     "tagFilter": "Tag +",
     "timeFilter": "Time +",
+    "caloriesFilter": "Calories +",
+    "cookwareFilter": "Cookware +",
+    "tagSheetTitle": "Tag",
+    "timeSheetTitle": "Time",
+    "caloriesSheetTitle": "Calories",
+    "cookwareSheetTitle": "Cookware",
+    "apply": "Apply",
     "clearAllTags": "Clear tags",
+    "noMatches": "No matches found",
     "results": "Search results %{count}",
     "cal": "Cal",
-    "minute": "min"
+    "minute": "min",
+    "options": {
+      "tags": {
+        "lowCalorie": "Low Calorie",
+        "highProtein": "High Protein",
+        "lowFat": "Low Fat",
+        "lunch": "Lunch",
+        "dinner": "Dinner",
+        "snack": "Snack",
+        "breakfast": "Breakfast",
+        "soup": "Soup",
+        "highFiber": "High Fiber",
+        "familyFriendly": "Family Friendly",
+        "sideDish": "Side Dish",
+        "kidFriendly": "Kid Friendly",
+        "lazyCook": "Lazy Cook",
+        "onePot": "One Pot",
+        "glutenFree": "Gluten Free",
+        "ketoFriendly": "Keto Friendly",
+        "vegan": "Vegan",
+        "vegetarian": "Vegetarian",
+        "eggFree": "Egg Free",
+        "shellfishFree": "Shellfish Free"
+      },
+      "time": {
+        "under5": "Under 5 min",
+        "under10": "Under 10 min",
+        "under20": "Under 20 min",
+        "under30": "Under 30 min"
+      },
+      "calories": {
+        "lt200": "< 200 Cal",
+        "lt500": "< 500 Cal",
+        "lt1000": "< 1000 Cal"
+      },
+      "cookware": {
+        "fryingPan": "Frying Pan",
+        "skillet": "Skillet",
+        "microwave": "Microwave",
+        "airFryer": "Air Fryer",
+        "oven": "Oven",
+        "blender": "Blender",
+        "slowCooker": "Slow Cooker"
+      }
+    }
   },
   "account": {
     "guest": "Guest",
@@ -85,6 +148,7 @@
     "cancel": "Cancel",
     "create": "Create",
     "editName": "Edit name",
+    "name": "Name",
     "deleteCookbook": "Delete cookbook",
     "todayRemainingImports": "Today's remaining imports",
     "searchInMyRecipes": "Search in my recipes",
@@ -96,16 +160,91 @@
     "successAnalyzed": "Analysis complete from %{source}.",
     "aiSourceCamera": "Camera photo",
     "aiSourcePhotoLibrary": "Photo library",
-    "notifyTitle": "Notice",
+    "notifyTitle": "Notice",    
     "renameComingSoon": "The rename feature will be available in a future update.",
     "notCooked": "Not Cooked",
     "addIntoCookbook": "Add into cookbook",
     "startCooking": "Start Cooking"
   },
+  "aiRecipe": {
+    "title": "AI Recipe",
+    "ingredient": "Ingredient",
+    "add": "Add",
+    "selectCookware": "Select Your Cookware",
+    "dishType": "Dish Type",
+    "diet": "Diet",
+    "cuisine": "Cuisine",
+    "time": "Time",
+    "allergenFree": "Allergen-Free",
+    "extraCommand": "Extra Command",
+    "extraPlaceholder": "Any other requests? Write here",
+    "generate": "Generate Recipe",
+    "generatingTitle": "Generating recipe",
+    "generatingDescription": "AI is preparing your recipe from selected preferences.",
+    "generatingStatus": "Recipe generating...",
+    "generatedDoneTitle": "Recipe is ready",
+    "generatedDoneDescription": "Your AI recipe has been generated. Tap OK to return to home.",
+    "ok": "OK",
+    "ingredientLimitTitle": "Ingredient list is full",
+    "ingredientLimitDescription": "Tap an ingredient chip to remove it, then add a new one.",
+    "options": {
+      "cookware": {
+        "fryingPan": "Frying Pan",
+        "skillet": "Skillet",
+        "microwave": "Microwave",
+        "airFryer": "Air Fryer",
+        "oven": "Oven",
+        "blender": "Blender",
+        "slowCooker": "Slow Cooker"
+      },
+      "dishType": {
+        "breakfast": "Breakfast",
+        "lunch": "Lunch",
+        "dinner": "Dinner",
+        "snack": "Snack",
+        "dessert": "Dessert",
+        "drink": "Drink"
+      },
+      "diet": {
+        "vegan": "Vegan",
+        "vegetarian": "Vegetarian",
+        "ketoFriendly": "Keto-friendly",
+        "lowCarb": "Low-carb",
+        "lowCalorie": "Low-calorie",
+        "lowFat": "Low-fat",
+        "highProtein": "High-protein",
+        "highFiber": "High-fiber",
+        "petFood": "Pet Food"
+      },
+      "cuisine": {
+        "american": "American",
+        "mexican": "Mexican",
+        "chinese": "Chinese",
+        "italian": "Italian",
+        "japanese": "Japanese",
+        "korean": "Korean",
+        "spicy": "Spicy",
+        "sweet": "Sweet",
+        "savory": "Savory"
+      },
+      "allergenFree": {
+        "nutFree": "Nut-Free",
+        "eggFree": "Egg-Free",
+        "soyFree": "Soy-Free",
+        "shellfishFree": "Shellfish-Free"
+      },
+      "time": {
+        "lt15": "< 15 Mins",
+        "lt30": "< 30 Mins",
+        "lt60": "< 60 Mins"
+      }
+    }
+  },
   "steps": {
     "STEPS": "STEPS",
     "optimizeSteps": "Optimize Steps",
-    "step": "Step"
+    "step": "Step",
+    "addStep": "Add step"
   },
   "ingredients": {
     "INGREDIENTS": "INGREDIENTS",
@@ -124,7 +263,19 @@
     "addNote": "Add a note to this recipe",
     "next": "Next",
     "back": "Back",
+    "edit": "Edit",
+    "save": "Save",
+    "info": "Information",
+    "reOrder": "Re-order",
+    "saved": "Saved",
+    "changePhoto": "Change Photo",
+    "deleteTitle": "Delete recipe",
+    "deleteMessage": "Are you sure you want to delete this recipe?",
+    "delete": "Delete",
+    "cancel": "Cancel",
     "success": "Success!",
+    "successSave": "Saved successfully",
+    "successUpdate": "Recipe updated successfully!",
     "congratulations": "Congratulations",
     "congratulationsMessage": "Congratulations on completing the cooking steps! Enjoy your meal!"
   },

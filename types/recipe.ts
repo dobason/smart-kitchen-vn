@@ -1,4 +1,4 @@
-import { IngredientItem } from './ingredient';
+import { CookingIngredientItem } from './ingredient';
 import { StepItem } from './step';
 
 export type SearchRecipeItem = {
@@ -9,6 +9,7 @@ export type SearchRecipeItem = {
   timeMinutes: number;
   imageUrl: string;
   tags: string[];
+  cookware?: string[];
 };
 
 export type RecipeDetail = SearchRecipeItem & {
@@ -18,6 +19,6 @@ export type RecipeDetail = SearchRecipeItem & {
   calories: number;
   total_time: number;
   image_url: string;
-  ingredients: IngredientItem[];
+  ingredients: CookingIngredientItem[];
   steps: StepItem[];
 };

@@ -60,17 +60,80 @@
   "home": {
     "search": "Tìm kiếm",
     "generateRecipesVia": "Tạo công thức bằng",
-    "addIngredients": "Thêm nguyên liệu"
+    "addIngredients": "Thêm nguyên liệu",
+    "searchPlaceholder": "Tìm thứ bạn muốn",
+    "moreIngredients": "Thêm nguyên liệu",
+    "generateWith": "Tạo với",
+    "generateWithAI": "Tạo với AI"
+  },
+  "ingredientsPicker": {
+    "title": "Chọn nguyên liệu của bạn",
+    "searchPlaceholder": "Nhập nguyên liệu để thêm",
+    "youMightHave": "Bạn có thể có",
+    "selected": "Đã chọn %{count}",
+    "confirm": "XÁC NHẬN"
   },
   "searchResults": {
     "searchPlaceholder": "Tìm món hoặc nguyên liệu",
     "defaultKeyword": "Phở",
     "tagFilter": "Thẻ +",
     "timeFilter": "Thời gian +",
+    "caloriesFilter": "Calories +",
+    "cookwareFilter": "Dụng cụ +",
+    "tagSheetTitle": "Thẻ",
+    "timeSheetTitle": "Thời gian",
+    "caloriesSheetTitle": "Calories",
+    "cookwareSheetTitle": "Dụng cụ",
+    "apply": "Áp dụng",
     "clearAllTags": "Xóa tag",
+    "noMatches": "Không tìm thấy món phù hợp",
     "results": "Kết quả tìm kiếm %{count}",
     "cal": "Cal",
-    "minute": "phút"
+    "minute": "phút",
+    "options": {
+      "tags": {
+        "lowCalorie": "Ít calo",
+        "highProtein": "Giàu đạm",
+        "lowFat": "Ít béo",
+        "lunch": "Bữa trưa",
+        "dinner": "Bữa tối",
+        "snack": "Ăn vặt",
+        "breakfast": "Bữa sáng",
+        "soup": "Món súp",
+        "highFiber": "Giàu chất xơ",
+        "familyFriendly": "Phù hợp gia đình",
+        "sideDish": "Món ăn kèm",
+        "kidFriendly": "Phù hợp trẻ em",
+        "lazyCook": "Nấu nhanh gọn",
+        "onePot": "Một nồi",
+        "glutenFree": "Không gluten",
+        "ketoFriendly": "Thân thiện Keto",
+        "vegan": "Thuần chay",
+        "vegetarian": "Ăn chay",
+        "eggFree": "Không trứng",
+        "shellfishFree": "Không hải sản có vỏ"
+      },
+      "time": {
+        "under5": "Dưới 5 phút",
+        "under10": "Dưới 10 phút",
+        "under20": "Dưới 20 phút",
+        "under30": "Dưới 30 phút"
+      },
+      "calories": {
+        "lt200": "< 200 Cal",
+        "lt500": "< 500 Cal",
+        "lt1000": "< 1000 Cal"
+      },
+      "cookware": {
+        "fryingPan": "Chảo rán",
+        "skillet": "Chảo sâu",
+        "microwave": "Lò vi sóng",
+        "airFryer": "Nồi chiên không dầu",
+        "oven": "Lò nướng",
+        "blender": "Máy xay",
+        "slowCooker": "Nồi nấu chậm"
+      }
+    }
   },
   "account": {
     "guest": "Khách",
@@ -87,6 +150,7 @@
     "cancel": "Hủy",
     "create": "Tạo mới",
     "editName": "Chỉnh sửa tên",
+    "name": "Tên",
     "deleteCookbook": "Xóa sổ tay",
     "errorTitle": "Lỗi",
     "errorEmptyName": "Tên sổ tay không được để trống!",
@@ -102,10 +166,85 @@
     "addIntoCookbook": "Thêm vào sổ nấu ăn",
     "startCooking": "Bắt đầu nấu"
   },
+  "aiRecipe": {
+    "title": "Công thức AI",
+    "ingredient": "Nguyên liệu",
+    "add": "Thêm",
+    "selectCookware": "Chọn dụng cụ nấu",
+    "dishType": "Loại món",
+    "diet": "Chế độ ăn",
+    "cuisine": "Ẩm thực",
+    "time": "Thời gian",
+    "allergenFree": "Không dị ứng",
+    "extraCommand": "Yêu cầu thêm",
+    "extraPlaceholder": "Bạn muốn thêm gì nữa? Hãy nhập ở đây",
+    "generate": "Tạo công thức",
+    "generatingTitle": "Đang tạo công thức",
+    "generatingDescription": "AI đang chuẩn bị công thức theo các lựa chọn của bạn.",
+    "generatingStatus": "Recipe generating...",
+    "generatedDoneTitle": "Đã tạo xong công thức",
+    "generatedDoneDescription": "Công thức AI đã sẵn sàng. Nhấn OK để quay về trang chính.",
+    "ok": "OK",
+    "ingredientLimitTitle": "Danh sách nguyên liệu đã đầy",
+    "ingredientLimitDescription": "Nhấn vào chip nguyên liệu để xóa rồi thêm mới.",
+    "options": {
+      "cookware": {
+        "fryingPan": "Chảo rán",
+        "skillet": "Chảo sâu",
+        "microwave": "Lò vi sóng",
+        "airFryer": "Nồi chiên không dầu",
+        "oven": "Lò nướng",
+        "blender": "Máy xay",
+        "slowCooker": "Nồi nấu chậm"
+      },
+      "dishType": {
+        "breakfast": "Bữa sáng",
+        "lunch": "Bữa trưa",
+        "dinner": "Bữa tối",
+        "snack": "Ăn vặt",
+        "dessert": "Tráng miệng",
+        "drink": "Đồ uống"
+      },
+      "diet": {
+        "vegan": "Thuần chay",
+        "vegetarian": "Ăn chay",
+        "ketoFriendly": "Thân thiện Keto",
+        "lowCarb": "Ít tinh bột",
+        "lowCalorie": "Ít calo",
+        "lowFat": "Ít béo",
+        "highProtein": "Giàu đạm",
+        "highFiber": "Giàu chất xơ",
+        "petFood": "Thức ăn thú cưng"
+      },
+      "cuisine": {
+        "american": "Mỹ",
+        "mexican": "Mexico",
+        "chinese": "Trung Hoa",
+        "italian": "Ý",
+        "japanese": "Nhật Bản",
+        "korean": "Hàn Quốc",
+        "spicy": "Cay",
+        "sweet": "Ngọt",
+        "savory": "Đậm vị"
+      },
+      "allergenFree": {
+        "nutFree": "Không hạt",
+        "eggFree": "Không trứng",
+        "soyFree": "Không đậu nành",
+        "shellfishFree": "Không hải sản vỏ"
+      },
+      "time": {
+        "lt15": "< 15 phút",
+        "lt30": "< 30 phút",
+        "lt60": "< 60 phút"
+      }
+    }
+  },
   "steps": {
     "STEPS": "CÁC BƯỚC NẤU",
     "optimizeSteps": "Tối ưu các bước nấu",
-    "step": "Bước"
+    "step": "Bước",
+    "addStep": "Thêm bước"
   },
   "ingredients": {
     "INGREDIENTS": "NGUYÊN LIỆU",
@@ -124,7 +263,19 @@
     "addNote": "Thêm ghi chú cho công thức này",
     "next": "Tiếp tục",
     "back": "Trở về",
+    "edit": "Chỉnh sửa",
+    "save": "Lưu",
+    "info": "Thông tin",
+    "reOrder": "Sắp xếp lại",
+    "saved": "Đã tiết kiệm",
+    "changePhoto": "Thay đổi hình",
+    "deleteTitle": "Xóa công thức",
+    "deleteMessage": "Bạn có chắc chắn muốn xóa công thức này không?",
+    "delete": "Xóa",
+    "cancel": "Hủy",
     "success": "Hoàn thành",
+    "successSave": "Lưu thành công",
+    "successUpdate": "Công thức đã cập nhật thành công!",
     "congratulations": "Chúc mừng",
     "congratulationsMessage": "Chúc mừng bạn đã hoàn thành các bước nấu món ăn! Chúc bạn ngon miệng!"
   },
