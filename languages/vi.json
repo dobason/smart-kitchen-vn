@@ -150,6 +150,7 @@
     "cancel": "Hủy",
     "create": "Tạo mới",
     "editName": "Chỉnh sửa tên",
+    "name": "Tên",
     "deleteCookbook": "Xóa sổ tay",
     "errorTitle": "Lỗi",
     "errorEmptyName": "Tên sổ tay không được để trống!",
@@ -242,7 +243,8 @@
   "steps": {
     "STEPS": "CÁC BƯỚC NẤU",
     "optimizeSteps": "Tối ưu các bước nấu",
-    "step": "Bước"
+    "step": "Bước",
+    "addStep": "Thêm bước"
   },
   "ingredients": {
     "INGREDIENTS": "NGUYÊN LIỆU",
@@ -261,8 +263,42 @@
     "addNote": "Thêm ghi chú cho công thức này",
     "next": "Tiếp tục",
     "back": "Trở về",
+    "edit": "Chỉnh sửa",
+    "save": "Lưu",
+    "info": "Thông tin",
+    "reOrder": "Sắp xếp lại",
+    "saved": "Đã tiết kiệm",
+    "changePhoto": "Thay đổi hình",
+    "deleteTitle": "Xóa công thức",
+    "deleteMessage": "Bạn có chắc chắn muốn xóa công thức này không?",
+    "delete": "Xóa",
+    "cancel": "Hủy",
     "success": "Hoàn thành",
+    "successSave": "Lưu thành công",
+    "successUpdate": "Công thức đã cập nhật thành công!",
     "congratulations": "Chúc mừng",
     "congratulationsMessage": "Chúc mừng bạn đã hoàn thành các bước nấu món ăn! Chúc bạn ngon miệng!"
+  },
+    "recipePage": {
+      "recipeTab": "Công thức"
+    },
+  "cookbookDetail": {
+    "manageCookbook": "Quản lý sổ tay",
+    "rename": "Đổi tên",
+    "confirm": "Xác nhận",
+    "total": "Tổng",
+    "selectAll": "Chọn tất cả",
+    "moveTo": "Chuyển đến",
+    "addRecipesFrom": "Thêm công thức từ",
+    "myOwnRecipes": "Công thức của tôi",
+    "importNewRecipes": "Nhập công thức mới",
+    "move": "Di chuyển",
+    "uncategorized": "Chưa phân loại",
+    "desserts": "Món tráng miệng",
+    "dinner": "Bữa tối",
+    "camera": "Máy ảnh",
+    "photo": "Ảnh",
+    "instruction": "Hướng dẫn thêm công thức",
+    "aiAnalyzing": "AI đang phân tích dữ liệu..."
   }
 }
