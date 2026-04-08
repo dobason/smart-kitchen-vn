@@ -57,6 +57,14 @@ export default function TabsLayout() {
         name="recipe-edit"
         options={{ href: null }}
       />
+      <Tabs.Screen
+        name="import-recipe"
+        options={{ href: null }}
+      />
+      <Tabs.Screen
+        name="cookbook-detail"
+        options={{ headerShown: false, href: null }}
+      />
     </Tabs>
   );
 }
