@@ -1,7 +1,14 @@
 import { SearchFilterChip } from '@/components/in-app-ui/search-filter-chip';
 import { SearchQueryBar } from '@/components/in-app-ui/search-query-bar';
-import { SearchRecipeCard, type SearchRecipeItem } from '@/components/in-app-ui/search-recipe-card';
+import { SearchRecipeCard } from '@/components/in-app-ui/search-recipe-card';
 import { VietnamText } from '@/components/in-app-ui/vietnam-text';
+import {
+  SEARCH_CALORIES_FILTER_OPTIONS,
+  SEARCH_COOKWARE_FILTER_OPTIONS,
+  SEARCH_TAG_OPTIONS,
+  SEARCH_TIME_FILTER_OPTIONS,
+} from '@/constants/searchFilterOptions';
+import { SEARCH_RECIPES } from '@/constants/recipeData';
 import { Icon } from '@/components/ui/icon';
 import { useLocale } from '@/hooks/use-locale';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -9,42 +16,6 @@ import { BrushCleaning, X } from 'lucide-react-native';
 import * as React from 'react';
 import { Modal, Pressable, ScrollView, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { SEARCH_RECIPES } from '@/constants/recipeData';
-
-type TimeFilterOption = {
-  label: string;
-  maxMinutes: number;
-};
-
-const AVAILABLE_TAGS = [
-  'Low Calorie',
-  'High Protein',
-  'Low Fat',
-  'Lunch',
-  'Dinner',
-  'Snack',
-  'Breakfast',
-  'Soup',
-  'High Fiber',
-  'Family Friendly',
-  'Side Dish',
-  'Kid Friendly',
-  'Lazy Cook',
-  'One Pot',
-  'Gluten Free',
-  'Keto Friendly',
-  'Vegan',
-  'Vegetarian',
-  'Egg Free',
-  'Shellfish Free',
-];
-
-const TIME_FILTER_OPTIONS: TimeFilterOption[] = [
-  { label: 'Under 5 min', maxMinutes: 5 },
-  { label: 'Under 10 min', maxMinutes: 10 },
-  { label: 'Under 20 min', maxMinutes: 20 },
-  { label: 'Under 30 min', maxMinutes: 30 },
-];
 
 function normalizeSearchText(value: string) {
   return value
@@ -70,6 +41,14 @@ type CookingTimeSheetProps = {
   onClose: () => void;
 };
 
+type CaloriesFilterSheetProps = {
+  visible: boolean;
+  selectedMaxCalories: number | null;
+  onSelect: (maxCalories: number | null) => void;
+  onApply: () => void;
+  onClose: () => void;
+};
+
 type TagFilterSheetProps = {
   visible: boolean;
   selectedTags: string[];
@@ -77,11 +56,17 @@ type TagFilterSheetProps = {
   onClose: () => void;
 };
 
+type CookwareFilterSheetProps = {
+  visible: boolean;
+  selectedCookware: string[];
+  onApply: (cookware: string[]) => void;
+  onClose: () => void;
+};
+
 function TagFilterSheet({ visible, selectedTags, onApply, onClose }: TagFilterSheetProps) {
-  // Biến tạm để lưu các tag đang được chọn trong lúc mở Modal (chưa bấm Apply)
+  const { t } = useLocale();
   const [pendingTags, setPendingTags] = React.useState<string[]>(selectedTags);
 
-  // Mỗi khi mở Modal lên, đồng bộ biến tạm với state thật ở ngoài
   React.useEffect(() => {
     if (visible) setPendingTags(selectedTags);
   }, [visible, selectedTags]);
@@ -102,17 +87,15 @@ function TagFilterSheet({ visible, selectedTags, onApply, onClose }: TagFilterSh
       animationType="slide"
       statusBarTranslucent
       onRequestClose={onClose}>
-      {/* Dim backdrop */}
       <Pressable className="flex-1 bg-black/40" onPress={onClose} />
 
-      {/* Sheet Container */}
       <View className="absolute bottom-0 left-0 right-0 max-h-[80%] rounded-t-3xl bg-[#F5F5F6] pb-10 pt-4 shadow-2xl">
-        {/* Drag handle */}
         <View className="mb-4 h-1.5 w-12 self-center rounded-full bg-[#D1D1D6]" />
 
-        {/* Header */}
         <View className="mb-5 flex-row items-center justify-between px-5">
-          <VietnamText className="text-2xl font-bold text-[#1C1C1E]">Recipe Tags</VietnamText>
+          <VietnamText className="text-2xl font-bold text-[#1C1C1E]">
+            {t('searchResults.tagSheetTitle')}
+          </VietnamText>
           <TouchableOpacity
             onPress={onClose}
             className="h-8 w-8 items-center justify-center rounded-full bg-white shadow-sm">
@@ -120,28 +103,25 @@ function TagFilterSheet({ visible, selectedTags, onApply, onClose }: TagFilterSh
           </TouchableOpacity>
         </View>
 
-        {/* Scrollable Tags Area */}
         <ScrollView
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 20 }}>
           <View className="flex-row flex-wrap gap-3">
-            {AVAILABLE_TAGS.map((tag) => {
-              const isSelected = pendingTags.includes(tag);
+            {SEARCH_TAG_OPTIONS.map((tagOption) => {
+              const isSelected = pendingTags.includes(tagOption.value);
               return (
                 <TouchableOpacity
-                  key={tag}
-                  onPress={() => toggleTag(tag)}
+                  key={tagOption.value}
+                  onPress={() => toggleTag(tagOption.value)}
                   activeOpacity={0.7}
                   className={`rounded-full px-4 py-2.5 ${
-                    isSelected
-                      ? 'border border-[#2E7D32] bg-[#2E7D32]' // Màu xanh khi được chọn
-                      : 'border border-[#E5E5EA] bg-white' // Màu trắng khi chưa chọn
+                    isSelected ? 'border border-[#CE232A] bg-[#CE232A]' : 'border border-[#E5E5EA] bg-white'
                   }`}>
                   <VietnamText
                     className={`text-[15px] font-medium ${
                       isSelected ? 'text-white' : 'text-[#1C1C1E]'
                     }`}>
-                    {tag}
+                    {t(tagOption.labelKey)}
                   </VietnamText>
                 </TouchableOpacity>
               );
@@ -149,13 +129,14 @@ function TagFilterSheet({ visible, selectedTags, onApply, onClose }: TagFilterSh
           </View>
         </ScrollView>
 
-        {/* Apply Button */}
         <View className="bg-[#F5F5F6] px-5 pt-4">
           <TouchableOpacity
             onPress={handleApply}
             activeOpacity={0.85}
-            className="items-center justify-center rounded-full bg-[#1F7B44] py-4 shadow-sm">
-            <VietnamText className="text-lg font-bold text-white">Apply</VietnamText>
+            className="items-center justify-center rounded-full bg-[#CE232A] py-4 shadow-sm">
+            <VietnamText className="text-lg font-bold text-white">
+              {t('searchResults.apply')}
+            </VietnamText>
           </TouchableOpacity>
         </View>
       </View>
@@ -170,6 +151,7 @@ function CookingTimeSheet({
   onApply,
   onClose,
 }: CookingTimeSheetProps) {
+  const { t } = useLocale();
   const [pending, setPending] = React.useState<number | null>(selectedMaxMinutes);
 
   React.useEffect(() => {
@@ -181,23 +163,83 @@ function CookingTimeSheet({
     onApply();
   }
 
-  const boldNumber = (label: string) => {
-    // Split "Under X min" into parts so we can bold the number
-    const parts = label.split(/(\d+)/);
-    return (
-      <VietnamText className="text-base text-[#1C1C1E]">
-        {parts.map((part, i) =>
-          /^\d+$/.test(part) ? (
-            <VietnamText key={i} className="text-base font-bold text-[#1C1C1E]">
-              {part}
-            </VietnamText>
-          ) : (
-            part
-          )
-        )}
-      </VietnamText>
-    );
-  };
+  return (
+    <Modal
+      visible={visible}
+      transparent
+      animationType="slide"
+      statusBarTranslucent
+      onRequestClose={onClose}>
+      <Pressable className="flex-1 bg-black/40" onPress={onClose} />
+
+      <View className="absolute bottom-0 left-0 right-0 rounded-t-3xl bg-white px-5 pb-10 pt-4 shadow-2xl">
+        <View className="mb-4 h-1 w-10 self-center rounded-full bg-[#E0E0E0]" />
+
+        <View className="mb-5 flex-row items-center justify-between">
+          <VietnamText className="text-2xl font-bold text-[#1C1C1E]">
+            {t('searchResults.timeSheetTitle')}
+          </VietnamText>
+          <TouchableOpacity
+            onPress={onClose}
+            className="h-8 w-8 items-center justify-center rounded-full bg-[#F2F2F2]">
+            <Icon as={X} size={16} className="text-[#1C1C1E]" />
+          </TouchableOpacity>
+        </View>
+
+        <View className="mb-6 gap-y-3">
+          {SEARCH_TIME_FILTER_OPTIONS.map((opt) => {
+            const isSelected = pending === opt.maxMinutes;
+            return (
+              <TouchableOpacity
+                key={opt.maxMinutes}
+                onPress={() => setPending(isSelected ? null : opt.maxMinutes)}
+                activeOpacity={0.7}
+                className={`flex-row items-center justify-between rounded-2xl px-4 py-4 ${
+                  isSelected ? 'bg-[#FFF4F4]' : 'bg-[#F7F7F7]'
+                }`}>
+                <VietnamText className="text-base font-semibold text-[#1C1C1E]">
+                  {t(opt.labelKey)}
+                </VietnamText>
+                <View
+                  className={`h-6 w-6 items-center justify-center rounded-full border-2 ${
+                    isSelected ? 'border-[#CE232A]' : 'border-[#D1D1D6]'
+                  }`}>
+                  {isSelected && <View className="h-3 w-3 rounded-full bg-[#CE232A]" />}
+                </View>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+
+        <TouchableOpacity
+          onPress={handleApply}
+          activeOpacity={0.85}
+          className="items-center rounded-2xl bg-[#CE232A] py-4">
+          <VietnamText className="text-base font-bold text-white">{t('searchResults.apply')}</VietnamText>
+        </TouchableOpacity>
+      </View>
+    </Modal>
+  );
+}
+
+function CaloriesFilterSheet({
+  visible,
+  selectedMaxCalories,
+  onSelect,
+  onApply,
+  onClose,
+}: CaloriesFilterSheetProps) {
+  const { t } = useLocale();
+  const [pending, setPending] = React.useState<number | null>(selectedMaxCalories);
+
+  React.useEffect(() => {
+    if (visible) setPending(selectedMaxCalories);
+  }, [visible, selectedMaxCalories]);
+
+  function handleApply() {
+    onSelect(pending);
+    onApply();
+  }
 
   return (
     <Modal
@@ -206,17 +248,15 @@ function CookingTimeSheet({
       animationType="slide"
       statusBarTranslucent
       onRequestClose={onClose}>
-      {/* Dim backdrop */}
       <Pressable className="flex-1 bg-black/40" onPress={onClose} />
 
-      {/* Sheet */}
       <View className="absolute bottom-0 left-0 right-0 rounded-t-3xl bg-white px-5 pb-10 pt-4 shadow-2xl">
-        {/* Drag handle */}
         <View className="mb-4 h-1 w-10 self-center rounded-full bg-[#E0E0E0]" />
 
-        {/* Header */}
         <View className="mb-5 flex-row items-center justify-between">
-          <VietnamText className="text-xl font-bold text-[#1C1C1E]">Cooking Time</VietnamText>
+          <VietnamText className="text-2xl font-bold text-[#1C1C1E]">
+            {t('searchResults.caloriesSheetTitle')}
+          </VietnamText>
           <TouchableOpacity
             onPress={onClose}
             className="h-8 w-8 items-center justify-center rounded-full bg-[#F2F2F2]">
@@ -224,44 +264,124 @@ function CookingTimeSheet({
           </TouchableOpacity>
         </View>
 
-        {/* Options */}
         <View className="mb-6 gap-y-3">
-          {TIME_FILTER_OPTIONS.map((opt) => {
-            const isSelected = pending === opt.maxMinutes;
+          {SEARCH_CALORIES_FILTER_OPTIONS.map((opt) => {
+            const isSelected = pending === opt.maxCalories;
             return (
               <TouchableOpacity
-                key={opt.maxMinutes}
-                onPress={() => setPending(isSelected ? null : opt.maxMinutes)}
+                key={opt.maxCalories}
+                onPress={() => setPending(isSelected ? null : opt.maxCalories)}
                 activeOpacity={0.7}
                 className={`flex-row items-center justify-between rounded-2xl px-4 py-4 ${
-                  isSelected ? 'bg-[#F0FAF0]' : 'bg-[#F7F7F7]'
+                  isSelected ? 'bg-[#FFF4F4]' : 'bg-[#F7F7F7]'
                 }`}>
-                {boldNumber(opt.label)}
-                {/* Radio circle */}
+                <VietnamText className="text-base font-semibold text-[#1C1C1E]">
+                  {t(opt.labelKey)}
+                </VietnamText>
                 <View
                   className={`h-6 w-6 items-center justify-center rounded-full border-2 ${
-                    isSelected ? 'border-[#2E7D32]' : 'border-[#D1D1D6]'
+                    isSelected ? 'border-[#CE232A]' : 'border-[#D1D1D6]'
                   }`}>
-                  {isSelected && <View className="h-3 w-3 rounded-full bg-[#2E7D32]" />}
+                  {isSelected && <View className="h-3 w-3 rounded-full bg-[#CE232A]" />}
                 </View>
               </TouchableOpacity>
             );
           })}
         </View>
 
-        {/* Apply button */}
         <TouchableOpacity
           onPress={handleApply}
           activeOpacity={0.85}
-          className="items-center rounded-2xl bg-[#2E7D32] py-4">
-          <VietnamText className="text-base font-bold text-white">Apply</VietnamText>
+          className="items-center rounded-2xl bg-[#CE232A] py-4">
+          <VietnamText className="text-base font-bold text-white">{t('searchResults.apply')}</VietnamText>
         </TouchableOpacity>
       </View>
     </Modal>
   );
 }
 
-// ─── Main Container ───────────────────────────────────────────────────────────
+function CookwareFilterSheet({
+  visible,
+  selectedCookware,
+  onApply,
+  onClose,
+}: CookwareFilterSheetProps) {
+  const { t } = useLocale();
+  const [pendingCookware, setPendingCookware] = React.useState<string[]>(selectedCookware);
+
+  React.useEffect(() => {
+    if (visible) setPendingCookware(selectedCookware);
+  }, [visible, selectedCookware]);
+
+  function toggleCookware(id: string) {
+    setPendingCookware((prev) =>
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+    );
+  }
+
+  function handleApply() {
+    onApply(pendingCookware);
+    onClose();
+  }
+
+  return (
+    <Modal
+      visible={visible}
+      transparent
+      animationType="slide"
+      statusBarTranslucent
+      onRequestClose={onClose}>
+      <Pressable className="flex-1 bg-black/40" onPress={onClose} />
+
+      <View className="absolute bottom-0 left-0 right-0 rounded-t-3xl bg-[#F5F5F6] px-5 pb-10 pt-4 shadow-2xl">
+        <View className="mb-4 h-1.5 w-12 self-center rounded-full bg-[#D1D1D6]" />
+
+        <View className="mb-5 flex-row items-center justify-between">
+          <VietnamText className="text-2xl font-bold text-[#1C1C1E]">
+            {t('searchResults.cookwareSheetTitle')}
+          </VietnamText>
+          <TouchableOpacity
+            onPress={onClose}
+            className="h-8 w-8 items-center justify-center rounded-full bg-white shadow-sm">
+            <Icon as={X} size={18} className="text-[#1C1C1E]" />
+          </TouchableOpacity>
+        </View>
+
+        <View className="mb-6 flex-row flex-wrap justify-between gap-y-3">
+          {SEARCH_COOKWARE_FILTER_OPTIONS.map((opt) => {
+            const isSelected = pendingCookware.includes(opt.id);
+            return (
+              <TouchableOpacity
+                key={opt.id}
+                activeOpacity={0.75}
+                onPress={() => toggleCookware(opt.id)}
+                className={`flex-row items-center rounded-full border px-4 py-2.5 ${
+                  isSelected ? 'border-[#CE232A] bg-[#FFF4F4]' : 'border-[#E5E5EA] bg-white'
+                }`}
+                style={{ width: '48%' }}>
+                <VietnamText className="mr-2 text-[20px]">{opt.emoji}</VietnamText>
+                <VietnamText
+                  className={`text-[15px] font-semibold ${
+                    isSelected ? 'text-[#CE232A]' : 'text-[#1C1C1E]'
+                  }`}
+                  numberOfLines={1}>
+                  {t(opt.labelKey)}
+                </VietnamText>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+
+        <TouchableOpacity
+          onPress={handleApply}
+          activeOpacity={0.85}
+          className="items-center rounded-full bg-[#CE232A] py-4">
+          <VietnamText className="text-lg font-bold text-white">{t('searchResults.apply')}</VietnamText>
+        </TouchableOpacity>
+      </View>
+    </Modal>
+  );
+}
 
 export function SearchResultsContainer() {
   const router = useRouter();
@@ -280,38 +400,71 @@ export function SearchResultsContainer() {
     initialQuery ? [initialQuery] : []
   );
   const [savedIds, setSavedIds] = React.useState<Set<string>>(new Set());
-
-  // Time filter state
-  const [timeSheetVisible, setTimeSheetVisible] = React.useState(false);
   const [selectedMaxMinutes, setSelectedMaxMinutes] = React.useState<number | null>(null);
+  const [selectedMaxCalories, setSelectedMaxCalories] = React.useState<number | null>(null);
+  const [selectedCookware, setSelectedCookware] = React.useState<string[]>([]);
+
+  const [timeSheetVisible, setTimeSheetVisible] = React.useState(false);
   const [tagSheetVisible, setTagSheetVisible] = React.useState(false);
+  const [caloriesSheetVisible, setCaloriesSheetVisible] = React.useState(false);
+  const [cookwareSheetVisible, setCookwareSheetVisible] = React.useState(false);
 
   React.useEffect(() => {
     if (initialQuery) {
       setQuery(initialQuery);
-      setSelectedTags([initialQuery]);
     }
   }, [initialQuery]);
 
   const filteredRecipes = React.useMemo(() => {
     const keywordTerms = splitSearchTerms(query);
     const normalizedTags = selectedTags.map((tag) => normalizeSearchText(tag)).filter(Boolean);
+    const normalizedCookware = selectedCookware
+      .map((cookwareId) => normalizeSearchText(cookwareId))
+      .filter(Boolean);
+
     const activeTags = keywordTerms.length > 0 ? [] : normalizedTags;
 
     return SEARCH_RECIPES.filter((item) => {
-      const content = normalizeSearchText(item.name);
+      const normalizedName = normalizeSearchText(item.name);
+      const normalizedDescription = normalizeSearchText(item.description);
+      const searchableContent = `${normalizedName} ${normalizedDescription}`;
+
+      const normalizedItemTags = item.tags.map((tag) => normalizeSearchText(tag));
+      const normalizedItemCookware = (item.cookware ?? []).map((cookwareId) =>
+        normalizeSearchText(cookwareId)
+      );
 
       const matchQuery =
-        keywordTerms.length === 0 || keywordTerms.some((term) => content.includes(term));
-      const matchTag = activeTags.length === 0 || activeTags.some((tag) => content.includes(tag));
+        keywordTerms.length === 0 ||
+        keywordTerms.some(
+          (term) =>
+            searchableContent.includes(term) ||
+            normalizedItemTags.some((itemTag) => itemTag.includes(term))
+        );
+
+      const matchTag =
+        activeTags.length === 0 ||
+        activeTags.some(
+          (tag) =>
+            normalizedItemTags.some((itemTag) => itemTag.includes(tag)) ||
+            searchableContent.includes(tag)
+        );
 
       const matchTime =
         selectedMaxMinutes === null ||
         (typeof item.timeMinutes === 'number' && item.timeMinutes <= selectedMaxMinutes);
 
-      return matchQuery && matchTag && matchTime;
+      const matchCalories =
+        selectedMaxCalories === null ||
+        (typeof item.calories === 'number' && item.calories <= selectedMaxCalories);
+
+      const matchCookware =
+        normalizedCookware.length === 0 ||
+        normalizedCookware.some((cookwareId) => normalizedItemCookware.includes(cookwareId));
+
+      return matchQuery && matchTag && matchTime && matchCalories && matchCookware;
     });
-  }, [query, selectedTags, selectedMaxMinutes]);
+  }, [query, selectedTags, selectedCookware, selectedMaxMinutes, selectedMaxCalories]);
 
   function toggleSave(id: string) {
     setSavedIds((prev) => {
@@ -329,17 +482,39 @@ export function SearchResultsContainer() {
     router.replace('/(tabs)');
   }
 
-  function handleClearAllTags() {
+  function handleClearAllFilters() {
     setSelectedTags([]);
     setQuery('');
     setSelectedMaxMinutes(null);
+    setSelectedMaxCalories(null);
+    setSelectedCookware([]);
   }
 
-  const timeFilterLabel = selectedMaxMinutes
-    ? `⌛ ${String(t('searchResults.timeFilter'))} (≤${selectedMaxMinutes}m)`
-    : ` ${String(t('searchResults.timeFilter'))}`;
+  const caloriesFilterLabel = selectedMaxCalories
+    ? `${String(t('searchResults.caloriesFilter'))} (≤${selectedMaxCalories} ${String(
+        t('searchResults.cal')
+      )})`
+    : String(t('searchResults.caloriesFilter'));
 
-  const hasActiveFilters = selectedTags.length > 0 || selectedMaxMinutes !== null;
+  const tagFilterLabel = `${String(t('searchResults.tagFilter'))}${
+    selectedTags.length > 0 ? ` (${selectedTags.length})` : ''
+  }`;
+
+  const cookwareFilterLabel = `${String(t('searchResults.cookwareFilter'))}${
+    selectedCookware.length > 0 ? ` (${selectedCookware.length})` : ''
+  }`;
+
+  const timeFilterLabel = selectedMaxMinutes
+    ? `${String(t('searchResults.timeFilter'))} (≤${selectedMaxMinutes} ${String(
+        t('searchResults.minute')
+      )})`
+    : String(t('searchResults.timeFilter'));
+
+  const hasActiveFilters =
+    selectedTags.length > 0 ||
+    selectedMaxMinutes !== null ||
+    selectedMaxCalories !== null ||
+    selectedCookware.length > 0;
 
   return (
     <SafeAreaView className="flex-1 bg-[#F5F5F6]">
@@ -352,28 +527,54 @@ export function SearchResultsContainer() {
         />
 
         <View className="mt-2 flex-row items-center">
-          <Pressable onPress={() => setTagSheetVisible(true)}>
-            <View pointerEvents="none">
-              <SearchFilterChip
-                className="mr-2"
-                label={`${String(t('searchResults.tagFilter'))}${
-                  selectedTags.length > 0 ? ` (${selectedTags.length})` : ''
-                }`}
-                left={<View className="h-3.5 w-3.5 rounded-[4px] bg-[#F3BA1B]" />}
-              />
-            </View>
-          </Pressable>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            className="flex-1"
+            contentContainerStyle={{ paddingRight: 8 }}>
+            <View className="flex-row items-center">
+              <Pressable onPress={() => setCaloriesSheetVisible(true)} className="mr-2">
+                <View pointerEvents="none">
+                  <SearchFilterChip
+                    label={caloriesFilterLabel}
+                    left={<VietnamText className="text-base">🔥</VietnamText>}
+                  />
+                </View>
+              </Pressable>
 
-          {/* Time chip — opens the bottom sheet */}
-          <Pressable onPress={() => setTimeSheetVisible(true)}>
-            label={timeFilterLabel}
-            left={<VietnamText className="text-sm">⌛ {t('searchResults.timeFilter')}</VietnamText>}
-          </Pressable>
+              <Pressable onPress={() => setTagSheetVisible(true)} className="mr-2">
+                <View pointerEvents="none">
+                  <SearchFilterChip
+                    label={tagFilterLabel}
+                    left={<VietnamText className="text-base">🏷️</VietnamText>}
+                  />
+                </View>
+              </Pressable>
+
+              <Pressable onPress={() => setCookwareSheetVisible(true)} className="mr-2">
+                <View pointerEvents="none">
+                  <SearchFilterChip
+                    label={cookwareFilterLabel}
+                    left={<VietnamText className="text-base">🍳</VietnamText>}
+                  />
+                </View>
+              </Pressable>
+
+              <Pressable onPress={() => setTimeSheetVisible(true)} className="mr-2">
+                <View pointerEvents="none">
+                  <SearchFilterChip
+                    label={timeFilterLabel}
+                    left={<VietnamText className="text-base">⌛</VietnamText>}
+                  />
+                </View>
+              </Pressable>
+            </View>
+          </ScrollView>
 
           <Pressable
-            onPress={handleClearAllTags}
+            onPress={handleClearAllFilters}
             disabled={!hasActiveFilters}
-            className="ml-auto h-9 w-9 items-center justify-center">
+            className="ml-2 h-9 w-9 items-center justify-center">
             <Icon
               as={BrushCleaning}
               size={16}
@@ -386,25 +587,43 @@ export function SearchResultsContainer() {
           {t('searchResults.results', { count: filteredRecipes.length })}
         </VietnamText>
 
-        <ScrollView
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ paddingBottom: 28 }}>
-          <View className="flex-row flex-wrap justify-between">
-            {filteredRecipes.map((item) => (
-              <SearchRecipeCard
-                key={item.id}
-                item={item}
-                isSaved={savedIds.has(item.id)}
-                onToggleSave={toggleSave}
-                calUnit={String(t('searchResults.cal'))}
-                minuteUnit={String(t('searchResults.minute'))}
-              />
-            ))}
+        {filteredRecipes.length === 0 ? (
+          <View className="mt-16 items-center px-6">
+            <VietnamText className="text-6xl">🪄</VietnamText>
+            <VietnamText className="mt-2 text-3xl font-semibold text-[#5C5C63]">
+              {t('searchResults.noMatches')}
+            </VietnamText>
           </View>
-        </ScrollView>
+        ) : (
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={{ paddingBottom: 28 }}>
+            <View className="flex-row flex-wrap justify-between">
+              {filteredRecipes.map((item) => (
+                <SearchRecipeCard
+                  key={item.id}
+                  item={item}
+                  isSaved={savedIds.has(item.id)}
+                  onToggleSave={toggleSave}
+                  calUnit={String(t('searchResults.cal'))}
+                  minuteUnit={String(t('searchResults.minute'))}
+                />
+              ))}
+            </View>
+          </ScrollView>
+        )}
       </View>
 
-      {/* Cooking Time bottom sheet */}
+      <TagFilterSheet
+        visible={tagSheetVisible}
+        selectedTags={selectedTags}
+        onApply={(newTags) => {
+          setSelectedTags(newTags);
+          setTagSheetVisible(false);
+        }}
+        onClose={() => setTagSheetVisible(false)}
+      />
+
       <CookingTimeSheet
         visible={timeSheetVisible}
         selectedMaxMinutes={selectedMaxMinutes}
@@ -412,15 +631,23 @@ export function SearchResultsContainer() {
         onApply={() => setTimeSheetVisible(false)}
         onClose={() => setTimeSheetVisible(false)}
       />
-      {/* 3. Chèn TagFilterSheet vào đây */}
-      <TagFilterSheet
-        visible={tagSheetVisible}
-        selectedTags={selectedTags}
-        onApply={(newTags) => {
-          setSelectedTags(newTags); // Cập nhật mảng tag mới
-          setTagSheetVisible(false); // Đóng modal
+
+      <CookwareFilterSheet
+        visible={cookwareSheetVisible}
+        selectedCookware={selectedCookware}
+        onApply={(newCookware) => {
+          setSelectedCookware(newCookware);
+          setCookwareSheetVisible(false);
         }}
-        onClose={() => setTagSheetVisible(false)}
+        onClose={() => setCookwareSheetVisible(false)}
+      />
+
+      <CaloriesFilterSheet
+        visible={caloriesSheetVisible}
+        selectedMaxCalories={selectedMaxCalories}
+        onSelect={setSelectedMaxCalories}
+        onApply={() => setCaloriesSheetVisible(false)}
+        onClose={() => setCaloriesSheetVisible(false)}
       />
     </SafeAreaView>
   );

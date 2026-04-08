@@ -10,6 +10,7 @@ export const SEARCH_RECIPES: SearchRecipeItem[] = [
     imageUrl:
       'https://images.unsplash.com/photo-1582878826629-29b7ad1cdc43?auto=format&fit=crop&w=1000&q=80',
     tags: ['pho', 'bo', 'nuoc dung'],
+    cookware: ['slow-cooker', 'skillet'],
   },
   {
     id: 'bo-mong-co',
@@ -20,6 +21,7 @@ export const SEARCH_RECIPES: SearchRecipeItem[] = [
     imageUrl:
       'https://images.unsplash.com/photo-1601050690597-df0568f70950?auto=format&fit=crop&w=1000&q=80',
     tags: ['bo', 'hanh la', 'xao'],
+    cookware: ['frying-pan', 'skillet'],
   },
   {
     id: 'banh-xa-lach-cuon',
@@ -30,6 +32,7 @@ export const SEARCH_RECIPES: SearchRecipeItem[] = [
     imageUrl:
       'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=1000&q=80',
     tags: ['xa lach', 'salad', 'nhanh'],
+    cookware: ['frying-pan'],
   },
   {
     id: 'salad-ga-kieu-a',
@@ -40,15 +43,17 @@ export const SEARCH_RECIPES: SearchRecipeItem[] = [
     imageUrl:
       'https://images.unsplash.com/photo-1546793665-c74683f339c1?auto=format&fit=crop&w=1000&q=80',
     tags: ['salad', 'ga', 'healthy'],
+    cookware: ['blender'],
   },
   {
     id: 'bun-thit-nuong',
     name: 'Bún thịt nướng',
     description: 'Bún tươi, thịt heo ướp sả...',
-    calories: 420,
+    calories: 620,
     timeMinutes: 30,
     imageUrl:
       'https://images.unsplash.com/photo-1559847844-5315695dadae?auto=format&fit=crop&w=1000&q=80',
     tags: ['bun', 'nuong', 'heo'],
+    cookware: ['air-fryer', 'oven'],
   },
 ];
