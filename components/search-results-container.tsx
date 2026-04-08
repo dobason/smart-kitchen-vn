@@ -484,7 +484,6 @@ export function SearchResultsContainer() {
 
   function handleClearAllFilters() {
     setSelectedTags([]);
-    setQuery('');
     setSelectedMaxMinutes(null);
     setSelectedMaxCalories(null);
     setSelectedCookware([]);
