@@ -1,25 +1,17 @@
 import { RecipeInfoPill } from '@/components/in-app-ui/recipe-info-pill';
 import { VietnamText } from '@/components/in-app-ui/vietnam-text';
 import { Icon } from '@/components/ui/icon';
+import type { SearchRecipeItem } from '@/types/recipe';
 import { Bookmark, ChefHat, Clock3, Flame } from 'lucide-react-native';
 import * as React from 'react';
 import { Image, Pressable, View } from 'react-native';
-
-export type SearchRecipeItem = {
-  id: string;
-  name: string;
-  description: string;
-  calories: number;
-  timeMinutes: number;
-  imageUrl: string;
-  tags: string[];
-};
 
 type SearchRecipeCardProps = {
   item: SearchRecipeItem;
   isSaved: boolean;
   calUnit: string;
   minuteUnit: string;
+  onPressRecipe: (id: string) => void;
   onToggleSave: (id: string) => void;
 };
 
@@ -28,17 +20,22 @@ export function SearchRecipeCard({
   isSaved,
   calUnit,
   minuteUnit,
+  onPressRecipe,
   onToggleSave,
 }: SearchRecipeCardProps) {
   return (
-    <View
+    <Pressable
+      onPress={() => onPressRecipe(item.id)}
       className="mb-4 overflow-hidden rounded-[16px] border border-[#E4E5E8] bg-white"
       style={{ width: '48.6%' }}>
       <View className="relative">
         <Image source={{ uri: item.imageUrl }} className="h-32 w-full" resizeMode="cover" />
 
         <Pressable
-          onPress={() => onToggleSave(item.id)}
+          onPress={(event) => {
+            event.stopPropagation();
+            onToggleSave(item.id);
+          }}
           className="absolute right-2 top-2 h-7 w-7 items-center justify-center rounded-[9px] bg-white">
           <Icon as={Bookmark} size={14} className={isSaved ? 'text-[#CE232A]' : 'text-[#111111]'} />
         </Pressable>
@@ -73,6 +70,6 @@ export function SearchRecipeCard({
           />
         </View>
       </View>
-    </View>
+    </Pressable>
   );
 }

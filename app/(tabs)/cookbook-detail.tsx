@@ -110,7 +110,21 @@ export default function CookbookDetailScreen() {
               <Pressable 
                 key={recipe.id}
                 style={{ width: '48.5%', marginBottom: 16 }}
-                onPress={() => isManageMode ? toggleSelection(recipe.id) : router.push('/(tabs)/recipe-detail')}
+                onPress={() =>
+                  isManageMode
+                    ? toggleSelection(recipe.id)
+                    : router.push({
+                        pathname: '/(tabs)/recipe-detail',
+                        params: {
+                          recipeId: recipe.id,
+                          recipeName: recipe.name,
+                          recipeDescription: recipe.description,
+                          recipeCalories: String(recipe.calories),
+                          recipeTimeMinutes: String(recipe.timeMinutes),
+                          recipeImageUrl: recipe.imageUrl,
+                        },
+                      })
+                }
                 className="relative"
               >
                 <View className="pointer-events-none w-full">

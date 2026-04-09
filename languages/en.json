@@ -164,7 +164,19 @@
     "renameComingSoon": "The rename feature will be available in a future update.",
     "notCooked": "Not Cooked",
     "addIntoCookbook": "Add into cookbook",
-    "startCooking": "Start Cooking"
+    "startCooking": "Start Cooking",
+    "saveRecipe": "Save Recipe",
+    "noSavedRecipesTitle": "No saved recipes yet",
+    "noSavedRecipesDescription": "Tap the save icon on any recipe card to add it to this tab.",
+    "confirmDeleteSavedTitle": "Are you sure?",
+    "confirmDeleteSavedMessage": "Once deleted, this recipe can't be recovered.",
+    "detailTipsMessage": "You can add toppings like sausage, bacon, or mushrooms to boost flavor. If you do not have an oven, use a non-stick pan to toast on the stovetop."
+  },
+  "recipeDetail": {
+    "calories": "Calories",
+    "protein": "Protein",
+    "carbs": "Carbs",
+    "fats": "Fats"
   },
   "aiRecipe": {
     "title": "AI Recipe",

@@ -1,120 +1,187 @@
-import { Button } from '@/components/ui/button';
-import { Icon } from '@/components/ui/icon';
-import { VietnamText } from '@/components/in-app-ui/vietnam-text';
-import * as React from 'react';
-import { useRouter } from 'expo-router';
-import { Alert, Image, ScrollView, Modal, View, TouchableOpacity } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import {
-  ArrowLeftIcon,
-  PrinterIcon,
-  PencilIcon,
-  Trash2Icon,
-  MaximizeIcon,
-  BookOpenIcon,
-  CalendarIcon,
-  ShoppingCartIcon,
-  CookingPotIcon,
-  LinkIcon,
-  FolderIcon,
-  PlusIcon,
-  MinusIcon,
-  RefreshCwIcon,
-  SparklesIcon,
-  AlertCircleIcon,
-  ShareIcon,
-  PlayIcon,
-  ChevronRightIcon,
-} from 'lucide-react-native';
-
-import { IngredientRow } from '@/components/in-app-ui/ingredient-row';
-import { StepCard } from '@/components/in-app-ui/step-card';
-import { NutritionStat } from '@/components/in-app-ui/nutrition-stat';
-import { BottomActionBar } from '@/components/ui/bottom-action-bar';
-import { RoundedButton } from '@/components/in-app-ui/rounded-button';
 import { CircleButton } from '@/components/in-app-ui/circle-button';
-
+import { IngredientRow } from '@/components/in-app-ui/ingredient-row';
+import { NutritionStat } from '@/components/in-app-ui/nutrition-stat';
+import { RoundedButton } from '@/components/in-app-ui/rounded-button';
+import { StepCard } from '@/components/in-app-ui/step-card';
+import { VietnamText } from '@/components/in-app-ui/vietnam-text';
+import { BottomActionBar } from '@/components/ui/bottom-action-bar';
+import { Icon } from '@/components/ui/icon';
 import { INGREDIENTS } from '@/constants/ingredientData';
+import { SEARCH_RECIPES } from '@/constants/recipeData';
 import { STEPS } from '@/constants/stepData';
 import { useLocale } from '@/hooks/use-locale';
+import { useSavedRecipes } from '@/hooks/use-saved-recipes';
+import type { SearchRecipeItem } from '@/types/recipe';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import {
+  ArrowLeftIcon,
+  BookOpenIcon,
+  Bookmark,
+  CookingPotIcon,
+  FolderIcon,
+  MaximizeIcon,
+  MinusIcon,
+  PencilIcon,
+  PlayIcon,
+  PlusIcon,
+  ShareIcon,
+  SparklesIcon,
+  Trash2Icon,
+  XIcon,
+} from 'lucide-react-native';
+import * as React from 'react';
+import { Image, Modal, Pressable, ScrollView, TouchableOpacity, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+
+type RecipeDetailParams = {
+  recipeId?: string | string[];
+  recipeName?: string | string[];
+  recipeDescription?: string | string[];
+  recipeCalories?: string | string[];
+  recipeTimeMinutes?: string | string[];
+  recipeImageUrl?: string | string[];
+};
+
+function singleParam(value?: string | string[]) {
+  if (Array.isArray(value)) {
+    return value[0];
+  }
+  return value;
+}
 
 export default function RecipeDetailScreen() {
   const [serves, setServes] = React.useState(4);
+  const [imageVisible, setImageVisible] = React.useState(false);
+  const [deleteConfirmVisible, setDeleteConfirmVisible] = React.useState(false);
+
   const router = useRouter();
   const { t } = useLocale();
-  const [imageVisible, setImageVisible] = React.useState(false);
+  const params = useLocalSearchParams<RecipeDetailParams>();
 
+  const { isSaved, saveRecipe, removeSavedRecipe, getSavedRecipeById } = useSavedRecipes();
+
+  const recipeId = singleParam(params.recipeId);
+  const recipeName = singleParam(params.recipeName);
+  const recipeDescription = singleParam(params.recipeDescription);
+  const recipeImageUrl = singleParam(params.recipeImageUrl);
+  const recipeCalories = singleParam(params.recipeCalories);
+  const recipeTimeMinutes = singleParam(params.recipeTimeMinutes);
+
+  const recipeFromParams = React.useMemo<SearchRecipeItem | undefined>(() => {
+    if (!recipeId || !recipeName || !recipeDescription || !recipeImageUrl) {
+      return undefined;
+    }
+
+    const calories = Number(recipeCalories);
+    const timeMinutes = Number(recipeTimeMinutes);
+
+    return {
+      id: recipeId,
+      name: recipeName,
+      description: recipeDescription,
+      calories: Number.isFinite(calories) ? calories : 0,
+      timeMinutes: Number.isFinite(timeMinutes) ? timeMinutes : 0,
+      imageUrl: recipeImageUrl,
+      tags: [],
+    };
+  }, [recipeCalories, recipeDescription, recipeId, recipeImageUrl, recipeName, recipeTimeMinutes]);
+
+  const recipeFromCatalog = React.useMemo(
+    () => (recipeId ? SEARCH_RECIPES.find((item) => item.id === recipeId) : undefined),
+    [recipeId]
+  );
+
+  const recipeFromSaved = React.useMemo(
+    () => (recipeId ? getSavedRecipeById(recipeId) : undefined),
+    [getSavedRecipeById, recipeId]
+  );
+
+  const recipe = recipeFromSaved ?? recipeFromCatalog ?? recipeFromParams ?? SEARCH_RECIPES[0];
+
+  const recipeIsSaved = isSaved(recipe.id);
+
+  function handleBack() {
+    if (router.canGoBack()) {
+      router.back();
+      return;
+    }
+    router.replace('/(tabs)/recipe');
+  }
+
+  function handleSaveRecipe() {
+    saveRecipe(recipe);
+  }
+
+  function handleDeleteSavedRecipe() {
+    removeSavedRecipe(recipe.id);
+    setDeleteConfirmVisible(false);
+  }
 
   return (
     <SafeAreaView className="flex-1 bg-background" edges={['top']}>
-      {/* ── ScrollView ── */}
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
-        {/* ── Hero Image ── */}
         <View style={{ height: 260 }}>
           <Image
-            source={{
-              uri: 'https://images.squarespace-cdn.com/content/v1/66628bdc6b0b0d52d914a921/1752754499896-E9EAAEK78ESN8KAJV33G/unsplash-image-_33r6H_hiz4.jpg?format=1500w',
-            }}
+            source={{ uri: recipe.imageUrl }}
             style={{ width: '100%', height: '100%' }}
             resizeMode="cover"
           />
-          {/* Overlay gradient header icons */}
+
           <View className="absolute left-0 right-0 top-0 flex-row items-center justify-between px-4 pt-2">
             <CircleButton
               variant="ghost"
               className="h-10 w-10 items-center justify-center rounded-full bg-black/35"
-              onPress={() => router.push('./recipe')}>
+              onPress={handleBack}>
               <Icon as={ArrowLeftIcon} size={20} className="text-white" />
             </CircleButton>
+
             <View className="flex-row gap-3">
               <CircleButton
                 variant="ghost"
                 className="h-10 w-10 items-center justify-center rounded-full bg-black/35"
-                onPress={() => router.push('./recipe-edit')}>
+                onPress={() =>
+                  router.push({
+                    pathname: '/(tabs)/recipe-edit',
+                    params: { recipeId: recipe.id },
+                  })
+                }>
                 <Icon as={PencilIcon} size={18} className="text-white" />
               </CircleButton>
-              <CircleButton
-                variant="ghost"
-                className="h-10 w-10 items-center justify-center rounded-full bg-black/35"
-                onPress={() =>
-                  Alert.alert(
-                    t('other.deleteTitle'),
-                    t('other.deleteMessage'),
-                    [
-                      { text: t('other.cancel'),
-                        style: 'cancel' 
-                      },
-                      {
-                        text: t('other.delete'),
-                        style: 'destructive',
-                        onPress: () => {
-                          router.push('./recipe');
-                        },
-                      },
-                    ]
-                  )
-                }>
-                <Icon as={Trash2Icon} size={18} className="text-white" />
-              </CircleButton>
+
+              {recipeIsSaved ? (
+                <CircleButton
+                  variant="ghost"
+                  className="h-10 w-10 items-center justify-center rounded-full bg-black/35"
+                  onPress={() => setDeleteConfirmVisible(true)}>
+                  <Icon as={Trash2Icon} size={18} className="text-white" />
+                </CircleButton>
+              ) : (
+                <CircleButton
+                  variant="ghost"
+                  className="h-10 w-10 items-center justify-center rounded-full bg-black/35"
+                  onPress={handleSaveRecipe}>
+                  <Icon as={Bookmark} size={18} className="text-white" />
+                </CircleButton>
+              )}
             </View>
           </View>
-          {/* View button */}
+
           <View className="absolute bottom-4 right-4">
-            <CircleButton variant="ghost" style={{ backgroundColor: 'rgba(30,30,30,0.7)' }} onPress={() => setImageVisible(true)}>
+            <CircleButton
+              variant="ghost"
+              style={{ backgroundColor: 'rgba(30,30,30,0.7)' }}
+              onPress={() => setImageVisible(true)}>
               <Icon as={MaximizeIcon} size={14} className="text-white" />
             </CircleButton>
           </View>
         </View>
 
-        {/* ── Content Card ── */}
         <View className="-mt-4 rounded-t-3xl bg-background px-4 pt-5">
-          {/* Title */}
-          <VietnamText className="mb-4 text-2xl font-bold text-gray-900">Súp phở</VietnamText>
+          <VietnamText className="mb-2 text-2xl font-bold text-gray-900">{recipe.name}</VietnamText>
+          <VietnamText className="mb-4 text-sm text-gray-500">{recipe.description}</VietnamText>
 
-          {/* Action Grid */}
           <View className="mb-5 flex-row justify-around">
             <BottomActionBar icon={BookOpenIcon} label={t('recipe.addIntoCookbook')} />
-            {/* Not Cooked – circle icon variant */}
             <View className="flex-1 items-center gap-1">
               <View className="relative">
                 <Icon as={CookingPotIcon} size={26} className="text-gray-700" />
@@ -126,42 +193,31 @@ export default function RecipeDetailScreen() {
             </View>
           </View>
 
-          {/* Nutrition Card */}
           <View className="mb-4 flex-row rounded-2xl border border-gray-200">
-            <NutritionStat value="250" label="Calories" emoji="🔥" />
-            <NutritionStat value="12g" label="Protein" emoji="💪" hasBorder />
-            <NutritionStat value="28g" label="Carbs" emoji="🌾" hasBorder />
-            <NutritionStat value="10g" label="Fats" emoji="🥑" hasBorder />
+            <NutritionStat value={String(recipe.calories)} label={t('recipeDetail.calories')} emoji="🔥" />
+            <NutritionStat value="12g" label={t('recipeDetail.protein')} emoji="💪" hasBorder />
+            <NutritionStat value="28g" label={t('recipeDetail.carbs')} emoji="🌾" hasBorder />
+            <NutritionStat value="10g" label={t('recipeDetail.fats')} emoji="🥑" hasBorder />
           </View>
 
-          {/* Meta Info */}
           <View className="mb-4 gap-2">
             <View className="flex-row items-center gap-2">
-              <VietnamText className="text-sm font-semibold text-gray-800">
-                {t('other.time')}:
-              </VietnamText>
+              <VietnamText className="text-sm font-semibold text-gray-800">{t('other.time')}:</VietnamText>
               <VietnamText className="text-sm text-gray-600">
-                30 {t('searchResults.minute')}
+                {recipe.timeMinutes} {t('searchResults.minute')}
               </VietnamText>
             </View>
             <View className="flex-row items-center gap-2">
-              <VietnamText className="text-sm font-semibold text-gray-800">
-                {t('other.cost')}:
-              </VietnamText>
+              <VietnamText className="text-sm font-semibold text-gray-800">{t('other.cost')}:</VietnamText>
               <VietnamText className="text-sm text-gray-600">₫240000</VietnamText>
             </View>
             <View className="flex-1 flex-row items-center gap-2">
-              <VietnamText className="text-sm font-semibold text-gray-800">
-                {t('other.note')}:
-              </VietnamText>
-              <VietnamText className="text-sm text-gray-600 underline">
-                {t('other.addNote')}
-              </VietnamText>
+              <VietnamText className="text-sm font-semibold text-gray-800">{t('other.note')}:</VietnamText>
+              <VietnamText className="text-sm text-gray-600 underline">{t('other.addNote')}</VietnamText>
               <Icon as={PlusIcon} size={14} />
             </View>
           </View>
 
-          {/* COOKBOOK section */}
           <View className="mb-5">
             <VietnamText className="mb-2 text-base font-bold text-gray-900">
               {t('cookbook.COOKBOOK')}
@@ -170,48 +226,37 @@ export default function RecipeDetailScreen() {
               <View className="flex-row items-center gap-1.5 rounded-full bg-gray-100 px-3 py-1.5">
                 <Icon as={FolderIcon} size={14} className="text-gray-600" />
                 <VietnamText className="text-sm font-medium italic text-gray-700">
-                  Dinner
+                  {t('cookbookDetail.dinner')}
                 </VietnamText>
               </View>
             </View>
           </View>
 
-          {/* ── INGREDIENTS ── */}
           <VietnamText className="mb-3 text-base font-bold text-gray-900">
             {t('ingredients.INGREDIENTS')}
           </VietnamText>
 
-          {/* Servings Stepper + Convert */}
           <View className="mb-4 flex-row items-center gap-3">
             <View className="flex-row items-center gap-4 rounded-xl border border-gray-300 px-4 py-2">
-              <TouchableOpacity onPress={() => setServes((s) => Math.max(1, s - 1))}>
+              <TouchableOpacity onPress={() => setServes((current) => Math.max(1, current - 1))}>
                 <Icon as={MinusIcon} size={18} />
               </TouchableOpacity>
               <VietnamText className="text-base font-medium text-gray-800">
                 {t('other.serves')}: <VietnamText className="font-bold">{serves}</VietnamText>
               </VietnamText>
-              <TouchableOpacity onPress={() => setServes((s) => s + 1)}>
+              <TouchableOpacity onPress={() => setServes((current) => current + 1)}>
                 <Icon as={PlusIcon} size={18} />
               </TouchableOpacity>
             </View>
           </View>
 
-          <VietnamText className="mb-2 text-sm text-gray-500">
-            {t('ingredients.mainIngredients')}
-          </VietnamText>
+          <VietnamText className="mb-2 text-sm text-gray-500">{t('ingredients.mainIngredients')}</VietnamText>
 
-          {/* Ingredient List */}
-          {INGREDIENTS.map((ing, i) => (
-            <IngredientRow key={i} {...ing} />
+          {INGREDIENTS.map((ingredient, index) => (
+            <IngredientRow key={index} {...ingredient} />
           ))}
 
-          {/* Swap Ingredients button – gradient border effect */}
-          <View
-            className="mt-5 rounded-full p-0.5"
-            style={{
-              borderWidth: 1.5,
-              // gradient-like by using a two-tone border via shadow
-            }}>
+          <View className="mt-5 rounded-full p-0.5" style={{ borderWidth: 1.5 }}>
             <RoundedButton variant="ghost">
               <Icon as={SparklesIcon} size={18} />
               <VietnamText className="text-base font-semibold">
@@ -220,75 +265,64 @@ export default function RecipeDetailScreen() {
             </RoundedButton>
           </View>
 
-          {/* ── STEPS ── */}
           <VietnamText className="mb-4 mt-6 text-base font-bold text-gray-900">
             {t('steps.STEPS')}
           </VietnamText>
 
           <View className="mb-4 rounded-2xl bg-amber-50 p-4">
-            {STEPS.map((step, i) => (
-              <StepCard key={i} {...step} isLast={i === STEPS.length - 1} />
+            {STEPS.map((step, index) => (
+              <StepCard key={index} {...step} isLast={index === STEPS.length - 1} />
             ))}
           </View>
 
-          {/* Optimize Steps button */}
-          <View
-            className="mb-5 rounded-full"
-            style={{
-              borderWidth: 1.5,
-            }}>
+          <View className="mb-5 rounded-full" style={{ borderWidth: 1.5 }}>
             <RoundedButton variant="ghost">
               <Icon as={SparklesIcon} size={18} />
-              <VietnamText className="text-base font-semibold">
-                {t('steps.optimizeSteps')}
-              </VietnamText>
+              <VietnamText className="text-base font-semibold">{t('steps.optimizeSteps')}</VietnamText>
             </RoundedButton>
           </View>
 
-          {/* Tips section */}
           <View className="mb-5 rounded-2xl bg-amber-50 p-4">
             <View className="mb-2 flex-row items-center gap-2">
               <VietnamText className="text-xl">💡</VietnamText>
-              <VietnamText className="text-base font-bold text-gray-900">
-                {t('other.tips')}
-              </VietnamText>
+              <VietnamText className="text-base font-bold text-gray-900">{t('other.tips')}</VietnamText>
             </View>
             <VietnamText className="text-sm leading-relaxed text-gray-600">
-              Bạn có thể thêm các loại topping khác như xúc xích, thịt xông khói hoặc nấm để tăng
-              hương vị. Nếu không có lò nướng, bạn có thể sử dụng chảo chống dính để nướng bánh trên
-              bếp.
+              {t('recipe.detailTipsMessage')}
             </VietnamText>
           </View>
 
-          {/* Bottom spacer for action bar */}
           <View className="h-20" />
         </View>
       </ScrollView>
-      {/* ── Bottom Action Bar ── */}
+
       <View className="absolute bottom-0 left-0 right-0 flex-row items-center gap-3 border-t border-gray-100 bg-background px-4 py-3">
-        {/* Share button */}
         <CircleButton variant="outline" size="icon" className="h-14 w-14">
           <Icon as={ShareIcon} size={20} />
         </CircleButton>
 
-        {/* Start Cooking button */}
-        <RoundedButton
-          className="flex-1"
-          size="lg"
-          onPress={() => router.push('/(tabs)/cooking-ingredients')}>
-          <View className="h-8 w-8 items-center justify-center rounded-full">
-            <Icon as={PlayIcon} size={16} color="white" />
-          </View>
-          <VietnamText className="text-lg font-bold text-white">
-            {t('recipe.startCooking')}
-          </VietnamText>
-        </RoundedButton>
+        {recipeIsSaved ? (
+          <RoundedButton
+            className="flex-1"
+            size="lg"
+            onPress={() => router.push('/(tabs)/cooking-ingredients')}>
+            <View className="h-8 w-8 items-center justify-center rounded-full">
+              <Icon as={PlayIcon} size={16} color="white" />
+            </View>
+            <VietnamText className="text-lg font-bold text-white">{t('recipe.startCooking')}</VietnamText>
+          </RoundedButton>
+        ) : (
+          <RoundedButton className="flex-1" size="lg" onPress={handleSaveRecipe}>
+            <View className="h-8 w-8 items-center justify-center rounded-full">
+              <Icon as={Bookmark} size={16} color="white" />
+            </View>
+            <VietnamText className="text-lg font-bold text-white">{t('recipe.saveRecipe')}</VietnamText>
+          </RoundedButton>
+        )}
       </View>
 
-      {/* Full-screen Modal */}
       <Modal visible={imageVisible} transparent animationType="fade" statusBarTranslucent>
         <View style={{ flex: 1, backgroundColor: 'black' }}>
-          {/* Close button */}
           <SafeAreaView style={{ position: 'absolute', top: 0, left: 0, right: 0, zIndex: 10 }}>
             <View className="flex-row justify-end px-4 pt-2">
               <CircleButton
@@ -300,14 +334,52 @@ export default function RecipeDetailScreen() {
             </View>
           </SafeAreaView>
 
-          {/* Full-screen image */}
-          <Image
-            source={{
-              uri: 'https://images.squarespace-cdn.com/content/v1/66628bdc6b0b0d52d914a921/1752754499896-E9EAAEK78ESN8KAJV33G/unsplash-image-_33r6H_hiz4.jpg?format=1500w',
-            }}
-            style={{ flex: 1 }}
-            resizeMode="contain"
-          />
+          <Image source={{ uri: recipe.imageUrl }} style={{ flex: 1 }} resizeMode="contain" />
+        </View>
+      </Modal>
+
+      <Modal
+        visible={deleteConfirmVisible}
+        transparent
+        animationType="fade"
+        statusBarTranslucent
+        onRequestClose={() => setDeleteConfirmVisible(false)}>
+        <View className="flex-1 items-center justify-center bg-black/45 px-6">
+          <View className="w-full rounded-[28px] bg-[#F4F4F6] p-6">
+            <View className="mb-2 flex-row justify-end">
+              <Pressable
+                onPress={() => setDeleteConfirmVisible(false)}
+                className="h-10 w-10 items-center justify-center rounded-full bg-[#E2E2E5]">
+                <Icon as={XIcon} size={20} className="text-[#69696F]" />
+              </Pressable>
+            </View>
+
+            <VietnamText className="text-center text-4xl font-black text-[#232326]">
+              {t('recipe.confirmDeleteSavedTitle')}
+            </VietnamText>
+
+            <VietnamText className="mt-5 text-center text-2xl font-semibold leading-8 text-[#2F2F34]">
+              {t('recipe.confirmDeleteSavedMessage')}
+            </VietnamText>
+
+            <View className="mt-8 flex-row gap-4">
+              <Pressable
+                onPress={() => setDeleteConfirmVisible(false)}
+                className="flex-1 items-center justify-center rounded-full border border-[#16814E] bg-white py-4">
+                <VietnamText className="text-[18px] font-bold text-[#16814E]">
+                  {t('other.cancel').toUpperCase()}
+                </VietnamText>
+              </Pressable>
+
+              <Pressable
+                onPress={handleDeleteSavedRecipe}
+                className="flex-1 items-center justify-center rounded-full bg-[#EB404F] py-4">
+                <VietnamText className="text-[18px] font-bold text-white">
+                  {t('other.delete').toUpperCase()}
+                </VietnamText>
+              </Pressable>
+            </View>
+          </View>
         </View>
       </Modal>
     </SafeAreaView>
