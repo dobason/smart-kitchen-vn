@@ -150,6 +150,8 @@
     "editName": "Edit name",
     "name": "Name",
     "deleteCookbook": "Delete cookbook",
+    "confirmDeleteCookbookTitle": "Delete cookbook",
+    "confirmDeleteCookbookMessage": "Are you sure you want to delete cookbook \"%{name}\"?",
     "todayRemainingImports": "Today's remaining imports",
     "searchInMyRecipes": "Search in my recipes",
     "errorTitle": "Error",

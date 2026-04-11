@@ -58,7 +58,13 @@ export default function RecipeDetailScreen() {
   const { t } = useLocale();
   const params = useLocalSearchParams<RecipeDetailParams>();
 
-  const { isSaved, saveRecipe, removeSavedRecipe, getSavedRecipeById } = useSavedRecipes();
+  const {
+    isSaved,
+    saveRecipe,
+    removeSavedRecipe,
+    getSavedRecipeById,
+    getRecipeCookbooks,
+  } = useSavedRecipes();
 
   const recipeId = singleParam(params.recipeId);
   const recipeName = singleParam(params.recipeName);
@@ -99,6 +105,17 @@ export default function RecipeDetailScreen() {
   const recipe = recipeFromSaved ?? recipeFromCatalog ?? recipeFromParams ?? SEARCH_RECIPES[0];
 
   const recipeIsSaved = isSaved(recipe.id);
+  const displayCookbooks = getRecipeCookbooks(recipe.id);
+  const displayCookbookBadges = React.useMemo(() => {
+    if (displayCookbooks.length === 0) {
+      return [{ id: 'fallback-uncategorized', name: String(t('cookbookDetail.uncategorized')) }];
+    }
+
+    return displayCookbooks.map((cookbook) => ({
+      id: cookbook.id,
+      name: cookbook.translationKey ? String(t(cookbook.translationKey)) : cookbook.name,
+    }));
+  }, [displayCookbooks, t]);
 
   function handleBack() {
     if (router.canGoBack()) {
@@ -222,13 +239,17 @@ export default function RecipeDetailScreen() {
             <VietnamText className="mb-2 text-base font-bold text-gray-900">
               {t('cookbook.COOKBOOK')}
             </VietnamText>
-            <View className="flex-row">
-              <View className="flex-row items-center gap-1.5 rounded-full bg-gray-100 px-3 py-1.5">
-                <Icon as={FolderIcon} size={14} className="text-gray-600" />
-                <VietnamText className="text-sm font-medium italic text-gray-700">
-                  {t('cookbookDetail.dinner')}
-                </VietnamText>
-              </View>
+            <View className="flex-row flex-wrap gap-2">
+              {displayCookbookBadges.map((cookbookBadge) => (
+                <View
+                  key={cookbookBadge.id}
+                  className="flex-row items-center gap-1.5 rounded-full bg-gray-100 px-3 py-1.5">
+                  <Icon as={FolderIcon} size={14} className="text-gray-600" />
+                  <VietnamText className="text-sm font-medium italic text-gray-700">
+                    {cookbookBadge.name}
+                  </VietnamText>
+                </View>
+              ))}
             </View>
           </View>
 

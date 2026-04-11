@@ -152,6 +152,8 @@
     "editName": "Chỉnh sửa tên",
     "name": "Tên",
     "deleteCookbook": "Xóa sổ tay",
+    "confirmDeleteCookbookTitle": "Xác nhận xóa sổ tay",
+    "confirmDeleteCookbookMessage": "Bạn có chắc muốn xóa sổ tay \"%{name}\" không?",
     "errorTitle": "Lỗi",
     "errorEmptyName": "Tên sổ tay không được để trống!",
     "errorCameraPermission": "Cần quyền truy cập Camera.",

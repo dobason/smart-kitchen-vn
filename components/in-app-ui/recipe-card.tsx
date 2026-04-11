@@ -10,9 +10,10 @@ type RecipeCardProps = {
     item: SearchRecipeItem;
     isSaved: boolean;
     onToggleSave: (id: string) => void;
+  showSaveButton?: boolean;
 };
 
-export function RecipeCard({ item, isSaved, onToggleSave }: RecipeCardProps) {
+export function RecipeCard({ item, isSaved, onToggleSave, showSaveButton = true }: RecipeCardProps) {
     const { t } = useLocale();
     return (
     // Đã đổi thành w-full để nó tự lấp đầy container cha
@@ -20,11 +21,13 @@ export function RecipeCard({ item, isSaved, onToggleSave }: RecipeCardProps) {
       <View className="relative">
         <Image source={{ uri: item.imageUrl }} className="h-32 w-full" resizeMode="cover" />
 
-        <Pressable
-          onPress={() => onToggleSave(item.id)}
-          className="absolute right-2 top-2 h-7 w-7 items-center justify-center rounded-[9px] bg-white">
-          <Icon as={Bookmark} size={14} className={isSaved ? 'text-[#CE232A]' : 'text-[#111111]'} />
-        </Pressable>
+        {showSaveButton ? (
+          <Pressable
+            onPress={() => onToggleSave(item.id)}
+            className="absolute right-2 top-2 h-7 w-7 items-center justify-center rounded-[9px] bg-white">
+            <Icon as={Bookmark} size={14} className={isSaved ? 'text-[#CE232A]' : 'text-[#111111]'} />
+          </Pressable>
+        ) : null}
 
         <View className="absolute bottom-2 right-2 h-7 w-7 items-center justify-center rounded-full bg-[#CE232A]">
           <Icon as={ChefHat} size={13} className="text-white" />

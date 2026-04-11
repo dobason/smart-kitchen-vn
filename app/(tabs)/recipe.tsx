@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { RenameCookbookModal } from '@/components/ui/rename-cookbook-modal';
-import { useFocusEffect, useRouter } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { View, ScrollView, Pressable, TextInput, Alert, Modal } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Search, SlidersHorizontal, ChevronRight, Plus, ChefHat, ArrowDown10, Edit2, Trash2, X, BookOpen } from 'lucide-react-native';
@@ -13,13 +13,7 @@ import { CookbookCard } from '@/components/in-app-ui/cookbook-card';
 import { ImportBottomSheet } from '@/components/import-bottom-sheet';
 import { useLocale } from '@/hooks/use-locale';
 import { useSavedRecipes } from '@/hooks/use-saved-recipes';
-import { GLOBAL_RECIPES } from './cookbook-detail';
-
-const initialCookbooks = [
-  { id: 'uncategorized', translationKey: 'cookbookDetail.uncategorized', count: 0, image: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=500&q=80' },
-  { id: 'desserts', translationKey: 'cookbookDetail.desserts', count: 0, image: 'https://images.unsplash.com/photo-1563729784474-d77dbb933a9e?w=500&q=80' },
-  { id: 'dinner', translationKey: 'cookbookDetail.dinner', count: 0, image: 'https://images.unsplash.com/photo-1547592180-85f173990554?w=500&q=80' },
-];
+import type { CookbookItem } from '@/context/saved-recipes-context';
 
 function normalizeRecipeSearchText(value: string) {
   return value
@@ -33,15 +27,25 @@ function normalizeRecipeSearchText(value: string) {
 export default function RecipeScreen() {
   const router = useRouter();
   const { t } = useLocale();
-  const { savedRecipes, savedRecipeIds, toggleSavedRecipe } = useSavedRecipes();
+  const {
+    savedRecipes,
+    savedRecipeIds,
+    toggleSavedRecipe,
+    cookbooks,
+    uncategorizedCookbookId,
+    createCookbook,
+    renameCookbook,
+    deleteCookbook,
+    getCookbookCount,
+    getRecipesByCookbook,
+  } = useSavedRecipes();
 
   const [activeTab, setActiveTab] = React.useState<'recipe' | 'cookbook'>('recipe');
-  const [cookbooks, setCookbooks] = React.useState<any[]>(initialCookbooks);
 
   const [isAddModalVisible, setIsAddModalVisible] = React.useState(false);
   const [newBookName, setNewBookName] = React.useState('');
   const [isMenuVisible, setIsMenuVisible] = React.useState(false);
-  const [selectedBook, setSelectedBook] = React.useState<any>(null);
+  const [selectedBook, setSelectedBook] = React.useState<CookbookItem | null>(null);
   
   const [isRenameVisible, setIsRenameVisible] = React.useState(false);
   const [renameTempName, setRenameTempName] = React.useState('');
@@ -67,6 +71,20 @@ export default function RecipeScreen() {
     });
   }, [recipeSearchQuery, savedRecipes]);
 
+  const cookbookCards = React.useMemo(
+    () =>
+      cookbooks.map((book) => ({
+        ...book,
+        displayName: book.translationKey ? String(t(book.translationKey)) : book.name,
+        count: getCookbookCount(book.id),
+        previewImages: getRecipesByCookbook(book.id)
+          .map((recipe) => recipe.imageUrl)
+          .filter(Boolean)
+          .slice(0, 3),
+      })),
+    [cookbooks, getCookbookCount, getRecipesByCookbook, t]
+  );
+
   const openRecipeDetail = (recipe: {
     id: string;
     name: string;
@@ -88,28 +106,50 @@ export default function RecipeScreen() {
     });
   };
 
-  useFocusEffect(
-    React.useCallback(() => {
-      setCookbooks(prevCookbooks => 
-        prevCookbooks.map(book => ({
-          ...book,
-          count: GLOBAL_RECIPES.filter((r) => r.folderId === book.id).length
-        }))
-      );
-    }, [])
-  );
-
   const handleCreateCookbook = () => {
-    if (!newBookName.trim()) { Alert.alert(i18n.t('recipe.errorTitle'), i18n.t('recipe.errorEmptyName')); return; }
-    const newBook = { id: Date.now().toString(), name: newBookName, translationKey: null, count: 0, image: 'https://images.unsplash.com/photo-1547592180-85f173990554?w=500&q=80' };
-    setCookbooks([...cookbooks, newBook]);
+    if (!newBookName.trim()) {
+      Alert.alert(i18n.t('recipe.errorTitle'), i18n.t('recipe.errorEmptyName'));
+      return;
+    }
+
+    const created = createCookbook(newBookName);
+    if (!created) {
+      Alert.alert(i18n.t('recipe.errorTitle'), i18n.t('recipe.errorEmptyName'));
+      return;
+    }
+
     setNewBookName('');
     setIsAddModalVisible(false);
   };
 
   const handleDeleteCookbook = () => {
-    setCookbooks(cookbooks.filter(b => b.id !== selectedBook.id));
-    setIsMenuVisible(false);
+    if (!selectedBook || selectedBook.id === uncategorizedCookbookId) {
+      return;
+    }
+
+    const cookbookName = selectedBook.translationKey
+      ? String(t(selectedBook.translationKey))
+      : selectedBook.name;
+
+    Alert.alert(
+      i18n.t('recipe.confirmDeleteCookbookTitle'),
+      i18n.t('recipe.confirmDeleteCookbookMessage', { name: cookbookName }),
+      [
+        {
+          text: i18n.t('other.cancel'),
+          style: 'cancel',
+        },
+        {
+          text: i18n.t('other.delete'),
+          style: 'destructive',
+          onPress: () => {
+            deleteCookbook(selectedBook.id);
+            setIsMenuVisible(false);
+            setSelectedBook(null);
+          },
+        },
+      ]
+    );
   };
 
   const simulateAILoading = (actionName: string) => {
@@ -136,17 +176,17 @@ export default function RecipeScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-gray-50">
-      <View className="flex-row items-center justify-between px-4 py-3 bg-white border-b border-gray-100">
+    <SafeAreaView className="flex-1 bg-[#F2F2F5]">
+      <View className="flex-row items-center justify-between border-b border-[#E8E8ED] bg-white px-4 py-3">
         <View className="flex-row gap-6">
-          <Pressable onPress={() => setActiveTab('recipe')} className={activeTab === 'recipe' ? "border-b-4 border-[#CE232A] pb-1" : "pb-1"}>
-            <VietnamText className={`text-xl font-bold ${activeTab === 'recipe' ? 'text-gray-900' : 'text-gray-400'}`}>{i18n.t('recipe.tabRecipes')}</VietnamText>
+          <Pressable onPress={() => setActiveTab('recipe')} className={activeTab === 'recipe' ? "border-b-[3px] border-[#CE232A] pb-1.5" : "pb-1.5"}>
+            <VietnamText className={`text-lg font-bold ${activeTab === 'recipe' ? 'text-[#141518]' : 'text-[#A3A7AE]'}`}>{i18n.t('recipe.tabRecipes')}</VietnamText>
           </Pressable>
-          <Pressable onPress={() => setActiveTab('cookbook')} className={activeTab === 'cookbook' ? "border-b-4 border-[#CE232A] pb-1" : "pb-1"}>
-            <VietnamText className={`text-xl font-bold ${activeTab === 'cookbook' ? 'text-gray-900' : 'text-gray-400'}`}>{i18n.t('recipe.tabCookbooks')}</VietnamText>
+          <Pressable onPress={() => setActiveTab('cookbook')} className={activeTab === 'cookbook' ? "border-b-[3px] border-[#CE232A] pb-1.5" : "pb-1.5"}>
+            <VietnamText className={`text-lg font-bold ${activeTab === 'cookbook' ? 'text-[#141518]' : 'text-[#A3A7AE]'}`}>{i18n.t('recipe.tabCookbooks')}</VietnamText>
           </Pressable>
         </View>
-        <Pressable className="bg-[#CE232A] p-2 rounded-full"><Icon as={ChefHat} size={20} className="text-white" /></Pressable>
+        <Pressable className="h-11 w-11 items-center justify-center rounded-full bg-[#CE232A] shadow-sm shadow-red-700/30"><Icon as={ChefHat} size={19} className="text-white" /></Pressable>
       </View>
 
       {activeTab === 'recipe' ? (
@@ -219,21 +259,36 @@ export default function RecipeScreen() {
           )}
         </ScrollView>
       ) : (
-        <ScrollView className="flex-1 bg-gray-50" contentContainerClassName="pb-32 pt-4">
-          <View className="flex-row justify-end px-4 pb-4"><Icon as={ArrowDown10} size={24} className="text-gray-600" /></View>
-          <View className="px-4 flex-row flex-wrap gap-x-[4%] gap-y-6">
+        <ScrollView className="flex-1 bg-[#F2F2F5]" contentContainerClassName="pb-36 pt-3">
+          <View className="flex-row justify-end px-4 pb-3"><Icon as={ArrowDown10} size={20} className="text-[#535861]" /></View>
+          <View className="px-4 flex-row flex-wrap gap-x-[4%] gap-y-5">
             
-            {cookbooks.map((book) => (
+            {cookbookCards.map((book) => (
               <CookbookCard 
                 key={book.id} 
-                book={{...book, name: book.translationKey ? t(book.translationKey) : book.name}} 
-                onMenuPress={() => { setSelectedBook(book); setIsMenuVisible(true); }} 
+                book={{
+                  id: book.id,
+                  name: book.displayName,
+                  count: book.count,
+                  image: book.image,
+                  previewImages: book.previewImages,
+                }}
+                showMenu={!book.isDefault}
+                onMenuPress={
+                  book.isDefault
+                    ? undefined
+                    : () => {
+                        setSelectedBook(book);
+                        setRenameTempName(book.name);
+                        setIsMenuVisible(true);
+                      }
+                }
               />
             ))}
 
-            <Pressable onPress={() => setIsAddModalVisible(true)} className="w-[48%] aspect-[4/5] border-2 border-dashed border-red-300 bg-red-50/50 rounded-2xl items-center justify-center overflow-hidden">
-              <View className="bg-red-100 p-4 rounded-full mb-3 shadow-inner shadow-red-200/50"><Icon as={Plus} size={28} className="text-[#CE232A]" /></View>
-              <VietnamText className="text-[#CE232A] font-medium text-base">{i18n.t('recipe.addCookbook')}</VietnamText>
+            <Pressable onPress={() => setIsAddModalVisible(true)} className="w-[48%] aspect-[4/5] rounded-[20px] border border-dashed border-[#E26169] bg-[#F7F7FA] items-center justify-center overflow-hidden">
+              <View className="mb-3 h-[58px] w-[58px] items-center justify-center rounded-full bg-[#F3E7EA]"><Icon as={Plus} size={31} className="text-[#CE232A]" /></View>
+              <VietnamText className="text-[16px] font-medium text-[#727781]">{i18n.t('recipe.addCookbook')}</VietnamText>
             </Pressable>
           </View>
         </ScrollView>
@@ -262,10 +317,21 @@ export default function RecipeScreen() {
         <Pressable className="flex-1 bg-black/40 justify-center items-center px-10" onPress={() => setIsMenuVisible(false)}>
           <View className="bg-white w-full rounded-2xl overflow-hidden shadow-2xl">
             <View className="p-4 bg-gray-50 border-b border-gray-100 flex-row justify-between items-center">
-              <VietnamText className="font-bold text-gray-900 text-lg line-clamp-1 flex-1">{selectedBook?.translationKey ? t(selectedBook.translationKey) : selectedBook?.name}</VietnamText>
+              <VietnamText className="font-bold text-gray-900 text-lg line-clamp-1 flex-1">
+                {selectedBook?.translationKey ? t(selectedBook.translationKey) : selectedBook?.name}
+              </VietnamText>
               <Icon as={X} size={20} className="text-gray-400" />
             </View>
-            <Pressable onPress={() => { setIsMenuVisible(false); setRenameTempName(selectedBook?.name || ''); setTimeout(() => setIsRenameVisible(true), 300); }} className="flex-row items-center gap-3 p-4 border-b border-gray-50">
+            <Pressable
+              onPress={() => {
+                if (!selectedBook) {
+                  return;
+                }
+                setIsMenuVisible(false);
+                setRenameTempName(selectedBook.name || '');
+                setTimeout(() => setIsRenameVisible(true), 300);
+              }}
+              className="flex-row items-center gap-3 p-4 border-b border-gray-50">
               <Icon as={Edit2} size={20} className="text-gray-600" /><VietnamText className="font-medium text-gray-800 text-base">{i18n.t('recipe.editName')}</VietnamText>
             </Pressable>
             <Pressable onPress={handleDeleteCookbook} className="flex-row items-center gap-3 p-4">
@@ -277,7 +343,13 @@ export default function RecipeScreen() {
 
       <RenameCookbookModal 
         visible={isRenameVisible} tempName={renameTempName} setTempName={setRenameTempName} onClose={() => setIsRenameVisible(false)}
-        onConfirm={() => { setCookbooks(cookbooks.map(b => b.id === selectedBook?.id ? { ...b, name: renameTempName, translationKey: null } : b)); setIsRenameVisible(false); }}
+        onConfirm={() => {
+          if (!selectedBook) {
+            return;
+          }
+          renameCookbook(selectedBook.id, renameTempName);
+          setIsRenameVisible(false);
+        }}
       />
     </SafeAreaView>
   );
