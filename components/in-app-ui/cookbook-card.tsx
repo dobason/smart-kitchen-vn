@@ -24,15 +24,21 @@ export function CookbookCard({ book, onMenuPress }: CookbookCardProps) {
         <View className="absolute -top-2 -right-2 w-full aspect-[4/3] rounded-xl bg-gray-200 border border-gray-100" />
         <View className="absolute -top-1 -right-1 w-full aspect-[4/3] rounded-xl bg-gray-300 border border-gray-100" />
         <Image source={{ uri: book.image }} className="w-full aspect-[4/3] rounded-xl bg-gray-100 z-10" />
-        <Pressable onPress={onMenuPress} className="absolute top-1 right-1 p-2 z-20">
-          <Icon as={MoreVertical} size={20} className="text-white drop-shadow-md" />
-        </Pressable>
       </View>
-      <View className="mt-4">
-        <VietnamText className="font-bold text-lg text-gray-900" numberOfLines={1}>{book.name}</VietnamText>
-        <VietnamText className="text-sm text-gray-500 mt-1">
-          {book.count} {t('recipePage.recipeTab')}
-        </VietnamText>
+      <View className="mt-4 flex-row items-start justify-between">
+        <View className="flex-1 pr-2">
+          <VietnamText className="font-bold text-lg text-gray-900" numberOfLines={1}>
+            {book.name}
+          </VietnamText>
+          <VietnamText className="text-sm text-gray-500 mt-1">
+            {book.count} {t('recipePage.recipeTab')}
+          </VietnamText>
+        </View>
+
+        <Pressable onPress={onMenuPress} className="p-1 -mr-1">
+          <Icon as={MoreVertical} size={20} className="text-gray-900" />
+        </Pressable>
+
       </View>
     </Pressable>
   );

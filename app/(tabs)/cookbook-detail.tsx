@@ -1,26 +1,21 @@
 import * as React from 'react';
-import { View, ScrollView, Pressable, Modal } from 'react-native';
+import { View, ScrollView, Pressable, Modal, Alert, TextInput } from 'react-native'; 
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router'; 
-import { Settings2, ChevronRight, Check, X, Plus } from 'lucide-react-native';
+import { Settings2, ChevronRight, Check, X, Plus, Search } from 'lucide-react-native';
 import { Icon } from '@/components/ui/icon';
 import { VietnamText } from '@/components/in-app-ui/vietnam-text';
 import { useLocale } from '@/hooks/use-locale';
+import * as ImagePicker from 'expo-image-picker'; 
 
 import { RecipeCard } from '@/components/in-app-ui/recipe-card';
 import { CookbookDetailHeader } from '@/components/ui/cookbook-detail-header';
 import { ManageActionBar } from '@/components/ui/manage-action-bar';
 import { RenameCookbookModal } from '@/components/ui/rename-cookbook-modal';
 import { AddRecipeModal } from '@/components/ui/add-recipe-modal';
-
-export let GLOBAL_RECIPES = [
-  { id: '1', folderId: 'dinner', name: 'Mì nước cay kiểu Á', description: 'mì sợi, thịt heo...', calories: 550, timeMinutes: 25, imageUrl: 'https://images.unsplash.com/photo-1552611052-33e04de081de?w=500' },
-  { id: '2', folderId: 'dinner', name: 'Pizza phô mai và rau củ', description: 'bột bánh pizza, phô mai...', calories: 250, timeMinutes: 30, imageUrl: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=500' },
-  { id: '3', folderId: 'desserts', name: 'Bánh Cupcake dâu tây', description: 'Bột mì, dâu tây, kem tươi...', calories: 350, timeMinutes: 45, imageUrl: 'https://images.unsplash.com/photo-1563729784474-d77dbb933a9e?w=500' },
-  { id: '4', folderId: 'uncategorized', name: 'Salad gà nướng', description: 'Ức gà, xà lách, sốt mè rang...', calories: 220, timeMinutes: 15, imageUrl: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=500' },
-  { id: '5', folderId: 'uncategorized', name: 'Bánh mì bơ tỏi', description: 'Bánh mì, bơ, tỏi băm...', calories: 200, timeMinutes: 10, imageUrl: 'https://images.unsplash.com/photo-1573140247632-f8fd74997d5c?w=500' },
-  { id: '6', folderId: 'uncategorized', name: 'Sinh tố xoài', description: 'Xoài chín, sữa tươi, đá...', calories: 150, timeMinutes: 5, imageUrl: 'https://images.unsplash.com/photo-1553530666-ba11a7da3888?w=500' },
-];
+import { ImportBottomSheet } from '@/components/import-bottom-sheet';
+import { MyOwnRecipesModal } from '@/components/ui/my-own-recipes-modal'; 
+import { GLOBAL_RECIPES, updateGlobalRecipes } from '@/constants/cookbookData';
 
 export default function CookbookDetailScreen() {
   const { id, name } = useLocalSearchParams();
@@ -41,7 +36,13 @@ export default function CookbookDetailScreen() {
   const [isAddRecipeVisible, setIsAddRecipeVisible] = React.useState(false);
   const [isMoveVisible, setIsMoveVisible] = React.useState(false);
   const [selectedFolderToMove, setSelectedFolderToMove] = React.useState('uncategorized');
+  const [isImportVisible, setIsImportVisible] = React.useState(false);
+  const [isLoadingAI, setIsLoadingAI] = React.useState(false); 
+  const [isMyRecipesVisible, setIsMyRecipesVisible] = React.useState(false);
 
+  const [searchQuery, setSearchQuery] = React.useState('');
+  const [isSearchActive, setIsSearchActive] = React.useState(false);
+  
   React.useEffect(() => {
     setCurrentRecipes(GLOBAL_RECIPES.filter(r => r.folderId === currentFolderId));
     
@@ -54,14 +55,23 @@ export default function CookbookDetailScreen() {
     
     setIsManageMode(false);
     setSelectedIds([]);
+    setSearchQuery('');
+    setIsSearchActive(false);
   }, [id, name, t, currentFolderId, passedName]); 
+
+  const normalizeStr = (str: string) => str ? str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase() : "";
+
+  const filteredCurrentRecipes = React.useMemo(() => {
+    if (!searchQuery) return currentRecipes;
+    return currentRecipes.filter(r => normalizeStr(r.name).includes(normalizeStr(searchQuery)));
+  }, [currentRecipes, searchQuery]);
 
   const toggleSelection = (recipeId: string) => {
     setSelectedIds(prev => prev.includes(recipeId) ? prev.filter(id => id !== recipeId) : [...prev, recipeId]);
   };
 
   const handleSelectAll = () => {
-    setSelectedIds(selectedIds.length === currentRecipes.length ? [] : currentRecipes.map(r => r.id));
+    setSelectedIds(selectedIds.length === filteredCurrentRecipes.length ? [] : filteredCurrentRecipes.map(r => r.id));
   };
 
   const handleSaveRename = () => {
@@ -70,13 +80,48 @@ export default function CookbookDetailScreen() {
   };
 
   const handleConfirmMove = () => {
-    GLOBAL_RECIPES = GLOBAL_RECIPES.map(r => 
+    const updatedRecipes = GLOBAL_RECIPES.map(r => 
       selectedIds.includes(r.id) ? { ...r, folderId: selectedFolderToMove } : r
     );
-    setCurrentRecipes(GLOBAL_RECIPES.filter(r => r.folderId === currentFolderId));
+    updateGlobalRecipes(updatedRecipes);
+    setCurrentRecipes(updatedRecipes.filter(r => r.folderId === currentFolderId));
     setSelectedIds([]);
     setIsMoveVisible(false);
     setIsManageMode(false);
+  };
+
+  const availableRecipesToAdd = GLOBAL_RECIPES.filter(r => r.folderId !== currentFolderId);
+
+  const handleAddExistingRecipes = (selectedIdsToMove: string[]) => {
+    const updatedRecipes = GLOBAL_RECIPES.map(r => 
+      selectedIdsToMove.includes(r.id) ? { ...r, folderId: currentFolderId } : r
+    );
+    updateGlobalRecipes(updatedRecipes);
+    setCurrentRecipes(updatedRecipes.filter(r => r.folderId === currentFolderId));
+    setIsMyRecipesVisible(false); 
+  };
+
+  const simulateAILoading = (actionName: string) => {
+    setIsLoadingAI(true);
+    setTimeout(() => {
+      setIsLoadingAI(false);
+      setIsImportVisible(false); 
+      Alert.alert('Thành công', `Đã phân tích từ ${actionName}`);
+    }, 3000);
+  };
+
+  const handleCameraPress = async () => {
+    const permission = await ImagePicker.requestCameraPermissionsAsync();
+    if (!permission.granted) { Alert.alert('Lỗi', 'Thiếu quyền Camera'); return; }
+    const result = await ImagePicker.launchCameraAsync({ allowsEditing: true, aspect: [4, 3], quality: 0.8 });
+    if (!result.canceled) simulateAILoading('Camera');
+  };
+
+  const handlePhotoPress = async () => {
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permission.granted) { Alert.alert('Lỗi', 'Thiếu quyền Thư viện ảnh'); return; }
+    const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images, allowsEditing: true, aspect: [4, 3], quality: 0.8 });
+    if (!result.canceled) simulateAILoading('Thư viện ảnh');
   };
 
   return (
@@ -86,11 +131,32 @@ export default function CookbookDetailScreen() {
       <CookbookDetailHeader 
         isManageMode={isManageMode}
         cookbookName={cookbookName}
-        totalRecipes={currentRecipes.length}
+        totalRecipes={filteredCurrentRecipes.length}
         onBack={() => router.back()}
         onCloseManage={() => { setIsManageMode(false); setSelectedIds([]); }}
         onEditPress={() => { setTempName(cookbookName); setIsRenameVisible(true); }}
+        onSearchPress={() => setIsSearchActive(!isSearchActive)} 
       />
+      {isSearchActive && !isManageMode && (
+        <View className="px-4 py-3 bg-white border-b border-gray-100 z-10 shadow-sm">
+           <View className="flex-row items-center bg-gray-50 border border-gray-200 rounded-full px-4 py-2">
+              <Icon as={Search} size={20} className="text-gray-400" />
+              <TextInput
+                 placeholder={t('recipe.searchInMyRecipes')}
+                 className="flex-1 ml-2 text-base font-medium text-gray-900"
+                 placeholderTextColor="#9ca3af"
+                 value={searchQuery}
+                 onChangeText={setSearchQuery}
+                 autoFocus
+              />
+              {searchQuery.length > 0 && (
+                 <Pressable onPress={() => setSearchQuery('')} className="p-1">
+                    <Icon as={X} size={16} className="text-gray-400" />
+                 </Pressable>
+              )}
+           </View>
+        </View>
+      )}
 
       <ScrollView className="flex-1" contentContainerClassName="pb-32 pt-2">
         {!isManageMode && (
@@ -104,7 +170,8 @@ export default function CookbookDetailScreen() {
         )}
         
         <View className="px-4 flex-row flex-wrap justify-between">
-          {currentRecipes.map((recipe: any) => {
+          {/*Render mảng đã lọc */}
+          {filteredCurrentRecipes.map((recipe: any) => {
             const isSelected = selectedIds.includes(recipe.id);
             return (
               <Pressable 
@@ -113,7 +180,7 @@ export default function CookbookDetailScreen() {
                 onPress={() => isManageMode ? toggleSelection(recipe.id) : router.push('/(tabs)/recipe-detail')}
                 className="relative"
               >
-                <View className="pointer-events-none w-full">
+                <View pointerEvents="none" className="w-full">
                     <RecipeCard item={recipe} isSaved={false} onToggleSave={() => {}} />
                 </View>
                 
@@ -125,12 +192,18 @@ export default function CookbookDetailScreen() {
               </Pressable>
             );
           })}
+
+          {filteredCurrentRecipes.length === 0 && searchQuery.length > 0 && (
+             <View className="w-full py-10 items-center">
+                <VietnamText className="text-gray-500 font-medium">Không tìm thấy "{searchQuery}"</VietnamText>
+             </View>
+          )}
         </View>
       </ScrollView>
 
       {isManageMode && (
         <ManageActionBar 
-          isAllSelected={selectedIds.length === currentRecipes.length && currentRecipes.length > 0}
+          isAllSelected={selectedIds.length === filteredCurrentRecipes.length && filteredCurrentRecipes.length > 0}
           selectedCount={selectedIds.length}
           onSelectAll={handleSelectAll}
           onMovePress={() => setIsMoveVisible(true)}
@@ -174,7 +247,29 @@ export default function CookbookDetailScreen() {
           <Icon as={Plus} size={32} className="text-white" />
         </Pressable>
       )}
-      <AddRecipeModal visible={isAddRecipeVisible} onClose={() => setIsAddRecipeVisible(false)} />
+
+      <AddRecipeModal 
+        visible={isAddRecipeVisible} 
+        onClose={() => setIsAddRecipeVisible(false)} 
+        onOpenImport={() => setIsImportVisible(true)}
+        onOpenMyRecipes={() => setIsMyRecipesVisible(true)} 
+      />
+
+      <ImportBottomSheet 
+        visible={isImportVisible} 
+        isLoading={isLoadingAI} 
+        onClose={() => setIsImportVisible(false)} 
+        onCameraPress={handleCameraPress} 
+        onPhotoPress={handlePhotoPress} 
+      />
+
+      <MyOwnRecipesModal
+        visible={isMyRecipesVisible}
+        availableRecipes={availableRecipesToAdd}
+        onClose={() => setIsMyRecipesVisible(false)}
+        onAdd={handleAddExistingRecipes}
+      />
+
     </SafeAreaView>
   );
 }

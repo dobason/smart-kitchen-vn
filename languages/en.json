@@ -164,7 +164,11 @@
     "renameComingSoon": "The rename feature will be available in a future update.",
     "notCooked": "Not Cooked",
     "addIntoCookbook": "Add into cookbook",
-    "startCooking": "Start Cooking"
+    "startCooking": "Start Cooking",
+    "sortMostRecipes": "Most recipes",
+    "sortLeastRecipes": "Least recipes",
+    "sortNameAsc": "Name A to Z",
+    "sortNameDesc": "Name Z to A"
   },
   "aiRecipe": {
     "title": "AI Recipe",
