@@ -12,9 +12,10 @@ type Props = {
   onBack: () => void;
   onCloseManage: () => void;
   onEditPress: () => void;
+  onSearchPress?: () => void;
 };
 
-export function CookbookDetailHeader({ isManageMode, cookbookName, totalRecipes, onBack, onCloseManage, onEditPress }: Props) {
+export function CookbookDetailHeader({ isManageMode, cookbookName, totalRecipes, onBack, onCloseManage, onEditPress, onSearchPress }: Props) {
   const { t } = useLocale();
   return (
     <View className="bg-white px-4 py-3 border-b border-gray-100">
@@ -30,7 +31,8 @@ export function CookbookDetailHeader({ isManageMode, cookbookName, totalRecipes,
                 <Icon as={Pencil} size={16} className="text-[#CE232A]" />
               </Pressable>
             </View>
-            <Pressable className="p-2 -mr-2">
+            {/*2. Gắn lệnh vào nút kính lúp */}
+            <Pressable onPress={onSearchPress} className="p-2 -mr-2">
               <Icon as={Search} size={24} className="text-gray-800" />
             </Pressable>
           </React.Fragment>

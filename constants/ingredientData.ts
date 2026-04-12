@@ -1,4 +1,4 @@
-import { CookingIngredientItem, IngredientItem } from '@/types/ingredient';
+import { CookingIngredientItem, IngredientItem, IngredientGroup } from '@/types/ingredient';
 
 const RED = '#F28398';
 const PINK = '#F8D4DC';
@@ -270,3 +270,21 @@ export function getIngredientDisplayName(ingredient: IngredientItem, locale: str
   return ingredient.name;
 }
 
+export const INITIAL_GROUPS: IngredientGroup[] = [
+  {
+    id: 'g1',
+    label: 'Nguyên liệu chính',
+    items: [
+      { id: 'i1', name: 'Mì', qty: '200', unit: 'g', emoji: '🍜', bgColor: '#E5CDAA' },
+      { id: 'i2', name: 'Thịt heo', qty: '150', unit: 'g', emoji: '🥩', bgColor: '#F28398' },
+    ],
+  },
+  {
+    id: 'g2',
+    label: 'Rau & Gia vị',
+    items: [
+      { id: 'i3', name: 'Hành tây', qty: '1', unit: 'củ', emoji: '🧅', bgColor: '#F8D4DC' },
+      { id: 'i4', name: 'Tỏi', qty: '2', unit: 'tép', emoji: '🧄', bgColor: '#F6F0A8' },
+    ],
+  },
+];

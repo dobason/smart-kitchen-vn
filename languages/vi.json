@@ -164,7 +164,11 @@
     "renameComingSoon": "Tính năng đổi tên sẽ có trong bản cập nhật sau.",
     "notCooked": "Chưa nấu",
     "addIntoCookbook": "Thêm vào sổ nấu ăn",
-    "startCooking": "Bắt đầu nấu"
+    "startCooking": "Bắt đầu nấu",
+    "sortMostRecipes": "Nhiều công thức nhất",
+    "sortLeastRecipes": "Ít công thức nhất",
+    "sortNameAsc": "Tên từ A-Z",
+    "sortNameDesc": "Tên từ Z-A"
   },
   "aiRecipe": {
     "title": "Công thức AI",

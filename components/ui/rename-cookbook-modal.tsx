@@ -17,7 +17,7 @@ export function RenameCookbookModal({ visible, tempName, setTempName, onClose, o
   const { t } = useLocale();
 
   return (
-    <Modal visible={visible} transparent animationType="fade">
+    <Modal visible={visible} transparent animationType="fade"statusBarTranslucent={true}>
       <View className="flex-1 bg-black/50 justify-center items-center px-6">
         <View className="bg-white w-full rounded-[24px] p-6 shadow-2xl items-center">
           <Pressable onPress={onClose} className="absolute top-4 right-4">
