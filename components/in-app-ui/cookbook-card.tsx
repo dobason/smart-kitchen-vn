@@ -7,30 +7,64 @@ import { VietnamText } from '@/components/in-app-ui/vietnam-text';
 import { useLocale } from '@/hooks/use-locale'; 
 
 interface CookbookCardProps {
-  book: { id: string; name: string; count: number; image: string };
-  onMenuPress: () => void;
+  book: { id: string; name: string; count: number; image: string; previewImages?: string[] };
+  onMenuPress?: () => void;
+  showMenu?: boolean;
 }
 
-export function CookbookCard({ book, onMenuPress }: CookbookCardProps) {
+export function CookbookCard({ book, onMenuPress, showMenu = true }: CookbookCardProps) {
   const router = useRouter();
-  const { t } = useLocale(); 
+  const { t } = useLocale();
+
+  const coverImages = React.useMemo(() => {
+    const uniqueImages = Array.from(new Set((book.previewImages ?? []).filter(Boolean)));
+
+    if (uniqueImages.length === 0) {
+      uniqueImages.push(book.image);
+    }
+
+    while (uniqueImages.length < 3) {
+      uniqueImages.push(uniqueImages[0]);
+    }
+
+    return uniqueImages.slice(0, 3);
+  }, [book.image, book.previewImages]);
   
   return (
       <Pressable 
         onPress={() => router.push({ pathname: '/(tabs)/cookbook-detail', params: { id: book.id, name: book.name } } as any)}
-        className="w-[48%] bg-white rounded-2xl p-3 shadow-sm border border-gray-100 overflow-visible"
+        className="w-[48%] rounded-[20px] border border-[#ECECF0] bg-[#F6F6F8] p-3.5 shadow-sm overflow-visible"
       >
-      <View className="relative">
-        <View className="absolute -top-2 -right-2 w-full aspect-[4/3] rounded-xl bg-gray-200 border border-gray-100" />
-        <View className="absolute -top-1 -right-1 w-full aspect-[4/3] rounded-xl bg-gray-300 border border-gray-100" />
-        <Image source={{ uri: book.image }} className="w-full aspect-[4/3] rounded-xl bg-gray-100 z-10" />
-        <Pressable onPress={onMenuPress} className="absolute top-1 right-1 p-2 z-20">
-          <Icon as={MoreVertical} size={20} className="text-white drop-shadow-md" />
-        </Pressable>
+      <View className="relative mt-1">
+        <Image
+          source={{ uri: coverImages[2] }}
+          className="absolute -top-1 right-0 w-[96%] aspect-[4/3] rounded-[13px] border border-[#DBDEE4] bg-[#E9ECF2]"
+          style={{ transform: [{ rotate: '6deg' }] }}
+        />
+        <Image
+          source={{ uri: coverImages[1] }}
+          className="absolute top-0 left-0 w-[96%] aspect-[4/3] rounded-[13px] border border-[#D7DAE1] bg-[#E2E5EB]"
+          style={{ transform: [{ rotate: '-5deg' }] }}
+        />
+        <Image
+          source={{ uri: coverImages[0] }}
+          className="w-full aspect-[4/3] rounded-[13px] bg-[#D8DCE3] z-10"
+          style={{ transform: [{ rotate: '-1.5deg' }] }}
+        />
+        {showMenu && onMenuPress ? (
+          <Pressable
+            onPress={(event) => {
+              event.stopPropagation();
+              onMenuPress();
+            }}
+            className="absolute top-1 right-1 p-1.5 z-20">
+            <Icon as={MoreVertical} size={17} className="text-[#757984]" />
+          </Pressable>
+        ) : null}
       </View>
-      <View className="mt-4">
-        <VietnamText className="font-bold text-lg text-gray-900" numberOfLines={1}>{book.name}</VietnamText>
-        <VietnamText className="text-sm text-gray-500 mt-1">
+      <View className="mt-4 mb-1">
+        <VietnamText className="text-[18px] font-bold text-[#16171A]" numberOfLines={1}>{book.name}</VietnamText>
+        <VietnamText className="mt-1.5 text-[14px] text-[#7B808A]">
           {book.count} {t('recipePage.recipeTab')}
         </VietnamText>
       </View>

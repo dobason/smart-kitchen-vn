@@ -11,6 +11,7 @@ import {
 import { SEARCH_RECIPES } from '@/constants/recipeData';
 import { Icon } from '@/components/ui/icon';
 import { useLocale } from '@/hooks/use-locale';
+import { useSavedRecipes } from '@/hooks/use-saved-recipes';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { BrushCleaning, X } from 'lucide-react-native';
 import * as React from 'react';
@@ -386,6 +387,7 @@ function CookwareFilterSheet({
 export function SearchResultsContainer() {
   const router = useRouter();
   const { t } = useLocale();
+  const { savedRecipeIds, toggleSavedRecipe } = useSavedRecipes();
   const params = useLocalSearchParams<{ q?: string | string[] }>();
 
   const initialQuery = React.useMemo(() => {
@@ -399,7 +401,6 @@ export function SearchResultsContainer() {
   const [selectedTags, setSelectedTags] = React.useState<string[]>(
     initialQuery ? [initialQuery] : []
   );
-  const [savedIds, setSavedIds] = React.useState<Set<string>>(new Set());
   const [selectedMaxMinutes, setSelectedMaxMinutes] = React.useState<number | null>(null);
   const [selectedMaxCalories, setSelectedMaxCalories] = React.useState<number | null>(null);
   const [selectedCookware, setSelectedCookware] = React.useState<string[]>([]);
@@ -467,10 +468,29 @@ export function SearchResultsContainer() {
   }, [query, selectedTags, selectedCookware, selectedMaxMinutes, selectedMaxCalories]);
 
   function toggleSave(id: string) {
-    setSavedIds((prev) => {
-      const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
-      return next;
+    const recipe = SEARCH_RECIPES.find((item) => item.id === id);
+    if (!recipe) {
+      return;
+    }
+    toggleSavedRecipe(recipe);
+  }
+
+  function handleOpenRecipe(id: string) {
+    const recipe = SEARCH_RECIPES.find((item) => item.id === id);
+    if (!recipe) {
+      return;
+    }
+
+    router.push({
+      pathname: '/(tabs)/recipe-detail',
+      params: {
+        recipeId: recipe.id,
+        recipeName: recipe.name,
+        recipeDescription: recipe.description,
+        recipeCalories: String(recipe.calories),
+        recipeTimeMinutes: String(recipe.timeMinutes),
+        recipeImageUrl: recipe.imageUrl,
+      },
     });
   }
 
@@ -602,7 +622,8 @@ export function SearchResultsContainer() {
                 <SearchRecipeCard
                   key={item.id}
                   item={item}
-                  isSaved={savedIds.has(item.id)}
+                  isSaved={savedRecipeIds.has(item.id)}
+                  onPressRecipe={handleOpenRecipe}
                   onToggleSave={toggleSave}
                   calUnit={String(t('searchResults.cal'))}
                   minuteUnit={String(t('searchResults.minute'))}

@@ -21,6 +21,7 @@ import * as React from 'react';
 import { BeVietnamPro_400Regular, useFonts } from '@expo-google-fonts/be-vietnam-pro';
 import { LocaleProvider } from '@/providers/locale-provider';
 import { IngredientsProvider } from '@/providers/ingredients-provider';
+import { SavedRecipesProvider } from '@/providers/saved-recipes-provider';
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -39,13 +40,15 @@ export default function RootLayout() {
   return (
     <LocaleProvider>
       <IngredientsProvider>
-        <ClerkProvider publishableKey={clerkPublishableKey} tokenCache={tokenCache}>
-          <ThemeProvider value={NAV_THEME['light']}>
-            <StatusBar style="dark" />
-            <Routes />
-            <PortalHost />
-          </ThemeProvider>
-        </ClerkProvider>
+        <SavedRecipesProvider>
+          <ClerkProvider publishableKey={clerkPublishableKey} tokenCache={tokenCache}>
+            <ThemeProvider value={NAV_THEME['light']}>
+              <StatusBar style="dark" />
+              <Routes />
+              <PortalHost />
+            </ThemeProvider>
+          </ClerkProvider>
+        </SavedRecipesProvider>
       </IngredientsProvider>
     </LocaleProvider>
   );

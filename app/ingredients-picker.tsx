@@ -61,15 +61,24 @@ export default function IngredientsPickerScreen() {
     [draftSelectedIds]
   );
 
+  function handleClose() {
+    if (isAITarget) {
+      router.replace('/ai-recipe');
+      return;
+    }
+
+    router.replace('/(tabs)');
+  }
+
   function handleConfirm() {
     setBaseIngredientIds(draftSelectedIds);
-    router.back();
+    handleClose();
   }
 
   return (
     <SafeAreaView className="flex-1 bg-white">
       <View className="flex-row items-center px-4 pb-2 pt-2">
-        <Pressable onPress={() => router.back()} className="h-11 w-11 items-start justify-center pt-1">
+        <Pressable onPress={handleClose} className="h-11 w-11 items-start justify-center pt-1">
           <Icon as={X} size={34} className="text-[#111827]" />
         </Pressable>
 
