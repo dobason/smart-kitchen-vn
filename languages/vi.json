@@ -289,7 +289,12 @@
     "successSave": "Lưu thành công",
     "successUpdate": "Công thức đã cập nhật thành công!",
     "congratulations": "Chúc mừng",
-    "congratulationsMessage": "Chúc mừng bạn đã hoàn thành các bước nấu món ăn! Chúc bạn ngon miệng!"
+    "congratulationsMessage": "Chúc mừng bạn đã hoàn thành các bước nấu món ăn! Chúc bạn ngon miệng!",
+    "goToImport": "Nhập công thức",
+    "importPhoto": "Dán ảnh công thức từ thư viện",
+    "importCamera": "Chụp ảnh công thức từ camera",
+    "openCamera": "Chụp ảnh công thức",
+    "howToImport": "Cách để nhập công thức"
   },
     "recipePage": {
       "recipeTab": "Công thức"

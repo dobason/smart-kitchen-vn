@@ -61,3 +61,49 @@ export const INITIAL_STEPS: StepItem[] = [
       tip: 'Chan nước dùng gà thật nóng lên mì sợi để mì ấm đều, thêm sa tế ớt nếu thích ăn cay hơn.',
     },
   ];
+
+export const PHOTO_STEPS = [
+  {
+    step: 1,
+    title: "Open 'RECIPE' Page and tap '+' import button",
+    image: require('@/assets/images/guide-step1.png'),
+  },
+  {
+    step: 2,
+    title: "Choose 'Photo' from the options.",
+    image: require('@/assets/images/guide-step2.png'),
+  },
+  {
+    step: 3,
+    title: 'Select an image from your album to import recipe.',
+    image: require('@/assets/images/guide-step3.png'),
+  },
+  {
+    step: 4,
+    title: "Input a short description, then tap 'Import Recipe' button.",
+    image: require('@/assets/images/guide-step4.png'),
+  },
+];
+
+export const CAMERA_STEPS = [
+  {
+    step: 1,
+    title: "Open 'RECIPE' Page and tap '+' import button",
+    image: require('@/assets/images/guide-step1.png'),
+  },
+  {
+    step: 2,
+    title: "Choose 'Pic to Recipe' from the import options.",
+    image: require('@/assets/images/camera-guide-step2.png'),
+  },
+  {
+    step: 3,
+    title: 'Point your camera at the dish and take a photo.',
+    image: require('@/assets/images/camera-guide-step3.png'),
+  },
+  {
+    step: 4,
+    title: "Input a short description, then tap 'Import Recipe' button.",
+    image: require('@/assets/images/guide-step4.png'),
+  },
+];
