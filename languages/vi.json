@@ -164,7 +164,19 @@
     "renameComingSoon": "Tính năng đổi tên sẽ có trong bản cập nhật sau.",
     "notCooked": "Chưa nấu",
     "addIntoCookbook": "Thêm vào sổ nấu ăn",
-    "startCooking": "Bắt đầu nấu"
+    "startCooking": "Bắt đầu nấu",
+    "saveRecipe": "Lưu công thức",
+    "noSavedRecipesTitle": "Chưa có công thức đã lưu",
+    "noSavedRecipesDescription": "Nhấn nút lưu trên card công thức để thêm vào mục này.",
+    "confirmDeleteSavedTitle": "Bạn có chắc chắn?",
+    "confirmDeleteSavedMessage": "Sau khi xóa, công thức này sẽ không thể khôi phục.",
+    "detailTipsMessage": "Bạn có thể thêm các loại topping như xúc xích, thịt xông khói hoặc nấm để tăng hương vị. Nếu không có lò nướng, bạn có thể dùng chảo chống dính để nướng trên bếp."
+  },
+  "recipeDetail": {
+    "calories": "Calories",
+    "protein": "Chất đạm",
+    "carbs": "Tinh bột",
+    "fats": "Chất béo"
   },
   "aiRecipe": {
     "title": "Công thức AI",
@@ -267,7 +279,7 @@
     "save": "Lưu",
     "info": "Thông tin",
     "reOrder": "Sắp xếp lại",
-    "saved": "Đã tiết kiệm",
+    "saved": "Đã lưu",
     "changePhoto": "Thay đổi hình",
     "deleteTitle": "Xóa công thức",
     "deleteMessage": "Bạn có chắc chắn muốn xóa công thức này không?",
@@ -277,7 +289,12 @@
     "successSave": "Lưu thành công",
     "successUpdate": "Công thức đã cập nhật thành công!",
     "congratulations": "Chúc mừng",
-    "congratulationsMessage": "Chúc mừng bạn đã hoàn thành các bước nấu món ăn! Chúc bạn ngon miệng!"
+    "congratulationsMessage": "Chúc mừng bạn đã hoàn thành các bước nấu món ăn! Chúc bạn ngon miệng!",
+    "goToImport": "Nhập công thức",
+    "importPhoto": "Dán ảnh công thức từ thư viện",
+    "importCamera": "Chụp ảnh công thức từ camera",
+    "openCamera": "Chụp ảnh công thức",
+    "howToImport": "Cách để nhập công thức"
   },
     "recipePage": {
       "recipeTab": "Công thức"

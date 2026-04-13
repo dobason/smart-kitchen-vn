@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { RenameCookbookModal } from '@/components/ui/rename-cookbook-modal';
-import { Link, useFocusEffect } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { View, ScrollView, Pressable, TextInput, Alert, Modal } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Search, SlidersHorizontal, ChevronRight, Plus, ChefHat, ArrowDown10, Edit2, Trash2, X, BookOpen } from 'lucide-react-native';
@@ -12,11 +12,8 @@ import { RecipeCard } from '@/components/in-app-ui/recipe-card';
 import { CookbookCard } from '@/components/in-app-ui/cookbook-card';
 import { ImportBottomSheet } from '@/components/import-bottom-sheet';
 import { useLocale } from '@/hooks/use-locale';
+import { useSavedRecipes } from '@/hooks/use-saved-recipes';
 import { GLOBAL_RECIPES } from './cookbook-detail';
-
-const staticRecipes = [
-  { id: '1', name: 'Súp phở', description: '600ml nước, 100g bánh phở...', calories: 300, timeMinutes: 15, imageUrl: 'https://images.squarespace-cdn.com/content/v1/66628bdc6b0b0d52d914a921/1752754499896-E9EAAEK78ESN8KAJV33G/unsplash-image-_33r6H_hiz4.jpg?format=1500w', tags: [] }
-];
 
 const initialCookbooks = [
   { id: 'uncategorized', translationKey: 'cookbookDetail.uncategorized', count: 0, image: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=500&q=80' },
@@ -24,7 +21,20 @@ const initialCookbooks = [
   { id: 'dinner', translationKey: 'cookbookDetail.dinner', count: 0, image: 'https://images.unsplash.com/photo-1547592180-85f173990554?w=500&q=80' },
 ];
 
+function normalizeRecipeSearchText(value: string) {
+  return value
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/đ/g, 'd');
+}
+
 export default function RecipeScreen() {
+  const router = useRouter();
+  const { t } = useLocale();
+  const { savedRecipes, savedRecipeIds, toggleSavedRecipe } = useSavedRecipes();
+
   const [activeTab, setActiveTab] = React.useState<'recipe' | 'cookbook'>('recipe');
   const [cookbooks, setCookbooks] = React.useState<any[]>(initialCookbooks);
 
@@ -38,8 +48,45 @@ export default function RecipeScreen() {
   
   const [isImportVisible, setIsImportVisible] = React.useState(false);
   const [isLoadingAI, setIsLoadingAI] = React.useState(false);
+  const [recipeSearchQuery, setRecipeSearchQuery] = React.useState('');
 
-  const { t } = useLocale();
+  const filteredSavedRecipes = React.useMemo(() => {
+    const normalizedQuery = normalizeRecipeSearchText(recipeSearchQuery);
+
+    if (!normalizedQuery) {
+      return savedRecipes;
+    }
+
+    return savedRecipes.filter((recipe) => {
+      const normalizedName = normalizeRecipeSearchText(recipe.name);
+      const normalizedDescription = normalizeRecipeSearchText(recipe.description);
+      return (
+        normalizedName.includes(normalizedQuery) ||
+        normalizedDescription.includes(normalizedQuery)
+      );
+    });
+  }, [recipeSearchQuery, savedRecipes]);
+
+  const openRecipeDetail = (recipe: {
+    id: string;
+    name: string;
+    description: string;
+    calories: number;
+    timeMinutes: number;
+    imageUrl: string;
+  }) => {
+    router.push({
+      pathname: '/(tabs)/recipe-detail',
+      params: {
+        recipeId: recipe.id,
+        recipeName: recipe.name,
+        recipeDescription: recipe.description,
+        recipeCalories: String(recipe.calories),
+        recipeTimeMinutes: String(recipe.timeMinutes),
+        recipeImageUrl: recipe.imageUrl,
+      },
+    });
+  };
 
   useFocusEffect(
     React.useCallback(() => {
@@ -107,7 +154,13 @@ export default function RecipeScreen() {
           <View className="flex-row items-center px-4 py-3 gap-3">
             <View className="flex-1 flex-row items-center bg-gray-50 border border-gray-200 rounded-full px-4 py-2">
               <Icon as={Search} size={20} className="text-gray-400" />
-              <TextInput placeholder={t("recipe.searchInMyRecipes")} className="flex-1 ml-2 text-base font-medium text-gray-900" placeholderTextColor="#9ca3af" />
+              <TextInput
+                value={recipeSearchQuery}
+                onChangeText={setRecipeSearchQuery}
+                placeholder={t("recipe.searchInMyRecipes")}
+                className="flex-1 ml-2 text-base font-medium text-gray-900"
+                placeholderTextColor="#9ca3af"
+              />
             </View>
             <Pressable><Icon as={SlidersHorizontal} size={24} className="text-gray-600" /></Pressable>
           </View>
@@ -129,15 +182,41 @@ export default function RecipeScreen() {
             </View>
           </View>
 
-          <View className="px-4 mt-4 flex-row flex-wrap justify-between">
-            {staticRecipes.map(recipe => (
-              <Link key={recipe.id} href="/(tabs)/recipe-detail" asChild>
-                <Pressable style={{ width: '48.5%', marginBottom: 16 }}>
-                  <RecipeCard item={recipe} isSaved={false} onToggleSave={() => {}} />
+          {savedRecipes.length === 0 ? (
+            <View className="items-center px-8 py-12">
+              <VietnamText className="text-xl font-bold text-gray-900 text-center">
+                {t('recipe.noSavedRecipesTitle')}
+              </VietnamText>
+              <VietnamText className="mt-2 text-center text-base text-gray-500">
+                {t('recipe.noSavedRecipesDescription')}
+              </VietnamText>
+            </View>
+          ) : filteredSavedRecipes.length === 0 ? (
+            <View className="items-center px-8 py-12">
+              <VietnamText className="text-xl font-bold text-gray-900 text-center">
+                {t('searchResults.noMatches')}
+              </VietnamText>
+            </View>
+          ) : (
+            <View className="px-4 mt-4 flex-row flex-wrap justify-between">
+              {filteredSavedRecipes.map((recipe) => (
+                <Pressable
+                  key={recipe.id}
+                  style={{ width: '48.5%', marginBottom: 16 }}
+                  onPress={() => openRecipeDetail(recipe)}>
+                  <RecipeCard
+                    item={recipe}
+                    isSaved={savedRecipeIds.has(recipe.id)}
+                    onToggleSave={(id) => {
+                      if (id === recipe.id) {
+                        toggleSavedRecipe(recipe);
+                      }
+                    }}
+                  />
                 </Pressable>
-              </Link>
-            ))}
-          </View>
+              ))}
+            </View>
+          )}
         </ScrollView>
       ) : (
         <ScrollView className="flex-1 bg-gray-50" contentContainerClassName="pb-32 pt-4">
