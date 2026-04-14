@@ -4,7 +4,6 @@ import { NutritionStat } from '@/components/in-app-ui/nutrition-stat';
 import { RoundedButton } from '@/components/in-app-ui/rounded-button';
 import { StepCard } from '@/components/in-app-ui/step-card';
 import { VietnamText } from '@/components/in-app-ui/vietnam-text';
-import { BottomActionBar } from '@/components/ui/bottom-action-bar';
 import { Icon } from '@/components/ui/icon';
 import { INGREDIENTS } from '@/constants/ingredientData';
 import { SEARCH_RECIPES } from '@/constants/recipeData';
@@ -15,9 +14,7 @@ import type { SearchRecipeItem } from '@/types/recipe';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import {
   ArrowLeftIcon,
-  BookOpenIcon,
   Bookmark,
-  CookingPotIcon,
   FolderIcon,
   MaximizeIcon,
   MinusIcon,
@@ -107,6 +104,10 @@ export default function RecipeDetailScreen() {
   const recipeIsSaved = isSaved(recipe.id);
   const displayCookbooks = getRecipeCookbooks(recipe.id);
   const displayCookbookBadges = React.useMemo(() => {
+    if (!recipeIsSaved) {
+      return [];
+    }
+
     if (displayCookbooks.length === 0) {
       return [{ id: 'fallback-uncategorized', name: String(t('cookbookDetail.uncategorized')) }];
     }
@@ -115,7 +116,7 @@ export default function RecipeDetailScreen() {
       id: cookbook.id,
       name: cookbook.translationKey ? String(t(cookbook.translationKey)) : cookbook.name,
     }));
-  }, [displayCookbooks, t]);
+  }, [displayCookbooks, recipeIsSaved, t]);
 
   function handleBack() {
     if (router.canGoBack()) {
@@ -197,19 +198,6 @@ export default function RecipeDetailScreen() {
           <VietnamText className="mb-2 text-2xl font-bold text-gray-900">{recipe.name}</VietnamText>
           <VietnamText className="mb-4 text-sm text-gray-500">{recipe.description}</VietnamText>
 
-          <View className="mb-5 flex-row justify-around">
-            <BottomActionBar icon={BookOpenIcon} label={t('recipe.addIntoCookbook')} />
-            <View className="flex-1 items-center gap-1">
-              <View className="relative">
-                <Icon as={CookingPotIcon} size={26} className="text-gray-700" />
-                <View className="absolute -bottom-1 -right-1 h-4 w-4 rounded-full border-2 border-white" />
-              </View>
-              <VietnamText className="text-center text-xs text-gray-600">
-                {t('recipe.notCooked')}
-              </VietnamText>
-            </View>
-          </View>
-
           <View className="mb-4 flex-row rounded-2xl border border-gray-200">
             <NutritionStat value={String(recipe.calories)} label={t('recipeDetail.calories')} emoji="🔥" />
             <NutritionStat value="12g" label={t('recipeDetail.protein')} emoji="💪" hasBorder />
@@ -235,23 +223,25 @@ export default function RecipeDetailScreen() {
             </View>
           </View>
 
-          <View className="mb-5">
-            <VietnamText className="mb-2 text-base font-bold text-gray-900">
-              {t('cookbook.COOKBOOK')}
-            </VietnamText>
-            <View className="flex-row flex-wrap gap-2">
-              {displayCookbookBadges.map((cookbookBadge) => (
-                <View
-                  key={cookbookBadge.id}
-                  className="flex-row items-center gap-1.5 rounded-full bg-gray-100 px-3 py-1.5">
-                  <Icon as={FolderIcon} size={14} className="text-gray-600" />
-                  <VietnamText className="text-sm font-medium italic text-gray-700">
-                    {cookbookBadge.name}
-                  </VietnamText>
-                </View>
-              ))}
+          {recipeIsSaved ? (
+            <View className="mb-5">
+              <VietnamText className="mb-2 text-base font-bold text-gray-900">
+                {t('cookbook.COOKBOOK')}
+              </VietnamText>
+              <View className="flex-row flex-wrap gap-2">
+                {displayCookbookBadges.map((cookbookBadge) => (
+                  <View
+                    key={cookbookBadge.id}
+                    className="flex-row items-center gap-1.5 rounded-full bg-gray-100 px-3 py-1.5">
+                    <Icon as={FolderIcon} size={14} className="text-gray-600" />
+                    <VietnamText className="text-sm font-medium italic text-gray-700">
+                      {cookbookBadge.name}
+                    </VietnamText>
+                  </View>
+                ))}
+              </View>
             </View>
-          </View>
+          ) : null}
 
           <VietnamText className="mb-3 text-base font-bold text-gray-900">
             {t('ingredients.INGREDIENTS')}

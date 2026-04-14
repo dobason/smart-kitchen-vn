@@ -28,6 +28,7 @@ export type SavedRecipesContextValue = {
   renameCookbook: (cookbookId: string, newName: string) => void;
   deleteCookbook: (cookbookId: string) => void;
   assignRecipesToCookbook: (recipeIds: string[], targetCookbookId: string) => void;
+  removeRecipesFromCookbook: (recipeIds: string[], cookbookId: string) => void;
 };
 
 export const SavedRecipesContext = React.createContext<SavedRecipesContextValue | undefined>(

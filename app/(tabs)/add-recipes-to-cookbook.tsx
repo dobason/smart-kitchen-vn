@@ -45,33 +45,51 @@ export default function AddRecipesToCookbookScreen() {
   const targetCookbook = getCookbookById(targetCookbookId);
   const uncategorizedRecipes = getRecipesByCookbook(uncategorizedCookbookId);
 
-  const selectedFromTargetIds = React.useMemo(
-    () =>
-      uncategorizedRecipes
-        .filter((recipe) => getRecipeCookbookIds(recipe.id).includes(targetCookbookId))
-        .map((recipe) => recipe.id),
-    [getRecipeCookbookIds, targetCookbookId, uncategorizedRecipes]
+  const availableRecipes = React.useMemo(() => {
+    if (targetCookbookId === uncategorizedCookbookId) {
+      return uncategorizedRecipes;
+    }
+
+    return uncategorizedRecipes.filter(
+      (recipe) => !getRecipeCookbookIds(recipe.id).includes(targetCookbookId)
+    );
+  }, [
+    getRecipeCookbookIds,
+    targetCookbookId,
+    uncategorizedCookbookId,
+    uncategorizedRecipes,
+  ]);
+
+  const availableRecipeIdsKey = React.useMemo(
+    () => availableRecipes.map((recipe) => recipe.id).join('|'),
+    [availableRecipes]
   );
-  const selectedFromTargetKey = React.useMemo(
-    () => selectedFromTargetIds.join('|'),
-    [selectedFromTargetIds]
+  const availableRecipeIdSet = React.useMemo(
+    () => new Set(availableRecipes.map((recipe) => recipe.id)),
+    [availableRecipeIdsKey]
   );
 
   const [query, setQuery] = React.useState('');
-  const [selectedIds, setSelectedIds] = React.useState<string[]>(selectedFromTargetIds);
+  const [selectedIds, setSelectedIds] = React.useState<string[]>([]);
 
   React.useEffect(() => {
-    setSelectedIds(selectedFromTargetIds);
-  }, [targetCookbookId, selectedFromTargetKey]);
+    setSelectedIds((prev) => {
+      const next = prev.filter((id) => availableRecipeIdSet.has(id));
+      const unchanged =
+        next.length === prev.length && next.every((id, index) => id === prev[index]);
+
+      return unchanged ? prev : next;
+    });
+  }, [availableRecipeIdSet]);
 
   const filteredRecipes = React.useMemo(() => {
     const normalizedQuery = normalizeRecipeSearchText(query);
 
     if (!normalizedQuery) {
-      return uncategorizedRecipes;
+      return availableRecipes;
     }
 
-    return uncategorizedRecipes.filter((recipe) => {
+    return availableRecipes.filter((recipe) => {
       const normalizedName = normalizeRecipeSearchText(recipe.name);
       const normalizedDescription = normalizeRecipeSearchText(recipe.description);
       return (
@@ -79,7 +97,7 @@ export default function AddRecipesToCookbookScreen() {
         normalizedDescription.includes(normalizedQuery)
       );
     });
-  }, [query, uncategorizedRecipes]);
+  }, [availableRecipes, query]);
 
   const isAllSelected =
     filteredRecipes.length > 0 && filteredRecipes.every((recipe) => selectedIds.includes(recipe.id));
@@ -124,7 +142,7 @@ export default function AddRecipesToCookbookScreen() {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-[#FFF4F5]">
+    <SafeAreaView className="flex-1 bg-white">
       <Stack.Screen options={{ headerShown: false }} />
 
       <View className="mx-3 mt-2 flex-1 rounded-[28px] border border-[#F2D0D3] bg-white px-4 pt-4 shadow-sm">
@@ -181,7 +199,7 @@ export default function AddRecipesToCookbookScreen() {
         </ScrollView>
       </View>
 
-      <View className="absolute bottom-0 left-0 right-0 flex-row items-center justify-between border-t border-[#F2D0D3] bg-white px-6 pb-10 pt-4">
+      <View className="absolute bottom-0 left-0 right-0 flex-row items-center justify-between border-t border-[#E8E8ED] bg-white px-6 pb-10 pt-4">
         <Pressable onPress={handleSelectAll} className="flex-row items-center gap-3">
           <View
             className={`h-7 w-7 items-center justify-center rounded-full border-2 ${

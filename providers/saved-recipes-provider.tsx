@@ -31,6 +31,21 @@ function normalizeCookbookIds(value: string[] | string | undefined): string[] {
   return value ? [value] : [];
 }
 
+function normalizeSecondaryCookbookIds(
+  value: string[] | string | undefined,
+  cookbooks: CookbookItem[]
+): string[] {
+  return Array.from(
+    new Set(
+      normalizeCookbookIds(value).filter(
+        (mappedId) =>
+          mappedId !== UNCATEGORIZED_COOKBOOK_ID &&
+          cookbooks.some((cookbook) => cookbook.id === mappedId)
+      )
+    )
+  );
+}
+
 export const SavedRecipesProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [savedRecipes, setSavedRecipes] = React.useState<SearchRecipeItem[]>([]);
   const [cookbooks, setCookbooks] = React.useState<CookbookItem[]>(DEFAULT_COOKBOOKS);
@@ -94,20 +109,22 @@ export const SavedRecipesProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
   const getRecipeCookbookIds = React.useCallback(
     (recipeId: string) => {
-      const mappedIds = normalizeCookbookIds(recipeCookbookMap[recipeId]);
-      const validSecondaryIds = Array.from(
-        new Set(
-          mappedIds.filter(
-            (mappedId) =>
-              mappedId !== UNCATEGORIZED_COOKBOOK_ID &&
-              cookbooks.some((cookbook) => cookbook.id === mappedId)
-          )
-        )
+      if (!savedRecipeIds.has(recipeId)) {
+        return [];
+      }
+
+      const secondaryCookbookIds = normalizeSecondaryCookbookIds(
+        recipeCookbookMap[recipeId],
+        cookbooks
       );
 
-      return [UNCATEGORIZED_COOKBOOK_ID, ...validSecondaryIds];
+      if (secondaryCookbookIds.length === 0) {
+        return [UNCATEGORIZED_COOKBOOK_ID];
+      }
+
+      return secondaryCookbookIds;
     },
-    [cookbooks, recipeCookbookMap]
+    [cookbooks, recipeCookbookMap, savedRecipeIds]
   );
 
   const getRecipeCookbooks = React.useCallback(
@@ -126,10 +143,10 @@ export const SavedRecipesProvider: React.FC<{ children: React.ReactNode }> = ({ 
       }
 
       return savedRecipes.filter((recipe) =>
-        normalizeCookbookIds(recipeCookbookMap[recipe.id]).includes(cookbookId)
+        normalizeSecondaryCookbookIds(recipeCookbookMap[recipe.id], cookbooks).includes(cookbookId)
       );
     },
-    [recipeCookbookMap, savedRecipes]
+    [cookbooks, recipeCookbookMap, savedRecipes]
   );
 
   const getCookbookCount = React.useCallback(
@@ -139,12 +156,14 @@ export const SavedRecipesProvider: React.FC<{ children: React.ReactNode }> = ({ 
       }
 
       return savedRecipes.reduce((count, recipe) => {
-        return normalizeCookbookIds(recipeCookbookMap[recipe.id]).includes(cookbookId)
+        return normalizeSecondaryCookbookIds(recipeCookbookMap[recipe.id], cookbooks).includes(
+          cookbookId
+        )
           ? count + 1
           : count;
       }, 0);
     },
-    [recipeCookbookMap, savedRecipes]
+    [cookbooks, recipeCookbookMap, savedRecipes]
   );
 
   const createCookbook = React.useCallback((name: string) => {
@@ -194,13 +213,8 @@ export const SavedRecipesProvider: React.FC<{ children: React.ReactNode }> = ({ 
       const next: Record<string, string[]> = {};
 
       Object.entries(prev).forEach(([recipeId, mappedCookbookIds]) => {
-        const filteredIds = Array.from(
-          new Set(
-            normalizeCookbookIds(mappedCookbookIds).filter(
-              (mappedId) =>
-                mappedId !== cookbookId && mappedId !== UNCATEGORIZED_COOKBOOK_ID
-            )
-          )
+        const filteredIds = normalizeCookbookIds(mappedCookbookIds).filter(
+          (mappedId) => mappedId !== cookbookId && mappedId !== UNCATEGORIZED_COOKBOOK_ID
         );
 
         if (filteredIds.length > 0) {
@@ -223,7 +237,39 @@ export const SavedRecipesProvider: React.FC<{ children: React.ReactNode }> = ({ 
         return;
       }
 
-      if (targetCookbookId === UNCATEGORIZED_COOKBOOK_ID) {
+      setRecipeCookbookMap((prev) => {
+        const next = { ...prev };
+
+        recipeIds.forEach((recipeId) => {
+          if (!savedRecipeIds.has(recipeId)) {
+            return;
+          }
+
+          if (targetCookbookId === UNCATEGORIZED_COOKBOOK_ID) {
+            delete next[recipeId];
+            return;
+          }
+
+          const currentIds = normalizeSecondaryCookbookIds(next[recipeId], cookbooks);
+          const uniqueIds = new Set(currentIds);
+          uniqueIds.add(targetCookbookId);
+          next[recipeId] = Array.from(uniqueIds);
+        });
+
+        return next;
+      });
+    },
+    [cookbooks, savedRecipeIds]
+  );
+
+  const removeRecipesFromCookbook = React.useCallback(
+    (recipeIds: string[], cookbookId: string) => {
+      if (recipeIds.length === 0 || cookbookId === UNCATEGORIZED_COOKBOOK_ID) {
+        return;
+      }
+
+      const cookbookExists = cookbooks.some((cookbook) => cookbook.id === cookbookId);
+      if (!cookbookExists) {
         return;
       }
 
@@ -235,12 +281,16 @@ export const SavedRecipesProvider: React.FC<{ children: React.ReactNode }> = ({ 
             return;
           }
 
-          const currentIds = normalizeCookbookIds(next[recipeId]).filter(
-            (mappedId) => mappedId !== UNCATEGORIZED_COOKBOOK_ID
+          const filteredIds = normalizeSecondaryCookbookIds(next[recipeId], cookbooks).filter(
+            (mappedId) => mappedId !== cookbookId
           );
-          const uniqueIds = new Set(currentIds);
-          uniqueIds.add(targetCookbookId);
-          next[recipeId] = Array.from(uniqueIds);
+
+          if (filteredIds.length === 0) {
+            delete next[recipeId];
+            return;
+          }
+
+          next[recipeId] = filteredIds;
         });
 
         return next;
@@ -269,6 +319,7 @@ export const SavedRecipesProvider: React.FC<{ children: React.ReactNode }> = ({ 
       renameCookbook,
       deleteCookbook,
       assignRecipesToCookbook,
+      removeRecipesFromCookbook,
     }),
     [
       cookbooks,
@@ -288,6 +339,7 @@ export const SavedRecipesProvider: React.FC<{ children: React.ReactNode }> = ({ 
       renameCookbook,
       deleteCookbook,
       assignRecipesToCookbook,
+      removeRecipesFromCookbook,
     ]
   );
 

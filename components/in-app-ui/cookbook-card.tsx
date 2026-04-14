@@ -51,23 +51,24 @@ export function CookbookCard({ book, onMenuPress, showMenu = true }: CookbookCar
           className="w-full aspect-[4/3] rounded-[13px] bg-[#D8DCE3] z-10"
           style={{ transform: [{ rotate: '-1.5deg' }] }}
         />
-        {showMenu && onMenuPress ? (
-          <Pressable
-            onPress={(event) => {
-              event.stopPropagation();
-              onMenuPress();
-            }}
-            className="absolute top-1 right-1 p-1.5 z-20">
-            <Icon as={MoreVertical} size={17} className="text-[#757984]" />
-          </Pressable>
-        ) : null}
       </View>
-      <View className="mt-4 mb-1">
+      <View className="mb-1 mt-4 pr-10">
         <VietnamText className="text-[18px] font-bold text-[#16171A]" numberOfLines={1}>{book.name}</VietnamText>
         <VietnamText className="mt-1.5 text-[14px] text-[#7B808A]">
           {book.count} {t('recipePage.recipeTab')}
         </VietnamText>
       </View>
+
+      {showMenu && onMenuPress ? (
+        <Pressable
+          onPress={(event) => {
+            event.stopPropagation();
+            onMenuPress();
+          }}
+          className="absolute bottom-3 right-3 z-20 h-8 w-8 items-center justify-center rounded-full bg-black">
+          <Icon as={MoreVertical} size={16} className="text-white" />
+        </Pressable>
+      ) : null}
     </Pressable>
   );
 }
