@@ -291,7 +291,12 @@
     "successSave": "Saved successfully",
     "successUpdate": "Recipe updated successfully!",
     "congratulations": "Congratulations",
-    "congratulationsMessage": "Congratulations on completing the cooking steps! Enjoy your meal!"
+    "congratulationsMessage": "Congratulations on completing the cooking steps! Enjoy your meal!",
+    "goToImport": "Go to Import",
+    "importPhoto": "Import from a Photo",
+    "importCamera": "Import from a Camera",
+    "openCamera": "Open Camera",
+    "howToImport": "How to Import Recipes"
   },
     "recipePage": {
       "recipeTab": "Recipe"

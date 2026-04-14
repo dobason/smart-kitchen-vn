@@ -52,7 +52,7 @@ export function AddRecipeModal({ visible, onClose, targetCookbookId }: Props) {
           <Pressable 
             onPress={() => { 
               onClose(); 
-              router.push('/import-recipe' as any); // Chuyển sang trang Import
+              router.push('/(tabs)/import-recipe' as any); // Chuyển sang trang Import
             }} 
             className="flex-row items-center justify-between bg-green-50 p-5 rounded-2xl border border-green-100"
           >
