@@ -194,6 +194,9 @@ export default function RecipeEditScreen() {
   const router = useRouter();
   const { t } = useLocale();
 
+  const initialGroups = Array.isArray(INITIAL_GROUPS) ? INITIAL_GROUPS : [];
+  const initialSteps = Array.isArray(INITIAL_STEPS) ? INITIAL_STEPS : [];
+
   /* ── Name ── */
   const [name, setName] = React.useState('Mì nước cay kiểu Á');
   const MAX_NAME = 50;
@@ -211,10 +214,10 @@ export default function RecipeEditScreen() {
   const [cookbook] = React.useState('Dinner');
 
   /* ── Ingredients ── */
-  const [groups, setGroups] = React.useState<IngredientGroup[]>(INITIAL_GROUPS);
+  const [groups, setGroups] = React.useState<IngredientGroup[]>(initialGroups);
 
   /* ── Steps ── */
-  const [steps, setSteps] = React.useState<StepItem[]>(INITIAL_STEPS);
+  const [steps, setSteps] = React.useState<StepItem[]>(initialSteps);
 
   /* ─── Ingredient Helpers ─── */
   const updateIngredient = (
@@ -224,12 +227,12 @@ export default function RecipeEditScreen() {
     value: string
   ) => {
     setGroups((prev) => {
-      const next = prev.map((g, gi) =>
+      const next = (prev ?? []).map((g, gi) =>
         gi !== gIdx
           ? g
           : {
               ...g,
-              items: g.items.map((item, ii) =>
+              items: (g.items ?? []).map((item, ii) =>
                 ii !== iIdx ? item : { ...item, [field]: value }
               ),
             }
@@ -240,8 +243,8 @@ export default function RecipeEditScreen() {
 
   const removeIngredient = (gIdx: number, iIdx: number) => {
     setGroups((prev) =>
-      prev.map((g, gi) =>
-        gi !== gIdx ? g : { ...g, items: g.items.filter((_, ii) => ii !== iIdx) }
+      (prev ?? []).map((g, gi) =>
+        gi !== gIdx ? g : { ...g, items: (g.items ?? []).filter((_, ii) => ii !== iIdx) }
       )
     );
   };
@@ -254,7 +257,9 @@ export default function RecipeEditScreen() {
       name: '',
     };
     setGroups((prev) =>
-      prev.map((g, gi) => (gi !== gIdx ? g : { ...g, items: [...g.items, newItem] }))
+      (prev ?? []).map((g, gi) =>
+        gi !== gIdx ? g : { ...g, items: [...(g.items ?? []), newItem] }
+      )
     );
   };
 
@@ -357,7 +362,7 @@ export default function RecipeEditScreen() {
           {/* ── INGREDIENTS ── */}
           <SectionHeader title={t('ingredients.INGREDIENTS')} actionLabel={t('other.reOrder')} onAction={() => {}} />
 
-          {groups.map((group, gIdx) => (
+          {(groups ?? []).map((group, gIdx) => (
             <View key={group.id} className="mb-3">
               {/* Group Label */}
               <View className="flex-row items-center mb-1.5 gap-1.5">
@@ -373,7 +378,7 @@ export default function RecipeEditScreen() {
               </View>
 
               {/* Ingredient rows */}
-              {group.items.map((item, iIdx) => (
+              {(group.items ?? []).map((item, iIdx) => (
                 <IngredientItemRow
                   key={item.id}
                   item={item}
@@ -389,7 +394,7 @@ export default function RecipeEditScreen() {
           {/* ── STEPS ── */}
           <SectionHeader title={t('steps.STEPS')} actionLabel={t('other.reOrder')} onAction={() => {}} />
 
-          {steps.map((step, idx) => (
+          {(steps ?? []).map((step, idx) => (
             <StepRow
               key={step.id}
               step={step}
