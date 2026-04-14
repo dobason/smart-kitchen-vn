@@ -1,194 +1,335 @@
-import * as React from 'react';
-import { View, ScrollView, Pressable, Modal } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useLocalSearchParams, useRouter, Stack } from 'expo-router'; 
-import { Settings2, ChevronRight, Check, X, Plus } from 'lucide-react-native';
-import { Icon } from '@/components/ui/icon';
 import { VietnamText } from '@/components/in-app-ui/vietnam-text';
-import { useLocale } from '@/hooks/use-locale';
-
 import { RecipeCard } from '@/components/in-app-ui/recipe-card';
+import { AddRecipeModal } from '@/components/ui/add-recipe-modal';
 import { CookbookDetailHeader } from '@/components/ui/cookbook-detail-header';
 import { ManageActionBar } from '@/components/ui/manage-action-bar';
-import { RenameCookbookModal } from '@/components/ui/rename-cookbook-modal';
-import { AddRecipeModal } from '@/components/ui/add-recipe-modal';
+import { useLocale } from '@/hooks/use-locale';
+import { useSavedRecipes } from '@/hooks/use-saved-recipes';
+import { Icon } from '@/components/ui/icon';
+import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
+import { Check, ChevronRight, Plus, Settings, X } from 'lucide-react-native';
+import * as React from 'react';
+import { Modal, Pressable, ScrollView, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
-export let GLOBAL_RECIPES = [
-  { id: '1', folderId: 'dinner', name: 'Mì nước cay kiểu Á', description: 'mì sợi, thịt heo...', calories: 550, timeMinutes: 25, imageUrl: 'https://images.unsplash.com/photo-1552611052-33e04de081de?w=500' },
-  { id: '2', folderId: 'dinner', name: 'Pizza phô mai và rau củ', description: 'bột bánh pizza, phô mai...', calories: 250, timeMinutes: 30, imageUrl: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=500' },
-  { id: '3', folderId: 'desserts', name: 'Bánh Cupcake dâu tây', description: 'Bột mì, dâu tây, kem tươi...', calories: 350, timeMinutes: 45, imageUrl: 'https://images.unsplash.com/photo-1563729784474-d77dbb933a9e?w=500' },
-  { id: '4', folderId: 'uncategorized', name: 'Salad gà nướng', description: 'Ức gà, xà lách, sốt mè rang...', calories: 220, timeMinutes: 15, imageUrl: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=500' },
-  { id: '5', folderId: 'uncategorized', name: 'Bánh mì bơ tỏi', description: 'Bánh mì, bơ, tỏi băm...', calories: 200, timeMinutes: 10, imageUrl: 'https://images.unsplash.com/photo-1573140247632-f8fd74997d5c?w=500' },
-  { id: '6', folderId: 'uncategorized', name: 'Sinh tố xoài', description: 'Xoài chín, sữa tươi, đá...', calories: 150, timeMinutes: 5, imageUrl: 'https://images.unsplash.com/photo-1553530666-ba11a7da3888?w=500' },
-];
+type CookbookDetailParams = {
+  id?: string | string[];
+  name?: string | string[];
+};
+
+function singleParam(value?: string | string[]) {
+  if (Array.isArray(value)) {
+    return value[0];
+  }
+  return value;
+}
 
 export default function CookbookDetailScreen() {
-  const { id, name } = useLocalSearchParams();
   const router = useRouter();
   const { t } = useLocale();
+  const params = useLocalSearchParams<CookbookDetailParams>();
+  const {
+    uncategorizedCookbookId,
+    cookbooks,
+    getCookbookById,
+    getRecipesByCookbook,
+    assignRecipesToCookbook,
+    removeRecipesFromCookbook,
+  } = useSavedRecipes();
 
-  const currentFolderId = id ? String(id) : 'dinner';
-  const passedName = name ? String(name) : '';
-
-  const [currentRecipes, setCurrentRecipes] = React.useState<any[]>([]);
-  const [cookbookName, setCookbookName] = React.useState('');
-
+  const cookbookId = singleParam(params.id) ?? uncategorizedCookbookId;
+  const passedName = singleParam(params.name) ?? '';
+  const cookbook = getCookbookById(cookbookId);
+  const recipes = getRecipesByCookbook(cookbookId);
+  const [isAddRecipeVisible, setIsAddRecipeVisible] = React.useState(false);
   const [isManageMode, setIsManageMode] = React.useState(false);
   const [selectedIds, setSelectedIds] = React.useState<string[]>([]);
-  
-  const [isRenameVisible, setIsRenameVisible] = React.useState(false);
-  const [tempName, setTempName] = React.useState('');
-  const [isAddRecipeVisible, setIsAddRecipeVisible] = React.useState(false);
-  const [isMoveVisible, setIsMoveVisible] = React.useState(false);
-  const [selectedFolderToMove, setSelectedFolderToMove] = React.useState('uncategorized');
+  const [isMoveSheetVisible, setIsMoveSheetVisible] = React.useState(false);
+  const [selectedDestinationIds, setSelectedDestinationIds] = React.useState<string[]>([]);
+
+  const cookbookName = React.useMemo(() => {
+    if (cookbook?.translationKey) {
+      return String(t(cookbook.translationKey));
+    }
+    if (cookbook?.name) {
+      return cookbook.name;
+    }
+    return passedName || String(t('cookbook.COOKBOOK'));
+  }, [cookbook?.name, cookbook?.translationKey, passedName, t]);
+
+  const isDefaultCookbook = cookbookId === uncategorizedCookbookId;
+
+  const destinationCookbooks = React.useMemo(
+    () => cookbooks.filter((item) => !item.isDefault && item.id !== cookbookId),
+    [cookbookId, cookbooks]
+  );
+  const recipeIdsKey = React.useMemo(
+    () => recipes.map((recipe) => recipe.id).join('|'),
+    [recipes]
+  );
+
+  const selectedRecipeCount = selectedIds.length;
+  const isAllSelected = recipes.length > 0 && selectedIds.length === recipes.length;
 
   React.useEffect(() => {
-    setCurrentRecipes(GLOBAL_RECIPES.filter(r => r.folderId === currentFolderId));
-    
-    const isDefault = ['uncategorized', 'desserts', 'dinner'].includes(currentFolderId);
-    if (isDefault) {
-      setCookbookName(t(`cookbookDetail.${currentFolderId}`));
-    } else {
-      setCookbookName(passedName || t('cookbook.COOKBOOK')); 
+    const recipeIdSet = new Set(recipes.map((recipe) => recipe.id));
+    setSelectedIds((prev) => {
+      const next = prev.filter((recipeId) => recipeIdSet.has(recipeId));
+      const unchanged =
+        next.length === prev.length && next.every((id, index) => id === prev[index]);
+
+      return unchanged ? prev : next;
+    });
+  }, [recipeIdsKey]);
+
+  function handleBack() {
+    if (router.canGoBack()) {
+      router.back();
+      return;
     }
-    
+    router.replace('/(tabs)/recipe');
+  }
+
+  function closeManageMode() {
     setIsManageMode(false);
     setSelectedIds([]);
-  }, [id, name, t, currentFolderId, passedName]); 
+    setIsMoveSheetVisible(false);
+    setSelectedDestinationIds([]);
+  }
 
-  const toggleSelection = (recipeId: string) => {
-    setSelectedIds(prev => prev.includes(recipeId) ? prev.filter(id => id !== recipeId) : [...prev, recipeId]);
-  };
-
-  const handleSelectAll = () => {
-    setSelectedIds(selectedIds.length === currentRecipes.length ? [] : currentRecipes.map(r => r.id));
-  };
-
-  const handleSaveRename = () => {
-    setCookbookName(tempName);
-    setIsRenameVisible(false);
-  };
-
-  const handleConfirmMove = () => {
-    GLOBAL_RECIPES = GLOBAL_RECIPES.map(r => 
-      selectedIds.includes(r.id) ? { ...r, folderId: selectedFolderToMove } : r
+  function toggleRecipeSelection(recipeId: string) {
+    setSelectedIds((prev) =>
+      prev.includes(recipeId) ? prev.filter((id) => id !== recipeId) : [...prev, recipeId]
     );
-    setCurrentRecipes(GLOBAL_RECIPES.filter(r => r.folderId === currentFolderId));
-    setSelectedIds([]);
-    setIsMoveVisible(false);
-    setIsManageMode(false);
-  };
+  }
+
+  function handleSelectAll() {
+    if (isAllSelected) {
+      setSelectedIds([]);
+      return;
+    }
+
+    setSelectedIds(recipes.map((recipe) => recipe.id));
+  }
+
+  function handleManageAction() {
+    if (selectedRecipeCount === 0) {
+      return;
+    }
+
+    if (isDefaultCookbook) {
+      setSelectedDestinationIds([]);
+      setIsMoveSheetVisible(true);
+      return;
+    }
+
+    removeRecipesFromCookbook(selectedIds, cookbookId);
+    closeManageMode();
+  }
+
+  function toggleDestinationSelection(cookbookDestinationId: string) {
+    setSelectedDestinationIds((prev) =>
+      prev.includes(cookbookDestinationId)
+        ? prev.filter((id) => id !== cookbookDestinationId)
+        : [...prev, cookbookDestinationId]
+    );
+  }
+
+  function handleConfirmMove() {
+    if (selectedDestinationIds.length === 0 || selectedIds.length === 0) {
+      return;
+    }
+
+    selectedDestinationIds.forEach((destinationId) => {
+      assignRecipesToCookbook(selectedIds, destinationId);
+    });
+
+    closeManageMode();
+  }
+
+  function handleRecipePress(recipe: (typeof recipes)[number]) {
+    if (isManageMode) {
+      toggleRecipeSelection(recipe.id);
+      return;
+    }
+
+    router.push({
+      pathname: '/(tabs)/recipe-detail',
+      params: {
+        recipeId: recipe.id,
+        recipeName: recipe.name,
+        recipeDescription: recipe.description,
+        recipeCalories: String(recipe.calories),
+        recipeTimeMinutes: String(recipe.timeMinutes),
+        recipeImageUrl: recipe.imageUrl,
+      },
+    });
+  }
 
   return (
-    <SafeAreaView className="flex-1 bg-gray-50">
+    <SafeAreaView className="flex-1 bg-white">
       <Stack.Screen options={{ headerShown: false }} />
 
-      <CookbookDetailHeader 
+      <CookbookDetailHeader
         isManageMode={isManageMode}
         cookbookName={cookbookName}
-        totalRecipes={currentRecipes.length}
-        onBack={() => router.back()}
-        onCloseManage={() => { setIsManageMode(false); setSelectedIds([]); }}
-        onEditPress={() => { setTempName(cookbookName); setIsRenameVisible(true); }}
+        totalRecipes={recipes.length}
+        onBack={handleBack}
+        onCloseManage={closeManageMode}
+        onEditPress={() => {}}
+        canEdit={!isDefaultCookbook}
       />
 
-      <ScrollView className="flex-1" contentContainerClassName="pb-32 pt-2">
-        {!isManageMode && (
-          <Pressable onPress={() => setIsManageMode(true)} className="flex-row items-center justify-between bg-white px-4 py-4 mb-4 shadow-sm border-y border-gray-100">
+      <ScrollView className="flex-1" contentContainerClassName={isManageMode ? 'pb-36 pt-3' : 'pb-28 pt-3'}>
+        {!isManageMode ? (
+          <Pressable
+            onPress={() => setIsManageMode(true)}
+            className="mx-4 mb-4 flex-row items-center justify-between rounded-[18px] border border-[#E8E8ED] bg-[#F6F6F8] px-4 py-3.5">
             <View className="flex-row items-center gap-3">
-              <Icon as={Settings2} size={20} className="text-gray-500" />
-              <VietnamText className="text-base font-semibold text-gray-800">{t('cookbookDetail.manageCookbook')}</VietnamText>
+              <View className="h-8 w-8 items-center justify-center rounded-full bg-[#E2E2E6]">
+                <Icon as={Settings} size={17} className="text-[#6D6D73]" />
+              </View>
+              <VietnamText className="text-[18px] font-semibold text-[#1C1C1E]">
+                {t('cookbookDetail.manageCookbook')}
+              </VietnamText>
             </View>
-            <Icon as={ChevronRight} size={20} className="text-gray-400" />
+            <Icon as={ChevronRight} size={22} className="text-[#8E8E93]" />
           </Pressable>
-        )}
-        
-        <View className="px-4 flex-row flex-wrap justify-between">
-          {currentRecipes.map((recipe: any) => {
-            const isSelected = selectedIds.includes(recipe.id);
-            return (
-              <Pressable 
+        ) : null}
+
+        {recipes.length === 0 ? (
+          <View className="items-center px-8 py-16">
+            <VietnamText className="text-xl font-bold text-gray-900 text-center">
+              {t('recipe.noSavedRecipesTitle')}
+            </VietnamText>
+            <VietnamText className="mt-2 text-center text-base text-gray-500">
+              {t('recipe.noSavedRecipesDescription')}
+            </VietnamText>
+          </View>
+        ) : (
+          <View className="px-4 flex-row flex-wrap justify-between">
+            {recipes.map((recipe) => (
+              <Pressable
                 key={recipe.id}
                 style={{ width: '48.5%', marginBottom: 16 }}
-                onPress={() =>
-                  isManageMode
-                    ? toggleSelection(recipe.id)
-                    : router.push({
-                        pathname: '/(tabs)/recipe-detail',
-                        params: {
-                          recipeId: recipe.id,
-                          recipeName: recipe.name,
-                          recipeDescription: recipe.description,
-                          recipeCalories: String(recipe.calories),
-                          recipeTimeMinutes: String(recipe.timeMinutes),
-                          recipeImageUrl: recipe.imageUrl,
-                        },
-                      })
-                }
-                className="relative"
-              >
-                <View className="pointer-events-none w-full">
-                    <RecipeCard item={recipe} isSaved={false} onToggleSave={() => {}} />
+                onPress={() => handleRecipePress(recipe)}
+                className="relative">
+                <View pointerEvents="none">
+                  <RecipeCard
+                    item={recipe}
+                    isSaved={true}
+                    onToggleSave={() => {}}
+                    showSaveButton={false}
+                  />
                 </View>
-                
-                {isManageMode && (
-                  <View className={`absolute top-3 left-3 w-7 h-7 rounded-full border-2 items-center justify-center shadow-sm ${isSelected ? 'bg-[#CE232A] border-[#CE232A]' : 'bg-white/80 border-gray-300'}`}>
-                    {isSelected && <Icon as={Check} size={16} className="text-white" />}
+
+                {isManageMode ? (
+                  <View
+                    className={`absolute right-3 top-3 h-8 w-8 items-center justify-center rounded-full border-2 ${
+                      selectedIds.includes(recipe.id)
+                        ? 'border-[#CE232A] bg-[#CE232A]'
+                        : 'border-[#D1D5DB] bg-white/90'
+                    }`}>
+                    {selectedIds.includes(recipe.id) ? (
+                      <Icon as={Check} size={16} className="text-white" />
+                    ) : null}
                   </View>
-                )}
+                ) : null}
               </Pressable>
-            );
-          })}
-        </View>
+            ))}
+          </View>
+        )}
       </ScrollView>
 
-      {isManageMode && (
-        <ManageActionBar 
-          isAllSelected={selectedIds.length === currentRecipes.length && currentRecipes.length > 0}
-          selectedCount={selectedIds.length}
-          onSelectAll={handleSelectAll}
-          onMovePress={() => setIsMoveVisible(true)}
-        />
-      )}
+      {!isManageMode && !isDefaultCookbook ? (
+        <Pressable
+          onPress={() => setIsAddRecipeVisible(true)}
+          className="absolute bottom-8 right-6 bg-[#CE232A] w-16 h-16 rounded-full items-center justify-center shadow-lg shadow-red-600/40 z-10">
+          <Icon as={Plus} size={32} className="text-white" />
+        </Pressable>
+      ) : null}
 
-      <RenameCookbookModal 
-        visible={isRenameVisible}
-        tempName={tempName}
-        setTempName={setTempName}
-        onClose={() => setIsRenameVisible(false)}
-        onConfirm={handleSaveRename}
+      {isManageMode && recipes.length > 0 ? (
+        <ManageActionBar
+          isAllSelected={isAllSelected}
+          selectedCount={selectedRecipeCount}
+          onSelectAll={handleSelectAll}
+          onActionPress={handleManageAction}
+          actionLabel={isDefaultCookbook ? String(t('cookbookDetail.moveTo')) : String(t('cookbookDetail.remove'))}
+        />
+      ) : null}
+
+      <AddRecipeModal
+        visible={isAddRecipeVisible}
+        onClose={() => setIsAddRecipeVisible(false)}
+        targetCookbookId={cookbookId}
       />
 
-      <Modal visible={isMoveVisible} transparent animationType="fade">
-        <View className="flex-1 bg-black/50 justify-center items-center px-6">
-          <View className="bg-white w-full rounded-[24px] p-6 shadow-2xl">
-             <Pressable onPress={() => setIsMoveVisible(false)} className="absolute top-4 right-4 z-10">
-               <Icon as={X} size={24} className="text-gray-400" />
-             </Pressable>
-             <VietnamText className="text-xl font-bold text-gray-900 mb-6">{t('cookbookDetail.moveTo')}</VietnamText>
-             <View className="gap-3 mb-8">
-                {['uncategorized', 'desserts', 'dinner'].map((folder) => (
-                  <Pressable key={folder} onPress={() => setSelectedFolderToMove(folder)} className="flex-row items-center justify-between bg-gray-50 p-4 rounded-xl border border-gray-100">
-                    <VietnamText className="text-base font-semibold text-gray-800">{t(`cookbookDetail.${folder}`)}</VietnamText>
-                    <View className={`w-6 h-6 rounded-full border-2 items-center justify-center ${selectedFolderToMove === folder ? 'bg-[#CE232A] border-[#CE232A]' : 'border-gray-300 bg-white'}`}>
-                      {selectedFolderToMove === folder && <Icon as={Check} size={14} className="text-white" />}
+      <Modal
+        visible={isMoveSheetVisible}
+        transparent
+        animationType="fade"
+        statusBarTranslucent
+        onRequestClose={() => setIsMoveSheetVisible(false)}>
+        <View className="flex-1 justify-end bg-black/45">
+          <Pressable className="flex-1" onPress={() => setIsMoveSheetVisible(false)} />
+
+          <View className="rounded-t-[30px] bg-white px-6 pb-10 pt-3">
+            <View className="mb-3 h-1.5 w-16 self-center rounded-full bg-[#D2D2D7]" />
+
+            <View className="mb-5 flex-row items-center justify-between">
+              <VietnamText className="text-4xl font-black text-[#111114]">
+                {t('cookbookDetail.moveTo')}
+              </VietnamText>
+              <Pressable
+                onPress={() => setIsMoveSheetVisible(false)}
+                className="h-10 w-10 items-center justify-center rounded-full bg-[#ECECEF]">
+                <Icon as={X} size={22} className="text-[#6E6E76]" />
+              </Pressable>
+            </View>
+
+            <View className="gap-3">
+              {destinationCookbooks.map((destination) => {
+                const isSelected = selectedDestinationIds.includes(destination.id);
+                const displayName = destination.translationKey
+                  ? String(t(destination.translationKey))
+                  : destination.name;
+
+                return (
+                  <Pressable
+                    key={destination.id}
+                    onPress={() => toggleDestinationSelection(destination.id)}
+                    className={`flex-row items-center justify-between rounded-2xl px-4 py-4 ${
+                      isSelected ? 'bg-[#FBECEE]' : 'bg-[#F3F3F6]'
+                    }`}>
+                    <VietnamText className="text-2xl font-semibold text-[#1C1C1E]">
+                      {displayName}
+                    </VietnamText>
+
+                    <View
+                      className={`h-9 w-9 items-center justify-center rounded-md border-2 ${
+                        isSelected ? 'border-[#CE232A] bg-[#CE232A]' : 'border-[#A7A7AC] bg-transparent'
+                      }`}>
+                      {isSelected ? <Icon as={Check} size={20} className="text-white" /> : null}
                     </View>
                   </Pressable>
-                ))}
-             </View>
-             <Pressable onPress={handleConfirmMove} className="bg-[#CE232A] py-4 rounded-full items-center">
-                <VietnamText className="font-bold text-white text-base">{t('cookbookDetail.move')}</VietnamText>
-             </Pressable>
+                );
+              })}
+            </View>
+
+            <Pressable
+              onPress={handleConfirmMove}
+              disabled={selectedDestinationIds.length === 0}
+              className={`mt-8 items-center rounded-full py-4 ${
+                selectedDestinationIds.length > 0 ? 'bg-[#CE232A]' : 'bg-[#E3A4A8]'
+              }`}>
+              <VietnamText className="text-2xl font-bold text-white">
+                {t('cookbookDetail.move')}
+              </VietnamText>
+            </Pressable>
           </View>
         </View>
       </Modal>
-      
-      {!isManageMode && (
-        <Pressable onPress={() => setIsAddRecipeVisible(true)} className="absolute bottom-8 right-6 bg-[#CE232A] w-16 h-16 rounded-full items-center justify-center shadow-lg shadow-red-600/40 z-10">
-          <Icon as={Plus} size={32} className="text-white" />
-        </Pressable>
-      )}
-      <AddRecipeModal visible={isAddRecipeVisible} onClose={() => setIsAddRecipeVisible(false)} />
     </SafeAreaView>
   );
 }

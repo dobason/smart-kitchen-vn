@@ -4,7 +4,6 @@ import { NutritionStat } from '@/components/in-app-ui/nutrition-stat';
 import { RoundedButton } from '@/components/in-app-ui/rounded-button';
 import { StepCard } from '@/components/in-app-ui/step-card';
 import { VietnamText } from '@/components/in-app-ui/vietnam-text';
-import { BottomActionBar } from '@/components/ui/bottom-action-bar';
 import { Icon } from '@/components/ui/icon';
 import { INGREDIENTS } from '@/constants/ingredientData';
 import { SEARCH_RECIPES } from '@/constants/recipeData';
@@ -15,9 +14,7 @@ import type { SearchRecipeItem } from '@/types/recipe';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import {
   ArrowLeftIcon,
-  BookOpenIcon,
   Bookmark,
-  CookingPotIcon,
   FolderIcon,
   MaximizeIcon,
   MinusIcon,
@@ -30,7 +27,7 @@ import {
   XIcon,
 } from 'lucide-react-native';
 import * as React from 'react';
-import { Image, Modal, Pressable, ScrollView, TouchableOpacity, View } from 'react-native';
+import { Image, Modal, Pressable, ScrollView, TouchableOpacity, View, KeyboardAvoidingView, TextInput, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 type RecipeDetailParams = {
@@ -53,12 +50,20 @@ export default function RecipeDetailScreen() {
   const [serves, setServes] = React.useState(4);
   const [imageVisible, setImageVisible] = React.useState(false);
   const [deleteConfirmVisible, setDeleteConfirmVisible] = React.useState(false);
+  const [noteModalVisible, setNoteModalVisible] = React.useState(false);
+  const [noteText, setNoteText] = React.useState('');
 
   const router = useRouter();
   const { t } = useLocale();
   const params = useLocalSearchParams<RecipeDetailParams>();
 
-  const { isSaved, saveRecipe, removeSavedRecipe, getSavedRecipeById } = useSavedRecipes();
+  const {
+    isSaved,
+    saveRecipe,
+    removeSavedRecipe,
+    getSavedRecipeById,
+    getRecipeCookbooks,
+  } = useSavedRecipes();
 
   const recipeId = singleParam(params.recipeId);
   const recipeName = singleParam(params.recipeName);
@@ -99,6 +104,21 @@ export default function RecipeDetailScreen() {
   const recipe = recipeFromSaved ?? recipeFromCatalog ?? recipeFromParams ?? SEARCH_RECIPES[0];
 
   const recipeIsSaved = isSaved(recipe.id);
+  const displayCookbooks = getRecipeCookbooks(recipe.id);
+  const displayCookbookBadges = React.useMemo(() => {
+    if (!recipeIsSaved) {
+      return [];
+    }
+
+    if (displayCookbooks.length === 0) {
+      return [{ id: 'fallback-uncategorized', name: String(t('cookbookDetail.uncategorized')) }];
+    }
+
+    return displayCookbooks.map((cookbook) => ({
+      id: cookbook.id,
+      name: cookbook.translationKey ? String(t(cookbook.translationKey)) : cookbook.name,
+    }));
+  }, [displayCookbooks, recipeIsSaved, t]);
 
   function handleBack() {
     if (router.canGoBack()) {
@@ -180,19 +200,6 @@ export default function RecipeDetailScreen() {
           <VietnamText className="mb-2 text-2xl font-bold text-gray-900">{recipe.name}</VietnamText>
           <VietnamText className="mb-4 text-sm text-gray-500">{recipe.description}</VietnamText>
 
-          <View className="mb-5 flex-row justify-around">
-            <BottomActionBar icon={BookOpenIcon} label={t('recipe.addIntoCookbook')} />
-            <View className="flex-1 items-center gap-1">
-              <View className="relative">
-                <Icon as={CookingPotIcon} size={26} className="text-gray-700" />
-                <View className="absolute -bottom-1 -right-1 h-4 w-4 rounded-full border-2 border-white" />
-              </View>
-              <VietnamText className="text-center text-xs text-gray-600">
-                {t('recipe.notCooked')}
-              </VietnamText>
-            </View>
-          </View>
-
           <View className="mb-4 flex-row rounded-2xl border border-gray-200">
             <NutritionStat value={String(recipe.calories)} label={t('recipeDetail.calories')} emoji="🔥" />
             <NutritionStat value="12g" label={t('recipeDetail.protein')} emoji="💪" hasBorder />
@@ -211,26 +218,45 @@ export default function RecipeDetailScreen() {
               <VietnamText className="text-sm font-semibold text-gray-800">{t('other.cost')}:</VietnamText>
               <VietnamText className="text-sm text-gray-600">₫240000</VietnamText>
             </View>
-            <View className="flex-1 flex-row items-center gap-2">
+            <TouchableOpacity 
+              className="flex-1 flex-row items-center gap-2"
+              onPress={() => setNoteModalVisible(true)}>
               <VietnamText className="text-sm font-semibold text-gray-800">{t('other.note')}:</VietnamText>
-              <VietnamText className="text-sm text-gray-600 underline">{t('other.addNote')}</VietnamText>
-              <Icon as={PlusIcon} size={14} />
-            </View>
+              {noteText && noteText.trim().length > 0 ? (
+                <View className="flex-1 flex-row items-center gap-1.5">
+                   <VietnamText className="flex-shrink text-sm text-gray-600" numberOfLines={1}>
+                     {noteText.replace(/\n/g, ' ').trim()}
+                   </VietnamText>
+                   <Icon as={PencilIcon} size={13} color="#4B5563" />
+                </View>
+              ) : (
+                <>
+                  <VietnamText className="text-sm text-gray-600 underline">{t('other.addNote')}</VietnamText>
+                  <Icon as={PlusIcon} size={14} />
+                </>
+              )}
+            </TouchableOpacity>
           </View>
 
-          <View className="mb-5">
-            <VietnamText className="mb-2 text-base font-bold text-gray-900">
-              {t('cookbook.COOKBOOK')}
-            </VietnamText>
-            <View className="flex-row">
-              <View className="flex-row items-center gap-1.5 rounded-full bg-gray-100 px-3 py-1.5">
-                <Icon as={FolderIcon} size={14} className="text-gray-600" />
-                <VietnamText className="text-sm font-medium italic text-gray-700">
-                  {t('cookbookDetail.dinner')}
-                </VietnamText>
+          {recipeIsSaved ? (
+            <View className="mb-5">
+              <VietnamText className="mb-2 text-base font-bold text-gray-900">
+                {t('cookbook.COOKBOOK')}
+              </VietnamText>
+              <View className="flex-row flex-wrap gap-2">
+                {displayCookbookBadges.map((cookbookBadge) => (
+                  <View
+                    key={cookbookBadge.id}
+                    className="flex-row items-center gap-1.5 rounded-full bg-gray-100 px-3 py-1.5">
+                    <Icon as={FolderIcon} size={14} className="text-gray-600" />
+                    <VietnamText className="text-sm font-medium italic text-gray-700">
+                      {cookbookBadge.name}
+                    </VietnamText>
+                  </View>
+                ))}
               </View>
             </View>
-          </View>
+          ) : null}
 
           <VietnamText className="mb-3 text-base font-bold text-gray-900">
             {t('ingredients.INGREDIENTS')}
@@ -381,6 +407,73 @@ export default function RecipeDetailScreen() {
             </View>
           </View>
         </View>
+      </Modal>
+      <Modal
+        visible={noteModalVisible}
+        transparent
+        animationType="fade"
+        statusBarTranslucent
+        onRequestClose={() => setNoteModalVisible(false)}>
+        <KeyboardAvoidingView 
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          className="flex-1 justify-center items-center bg-black/45 px-6"
+        >
+          <View className="w-full items-center">
+            {/* Top Icon */}
+            <View
+              className="rounded-full bg-white z-10" 
+              style={{ 
+                padding: 6, 
+                marginBottom: -46,
+                shadowColor: '#000', 
+                shadowOffset: { width: 0, height: 2 }, 
+                shadowOpacity: 0.1, 
+                shadowRadius: 4, 
+                elevation: 3 
+              }}
+            >
+              <View className="h-[80px] w-[80px] items-center justify-center rounded-full bg-[#EBF5EF]">
+                <VietnamText className="text-[40px]">📝</VietnamText>
+              </View>
+            </View>
+
+            {/* Card Body */}
+            <View className="w-full rounded-[28px] bg-white p-6 pt-[60px]">
+              {/* Close Button */}
+              <CircleButton
+                onPress={() => setNoteModalVisible(false)}
+                className="absolute right-4 top-4 h-8 w-8 items-center justify-center rounded-full">
+                <Icon as={XIcon} size={16} className="text-[#69696F]" />
+              </CircleButton>
+
+              {/* Content */}
+              <VietnamText className="mb-5 text-center text-[22px] font-bold text-[#1F2937]">
+                {t('other.addNote')}
+              </VietnamText>
+
+              <View className="min-h-[140px] w-full rounded-[14px] border border-[#16814E] p-3.5 mb-6 bg-white">
+                <TextInput
+                  multiline
+                  textAlignVertical="top"
+                  placeholderTextColor="#9CA3AF"
+                  className="flex-1 text-[15px] leading-[22px] text-[#374151]"
+                  style={{ fontFamily: 'BeVietnamPro_400Regular' }}
+                  value={noteText}
+                  onChangeText={setNoteText}
+                />
+              </View>
+
+              <RoundedButton 
+                className="w-full rounded-full items-center justify-center"
+                onPress={() => setNoteModalVisible(false)}
+              >
+                <VietnamText className="text-[16px] font-bold text-white tracking-wider">
+                  {t('cookbookDetail.confirm')}
+                </VietnamText>
+              </RoundedButton>
+            </View>
+          </View>
+        </KeyboardAvoidingView>
       </Modal>
     </SafeAreaView>
   );

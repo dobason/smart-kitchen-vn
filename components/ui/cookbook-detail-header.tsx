@@ -12,9 +12,10 @@ type Props = {
   onBack: () => void;
   onCloseManage: () => void;
   onEditPress: () => void;
+  canEdit?: boolean;
 };
 
-export function CookbookDetailHeader({ isManageMode, cookbookName, totalRecipes, onBack, onCloseManage, onEditPress }: Props) {
+export function CookbookDetailHeader({ isManageMode, cookbookName, totalRecipes, onBack, onCloseManage, onEditPress, canEdit = true }: Props) {
   const { t } = useLocale();
   return (
     <View className="bg-white px-4 py-3 border-b border-gray-100">
@@ -26,9 +27,11 @@ export function CookbookDetailHeader({ isManageMode, cookbookName, totalRecipes,
             </Pressable>
             <View className="flex-row items-center gap-2">
               <VietnamText className="text-xl font-bold text-gray-900">{cookbookName}</VietnamText>
-              <Pressable onPress={onEditPress}>
-                <Icon as={Pencil} size={16} className="text-[#CE232A]" />
-              </Pressable>
+              {canEdit ? (
+                <Pressable onPress={onEditPress}>
+                  <Icon as={Pencil} size={16} className="text-[#CE232A]" />
+                </Pressable>
+              ) : null}
             </View>
             <Pressable className="p-2 -mr-2">
               <Icon as={Search} size={24} className="text-gray-800" />
@@ -41,9 +44,11 @@ export function CookbookDetailHeader({ isManageMode, cookbookName, totalRecipes,
             </Pressable>
             <View className="flex-row items-center gap-2">
               <VietnamText className="text-xl font-bold text-gray-900">{cookbookName}</VietnamText>
-              <Pressable onPress={onEditPress}>
-                <Icon as={Pencil} size={16} className="text-[#CE232A]" />
-              </Pressable>
+              {canEdit ? (
+                <Pressable onPress={onEditPress}>
+                  <Icon as={Pencil} size={16} className="text-[#CE232A]" />
+                </Pressable>
+              ) : null}
             </View>
             <View className="w-8" />
           </React.Fragment>

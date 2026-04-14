@@ -25,7 +25,7 @@ import { Icon } from '@/components/ui/icon';
 import { CircleButton } from '@/components/in-app-ui/circle-button';
 import { RoundedButton } from '@/components/in-app-ui/rounded-button';
 import { useLocale } from '@/hooks/use-locale';
-import { IngredientItem, IngredientGroup } from '@/types/ingredient';
+import { EditableIngredientItem, IngredientGroup } from '@/types/ingredient';
 import { StepItem } from '@/types/step';
 import { INITIAL_GROUPS } from '@/constants/ingredientData';
 import { INITIAL_STEPS } from '@/constants/stepData';
@@ -99,7 +99,7 @@ function IngredientItemRow({
   onChangeUnit,
   onChangeName,
 }: {
-  item: IngredientItem;
+  item: EditableIngredientItem;
   onRemove: () => void;
   onChangeQty: (v: string) => void;
   onChangeUnit: (v: string) => void;
@@ -194,6 +194,9 @@ export default function RecipeEditScreen() {
   const router = useRouter();
   const { t } = useLocale();
 
+  const initialGroups = Array.isArray(INITIAL_GROUPS) ? INITIAL_GROUPS : [];
+  const initialSteps = Array.isArray(INITIAL_STEPS) ? INITIAL_STEPS : [];
+
   /* ── Name ── */
   const [name, setName] = React.useState('Mì nước cay kiểu Á');
   const MAX_NAME = 50;
@@ -211,27 +214,28 @@ export default function RecipeEditScreen() {
   const [cookbook] = React.useState('Dinner');
 
   /* ── Ingredients ── */
-  const [groups, setGroups] = React.useState<IngredientGroup[]>(INITIAL_GROUPS);
+  const [groups, setGroups] = React.useState<IngredientGroup[]>(initialGroups);
 
   /* ── Steps ── */
-  const [steps, setSteps] = React.useState<StepItem[]>(INITIAL_STEPS);
+  const [steps, setSteps] = React.useState<StepItem[]>(initialSteps);
 
   /* ─── Ingredient Helpers ─── */
   const updateIngredient = (
     gIdx: number,
     iIdx: number,
-    field: keyof IngredientItem,
+    field: Exclude<keyof EditableIngredientItem, 'id'>,
     value: string
   ) => {
     setGroups((prev) => {
+      if (!prev) return [];
       const next = prev.map((g, gi) =>
         gi !== gIdx
           ? g
           : {
               ...g,
-              items: g.items.map((item, ii) =>
+              items: g.items?.map((item, ii) =>
                 ii !== iIdx ? item : { ...item, [field]: value }
-              ),
+              ) || [],
             }
       );
       return next;
@@ -239,32 +243,41 @@ export default function RecipeEditScreen() {
   };
 
   const removeIngredient = (gIdx: number, iIdx: number) => {
-    setGroups((prev) =>
-      prev.map((g, gi) =>
-        gi !== gIdx ? g : { ...g, items: g.items.filter((_, ii) => ii !== iIdx) }
+    setGroups((prev) => {
+      if (!prev) return [];
+      return prev.map((g, gi) =>
+        gi !== gIdx ? g : { ...g, items: g.items?.filter((_, ii) => ii !== iIdx) || [] }
       )
+    }
     );
   };
 
   const addIngredient = (gIdx: number) => {
-    const newItem: IngredientItem = {
+    const newItem: EditableIngredientItem = {
       id: Date.now().toString(),
       qty: '',
       unit: '',
       name: '',
     };
-    setGroups((prev) =>
-      prev.map((g, gi) => (gi !== gIdx ? g : { ...g, items: [...g.items, newItem] }))
+    setGroups((prev) => {
+      if (!prev) return [];
+      return prev.map((g, gi) => (gi !== gIdx ? g : { ...g, items: [...(g.items || []), newItem] }))
+    }
     );
   };
 
-  /* ─── Step Helpers ─── */
   const removeStep = (idx: number) => {
-    setSteps((prev) => prev.filter((_, i) => i !== idx));
+    setSteps((prev) => {
+      if (!prev) return [];
+      return prev.filter((_, i) => i !== idx);
+    });
   };
 
   const updateStep = (idx: number, field: keyof StepItem, value: string) => {
-    setSteps((prev) => prev.map((s, i) => (i !== idx ? s : { ...s, [field]: value })));
+    setSteps((prev) => {
+      if (!prev) return [];
+      return prev.map((s, i) => (i !== idx ? s : { ...s, [field]: value }));
+    });
   };
 
   const addStep = () => {
@@ -357,7 +370,7 @@ export default function RecipeEditScreen() {
           {/* ── INGREDIENTS ── */}
           <SectionHeader title={t('ingredients.INGREDIENTS')} actionLabel={t('other.reOrder')} onAction={() => {}} />
 
-          {groups.map((group, gIdx) => (
+          {groups?.map((group, gIdx) => (
             <View key={group.id} className="mb-3">
               {/* Group Label */}
               <View className="flex-row items-center mb-1.5 gap-1.5">
@@ -373,7 +386,7 @@ export default function RecipeEditScreen() {
               </View>
 
               {/* Ingredient rows */}
-              {group.items.map((item, iIdx) => (
+              {group.items?.map((item, iIdx) => (
                 <IngredientItemRow
                   key={item.id}
                   item={item}
@@ -389,7 +402,7 @@ export default function RecipeEditScreen() {
           {/* ── STEPS ── */}
           <SectionHeader title={t('steps.STEPS')} actionLabel={t('other.reOrder')} onAction={() => {}} />
 
-          {steps.map((step, idx) => (
+          {steps?.map((step, idx) => (
             <StepRow
               key={step.id}
               step={step}

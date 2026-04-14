@@ -10,9 +10,10 @@ import { useRouter } from 'expo-router';
 type Props = {
   visible: boolean;
   onClose: () => void;
+  targetCookbookId: string;
 };
 
-export function AddRecipeModal({ visible, onClose }: Props) {
+export function AddRecipeModal({ visible, onClose, targetCookbookId }: Props) {
   const { t } = useLocale();
   const router = useRouter();
 
@@ -31,7 +32,13 @@ export function AddRecipeModal({ visible, onClose }: Props) {
           
           {/* Nút 1: Công thức của tôi */}
           <Pressable 
-            onPress={() => { onClose(); /* Mở trang chọn công thức đã có */ }} 
+            onPress={() => {
+              onClose();
+              router.push({
+                pathname: '/(tabs)/add-recipes-to-cookbook',
+                params: { cookbookId: targetCookbookId },
+              } as any);
+            }} 
             className="flex-row items-center justify-between bg-orange-50 p-5 rounded-2xl border border-orange-100 mb-4"
           >
             <View className="flex-row items-center gap-4">

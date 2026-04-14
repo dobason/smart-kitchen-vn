@@ -62,6 +62,10 @@ export default function TabsLayout() {
         options={{ href: null }}
       />
       <Tabs.Screen
+        name="add-recipes-to-cookbook"
+        options={{ href: null }}
+      />
+      <Tabs.Screen
         name="cookbook-detail"
         options={{ headerShown: false, href: null }}
       />

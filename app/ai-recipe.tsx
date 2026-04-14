@@ -73,10 +73,14 @@ export default function AIRecipeScreen() {
     router.push('./recipe-generating');
   }
 
+  function handleClose() {
+    router.replace('/(tabs)');
+  }
+
   return (
     <SafeAreaView className="flex-1 bg-background">
       <View className="flex-row items-center justify-between px-4 pb-2 pt-1">
-        <Pressable onPress={() => router.back()} className="h-10 w-10 items-start justify-center">
+        <Pressable onPress={handleClose} className="h-10 w-10 items-start justify-center">
           <Icon as={X} size={30} className="text-[#111827]" />
         </Pressable>
 
