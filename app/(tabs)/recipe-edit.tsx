@@ -25,7 +25,7 @@ import { Icon } from '@/components/ui/icon';
 import { CircleButton } from '@/components/in-app-ui/circle-button';
 import { RoundedButton } from '@/components/in-app-ui/rounded-button';
 import { useLocale } from '@/hooks/use-locale';
-import { IngredientItem, IngredientGroup } from '@/types/ingredient';
+import { EditableIngredientItem, IngredientGroup } from '@/types/ingredient';
 import { StepItem } from '@/types/step';
 import { INITIAL_GROUPS } from '@/constants/ingredientData';
 import { INITIAL_STEPS } from '@/constants/stepData';
@@ -99,7 +99,7 @@ function IngredientItemRow({
   onChangeUnit,
   onChangeName,
 }: {
-  item: IngredientItem;
+  item: EditableIngredientItem;
   onRemove: () => void;
   onChangeQty: (v: string) => void;
   onChangeUnit: (v: string) => void;
@@ -220,7 +220,7 @@ export default function RecipeEditScreen() {
   const updateIngredient = (
     gIdx: number,
     iIdx: number,
-    field: keyof IngredientItem,
+    field: Exclude<keyof EditableIngredientItem, 'id'>,
     value: string
   ) => {
     setGroups((prev) => {
@@ -247,7 +247,7 @@ export default function RecipeEditScreen() {
   };
 
   const addIngredient = (gIdx: number) => {
-    const newItem: IngredientItem = {
+    const newItem: EditableIngredientItem = {
       id: Date.now().toString(),
       qty: '',
       unit: '',

@@ -1,4 +1,4 @@
-import { CookingIngredientItem, IngredientItem } from '@/types/ingredient';
+import { CookingIngredientItem, IngredientGroup, IngredientItem } from '@/types/ingredient';
 
 const RED = '#F28398';
 const PINK = '#F8D4DC';
@@ -131,6 +131,27 @@ export const INGREDIENTS: CookingIngredientItem[] = [
     { emoji: '🍅', name: 'sốt cà chua', qty: '100 ml', bg: '#FADBD8' },
     { emoji: '🫑', name: '1/2 quả ớt chuông thái nhỏ', qty: '...', bg: '#FEF9E7' },
   ];
+
+export const INITIAL_GROUPS: IngredientGroup[] = [
+  {
+    id: 'g-main',
+    label: 'Nguyên liệu chính',
+    items: [
+      { id: 'i-noodle', name: 'Mì sợi', qty: '200', unit: 'g' },
+      { id: 'i-broth', name: 'Nước dùng gà', qty: '600', unit: 'ml' },
+      { id: 'i-pork', name: 'Thịt heo thái mỏng', qty: '180', unit: 'g' },
+    ],
+  },
+  {
+    id: 'g-seasoning',
+    label: 'Gia vị',
+    items: [
+      { id: 'i-fish-sauce', name: 'Nước mắm', qty: '1', unit: 'muỗng canh' },
+      { id: 'i-soy-sauce', name: 'Nước tương', qty: '1', unit: 'muỗng canh' },
+      { id: 'i-chili', name: 'Sa tế ớt', qty: '1', unit: 'muỗng cà phê' },
+    ],
+  },
+];
 
 const INGREDIENT_NAME_VI: Record<string, string> = {
   chicken: 'Gà',
