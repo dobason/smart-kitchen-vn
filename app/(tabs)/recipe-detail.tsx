@@ -27,7 +27,7 @@ import {
   XIcon,
 } from 'lucide-react-native';
 import * as React from 'react';
-import { Image, Modal, Pressable, ScrollView, TouchableOpacity, View } from 'react-native';
+import { Image, Modal, Pressable, ScrollView, TouchableOpacity, View, KeyboardAvoidingView, TextInput, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 type RecipeDetailParams = {
@@ -50,6 +50,8 @@ export default function RecipeDetailScreen() {
   const [serves, setServes] = React.useState(4);
   const [imageVisible, setImageVisible] = React.useState(false);
   const [deleteConfirmVisible, setDeleteConfirmVisible] = React.useState(false);
+  const [noteModalVisible, setNoteModalVisible] = React.useState(false);
+  const [noteText, setNoteText] = React.useState('');
 
   const router = useRouter();
   const { t } = useLocale();
@@ -216,11 +218,24 @@ export default function RecipeDetailScreen() {
               <VietnamText className="text-sm font-semibold text-gray-800">{t('other.cost')}:</VietnamText>
               <VietnamText className="text-sm text-gray-600">₫240000</VietnamText>
             </View>
-            <View className="flex-1 flex-row items-center gap-2">
+            <TouchableOpacity 
+              className="flex-1 flex-row items-center gap-2"
+              onPress={() => setNoteModalVisible(true)}>
               <VietnamText className="text-sm font-semibold text-gray-800">{t('other.note')}:</VietnamText>
-              <VietnamText className="text-sm text-gray-600 underline">{t('other.addNote')}</VietnamText>
-              <Icon as={PlusIcon} size={14} />
-            </View>
+              {noteText && noteText.trim().length > 0 ? (
+                <View className="flex-1 flex-row items-center gap-1.5">
+                   <VietnamText className="flex-shrink text-sm text-gray-600" numberOfLines={1}>
+                     {noteText.replace(/\n/g, ' ').trim()}
+                   </VietnamText>
+                   <Icon as={PencilIcon} size={13} color="#4B5563" />
+                </View>
+              ) : (
+                <>
+                  <VietnamText className="text-sm text-gray-600 underline">{t('other.addNote')}</VietnamText>
+                  <Icon as={PlusIcon} size={14} />
+                </>
+              )}
+            </TouchableOpacity>
           </View>
 
           {recipeIsSaved ? (
@@ -392,6 +407,73 @@ export default function RecipeDetailScreen() {
             </View>
           </View>
         </View>
+      </Modal>
+      <Modal
+        visible={noteModalVisible}
+        transparent
+        animationType="fade"
+        statusBarTranslucent
+        onRequestClose={() => setNoteModalVisible(false)}>
+        <KeyboardAvoidingView 
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          className="flex-1 justify-center items-center bg-black/45 px-6"
+        >
+          <View className="w-full items-center">
+            {/* Top Icon */}
+            <View
+              className="rounded-full bg-white z-10" 
+              style={{ 
+                padding: 6, 
+                marginBottom: -46,
+                shadowColor: '#000', 
+                shadowOffset: { width: 0, height: 2 }, 
+                shadowOpacity: 0.1, 
+                shadowRadius: 4, 
+                elevation: 3 
+              }}
+            >
+              <View className="h-[80px] w-[80px] items-center justify-center rounded-full bg-[#EBF5EF]">
+                <VietnamText className="text-[40px]">📝</VietnamText>
+              </View>
+            </View>
+
+            {/* Card Body */}
+            <View className="w-full rounded-[28px] bg-white p-6 pt-[60px]">
+              {/* Close Button */}
+              <CircleButton
+                onPress={() => setNoteModalVisible(false)}
+                className="absolute right-4 top-4 h-8 w-8 items-center justify-center rounded-full">
+                <Icon as={XIcon} size={16} className="text-[#69696F]" />
+              </CircleButton>
+
+              {/* Content */}
+              <VietnamText className="mb-5 text-center text-[22px] font-bold text-[#1F2937]">
+                {t('other.addNote')}
+              </VietnamText>
+
+              <View className="min-h-[140px] w-full rounded-[14px] border border-[#16814E] p-3.5 mb-6 bg-white">
+                <TextInput
+                  multiline
+                  textAlignVertical="top"
+                  placeholderTextColor="#9CA3AF"
+                  className="flex-1 text-[15px] leading-[22px] text-[#374151]"
+                  style={{ fontFamily: 'BeVietnamPro_400Regular' }}
+                  value={noteText}
+                  onChangeText={setNoteText}
+                />
+              </View>
+
+              <RoundedButton 
+                className="w-full rounded-full items-center justify-center"
+                onPress={() => setNoteModalVisible(false)}
+              >
+                <VietnamText className="text-[16px] font-bold text-white tracking-wider">
+                  {t('cookbookDetail.confirm')}
+                </VietnamText>
+              </RoundedButton>
+            </View>
+          </View>
+        </KeyboardAvoidingView>
       </Modal>
     </SafeAreaView>
   );
