@@ -224,14 +224,15 @@ export default function RecipeEditScreen() {
     value: string
   ) => {
     setGroups((prev) => {
+      if (!prev) return [];
       const next = prev.map((g, gi) =>
         gi !== gIdx
           ? g
           : {
               ...g,
-              items: g.items.map((item, ii) =>
+              items: g.items?.map((item, ii) =>
                 ii !== iIdx ? item : { ...item, [field]: value }
-              ),
+              ) || [],
             }
       );
       return next;
@@ -239,10 +240,12 @@ export default function RecipeEditScreen() {
   };
 
   const removeIngredient = (gIdx: number, iIdx: number) => {
-    setGroups((prev) =>
-      prev.map((g, gi) =>
-        gi !== gIdx ? g : { ...g, items: g.items.filter((_, ii) => ii !== iIdx) }
+    setGroups((prev) => {
+      if (!prev) return [];
+      return prev.map((g, gi) =>
+        gi !== gIdx ? g : { ...g, items: g.items?.filter((_, ii) => ii !== iIdx) || [] }
       )
+    }
     );
   };
 
@@ -253,18 +256,25 @@ export default function RecipeEditScreen() {
       unit: '',
       name: '',
     };
-    setGroups((prev) =>
-      prev.map((g, gi) => (gi !== gIdx ? g : { ...g, items: [...g.items, newItem] }))
+    setGroups((prev) => {
+      if (!prev) return [];
+      return prev.map((g, gi) => (gi !== gIdx ? g : { ...g, items: [...(g.items || []), newItem] }))
+    }
     );
   };
 
-  /* ─── Step Helpers ─── */
   const removeStep = (idx: number) => {
-    setSteps((prev) => prev.filter((_, i) => i !== idx));
+    setSteps((prev) => {
+      if (!prev) return [];
+      return prev.filter((_, i) => i !== idx);
+    });
   };
 
   const updateStep = (idx: number, field: keyof StepItem, value: string) => {
-    setSteps((prev) => prev.map((s, i) => (i !== idx ? s : { ...s, [field]: value })));
+    setSteps((prev) => {
+      if (!prev) return [];
+      return prev.map((s, i) => (i !== idx ? s : { ...s, [field]: value }));
+    });
   };
 
   const addStep = () => {
@@ -357,7 +367,7 @@ export default function RecipeEditScreen() {
           {/* ── INGREDIENTS ── */}
           <SectionHeader title={t('ingredients.INGREDIENTS')} actionLabel={t('other.reOrder')} onAction={() => {}} />
 
-          {groups.map((group, gIdx) => (
+          {groups?.map((group, gIdx) => (
             <View key={group.id} className="mb-3">
               {/* Group Label */}
               <View className="flex-row items-center mb-1.5 gap-1.5">
@@ -373,7 +383,7 @@ export default function RecipeEditScreen() {
               </View>
 
               {/* Ingredient rows */}
-              {group.items.map((item, iIdx) => (
+              {group.items?.map((item, iIdx) => (
                 <IngredientItemRow
                   key={item.id}
                   item={item}
@@ -389,7 +399,7 @@ export default function RecipeEditScreen() {
           {/* ── STEPS ── */}
           <SectionHeader title={t('steps.STEPS')} actionLabel={t('other.reOrder')} onAction={() => {}} />
 
-          {steps.map((step, idx) => (
+          {steps?.map((step, idx) => (
             <StepRow
               key={step.id}
               step={step}
