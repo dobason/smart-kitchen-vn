@@ -194,6 +194,9 @@ export default function RecipeEditScreen() {
   const router = useRouter();
   const { t } = useLocale();
 
+  const initialGroups = Array.isArray(INITIAL_GROUPS) ? INITIAL_GROUPS : [];
+  const initialSteps = Array.isArray(INITIAL_STEPS) ? INITIAL_STEPS : [];
+
   /* ── Name ── */
   const [name, setName] = React.useState('Mì nước cay kiểu Á');
   const MAX_NAME = 50;
@@ -211,10 +214,10 @@ export default function RecipeEditScreen() {
   const [cookbook] = React.useState('Dinner');
 
   /* ── Ingredients ── */
-  const [groups, setGroups] = React.useState<IngredientGroup[]>(INITIAL_GROUPS);
+  const [groups, setGroups] = React.useState<IngredientGroup[]>(initialGroups);
 
   /* ── Steps ── */
-  const [steps, setSteps] = React.useState<StepItem[]>(INITIAL_STEPS);
+  const [steps, setSteps] = React.useState<StepItem[]>(initialSteps);
 
   /* ─── Ingredient Helpers ─── */
   const updateIngredient = (
