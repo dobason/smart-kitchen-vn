@@ -6,18 +6,16 @@ import {
   TextInput,
   Image,
   Alert,
+  ActivityIndicator
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import {
   ArrowLeftIcon,
   CameraIcon,
   PlusIcon,
   XIcon,
-  PencilIcon,
-  GripVerticalIcon,
-  PinIcon,
-  ChevronRightIcon,
+  PencilIcon
 } from 'lucide-react-native';
 
 import { VietnamText } from '@/components/in-app-ui/vietnam-text';
@@ -29,6 +27,7 @@ import { EditableIngredientItem, IngredientGroup } from '@/types/ingredient';
 import { StepItem } from '@/types/step';
 import { INITIAL_GROUPS } from '@/constants/ingredientData';
 import { INITIAL_STEPS } from '@/constants/stepData';
+import recipeApi from '@/services/recipeServices';
 
 /* ─── Sub-components ─────────────────────────────────────────────── */
 
@@ -193,31 +192,51 @@ function StepRow({
 export default function RecipeEditScreen() {
   const router = useRouter();
   const { t } = useLocale();
-
-  const initialGroups = Array.isArray(INITIAL_GROUPS) ? INITIAL_GROUPS : [];
-  const initialSteps = Array.isArray(INITIAL_STEPS) ? INITIAL_STEPS : [];
-
-  /* ── Name ── */
-  const [name, setName] = React.useState('Mì nước cay kiểu Á');
+  const { id } = useLocalSearchParams();
   const MAX_NAME = 50;
+  const [isLoading, setIsLoading] = React.useState(true);
+  const [isSaving, setIsSaving] = React.useState(false);
 
-  /* ── Info ── */
-  const [time, setTime] = React.useState('25');
-  const [cost, setCost] = React.useState('120000');
-  const [saved, setSaved] = React.useState('100000');
-  const [calories, setCalories] = React.useState('550');
-  const [protein, setProtein] = React.useState('28');
-  const [carbs, setCarbs] = React.useState('65');
-  const [fats, setFats] = React.useState('18');
+  const [name, setName] = React.useState('');
+  const [time, setTime] = React.useState('');
+  const [cost, setCost] = React.useState('');
+  const [saved, setSaved] = React.useState('');
+  const [calories, setCalories] = React.useState('');
+  const [protein, setProtein] = React.useState('');
+  const [carbs, setCarbs] = React.useState('');
+  const [fats, setFats] = React.useState('');
+  const [cookbook, setCookbook] = React.useState('Dinner');
+  const [groups, setGroups] = React.useState<IngredientGroup[]>([]);
+  const [steps, setSteps] = React.useState<StepItem[]>([]);
 
-  /* ── Cookbook ── */
-  const [cookbook] = React.useState('Dinner');
+  React.useEffect(() => {
+    const fetchRecipeData = async () => {
+      if(!id) return;
+      
+      try {
+        setIsLoading(true);
+        const data = await recipeApi.getDetail(id as string);
 
-  /* ── Ingredients ── */
-  const [groups, setGroups] = React.useState<IngredientGroup[]>(initialGroups);
+        // Cập nhật State với dữ liệu từ Backend
+        setName(data.name || '');
+        setTime(data.timeMinutes?.toString() || '');
+        setCalories(data.calories?.toString() || '');
+        setProtein(data.protein?.toString() || '');
+        setCarbs(data.carbs?.toString() || '');
+        setFats(data.fats?.toString() || '');
+        setGroups(data.ingredientGroups || []);
+        setSteps(data.steps || []);
 
-  /* ── Steps ── */
-  const [steps, setSteps] = React.useState<StepItem[]>(initialSteps);
+      } catch (error) {
+        console.error("Lỗi fetch data:", error);
+        Alert.alert("Lỗi", "Không thể tải thông tin công thức.");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchRecipeData();
+  }, [id]);
 
   /* ─── Ingredient Helpers ─── */
   const updateIngredient = (
@@ -287,13 +306,39 @@ export default function RecipeEditScreen() {
     ]);
   };
 
-  const handleSave = () => {
-    Alert.alert(t('other.successSave'), t('other.successUpdate'), [
-      { text: 'OK', onPress: () => router.push('/(tabs)/recipe-detail') },
-    ]);
+  //Xử lý lưu
+  const handleSave = async () => {
+    if(!id) return;
+    
+    try {
+      setIsSaving(true);
+
+      // Chuyển đổi dữ liệu chuỗi từ TextInput về dạng số (Number)
+      const payload = {
+        name,
+        timeMinutes: Number(time) || 0,
+        calories: Number(calories) || 0,
+        protein: Number(protein) || 0,
+        carbs: Number(carbs) || 0,
+        fats: Number(fats) || 0,
+        ingredientGroups: groups,
+        steps: steps
+      }; 
+
+      //Gửi request
+      await recipeApi.update(id as string, payload);
+      Alert.alert(t('other.successSave'), t('other.successUpdate'), [
+        { text: 'OK', onPress: () => router.back() }, 
+      ]);
+    }catch (error) {
+      console.error("Lỗi khi lưu:", error);
+      Alert.alert("Thất bại", "Không thể cập nhật công thức. Vui lòng thử lại.");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
-  /* ─── Render ─── */
+  /* ─── Render UI ─── */
   return (
     <SafeAreaView className="flex-1 bg-white" edges={['top']}>
       {/* ── Top Bar ── */}
@@ -304,17 +349,24 @@ export default function RecipeEditScreen() {
 
         <VietnamText className="text-base font-bold text-gray-900 tracking-[1px]">{t('other.edit')}</VietnamText>
 
-        <RoundedButton onPress={handleSave} className="rounded-full px-5 py-2">
-          <VietnamText className="text-white font-semibold text-sm">{t('other.save')}</VietnamText>
+        {/* Nút Save có hiệu ứng loading */}
+        <RoundedButton onPress={handleSave} className="rounded-full px-5 py-2" disabled={isSaving}>
+          {isSaving ? (
+            <ActivityIndicator size="small" color="white" />
+          ) : (
+            <VietnamText className="text-white font-semibold text-sm">{t('other.save')}</VietnamText>
+          )}
         </RoundedButton>
       </View>
 
-      <ScrollView
-        className="flex-1"
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: 40 }}>
-        {/* ── Hero Photo ── */}
-        <View className="flex-[220px] h-[220px] relative">
+      {/* Hiển thị Loading che màn hình nếu đang lấy dữ liệu */}
+      {isLoading ? (
+        <View className="flex-1 items-center justify-center">
+          <ActivityIndicator size="large" color="#0000ff" />
+        </View>
+      ) : (
+        <ScrollView className="flex-1" showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40 }}>
+           <View className="flex-[220px] h-[220px] relative">
           <Image
             source={{
               uri: 'https://images.squarespace-cdn.com/content/v1/66628bdc6b0b0d52d914a921/1752754499896-E9EAAEK78ESN8KAJV33G/unsplash-image-_33r6H_hiz4.jpg?format=1500w',
@@ -419,7 +471,8 @@ export default function RecipeEditScreen() {
             <VietnamText  className="text-black">{t('steps.addStep')}</VietnamText>
           </RoundedButton>
         </View>
-      </ScrollView>
+        </ScrollView>
+      )}
     </SafeAreaView>
   );
 }
