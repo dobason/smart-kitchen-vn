@@ -12,6 +12,7 @@ import { NAV_THEME } from '@/lib/theme';
 import { ClerkProvider, useAuth } from '@clerk/clerk-expo';
 import { tokenCache } from '@clerk/clerk-expo/token-cache';
 import { ThemeProvider } from '@react-navigation/native';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { PortalHost } from '@rn-primitives/portal';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
@@ -29,6 +30,7 @@ export {
 } from 'expo-router';
 
 export default function RootLayout() {
+  const queryClient = new QueryClient();
   const { setColorScheme } = useColorScheme();
   React.useEffect(() => { setColorScheme('light'); }, []);
   const clerkPublishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY;
@@ -38,19 +40,21 @@ export default function RootLayout() {
   }
 
   return (
-    <LocaleProvider>
-      <IngredientsProvider>
-        <SavedRecipesProvider>
-          <ClerkProvider publishableKey={clerkPublishableKey} tokenCache={tokenCache}>
-            <ThemeProvider value={NAV_THEME['light']}>
-              <StatusBar style="dark" />
-              <Routes />
-              <PortalHost />
-            </ThemeProvider>
-          </ClerkProvider>
-        </SavedRecipesProvider>
-      </IngredientsProvider>
-    </LocaleProvider>
+    <QueryClientProvider client={queryClient}>
+      <LocaleProvider>
+        <IngredientsProvider>
+          <SavedRecipesProvider>
+            <ClerkProvider publishableKey={clerkPublishableKey} tokenCache={tokenCache}>
+              <ThemeProvider value={NAV_THEME['light']}>
+                <StatusBar style="dark" />
+                <Routes />
+                <PortalHost />
+              </ThemeProvider>
+            </ClerkProvider>
+          </SavedRecipesProvider>
+        </IngredientsProvider>
+      </LocaleProvider>
+    </QueryClientProvider>
   );
 }
 

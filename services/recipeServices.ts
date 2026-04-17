@@ -13,7 +13,8 @@ const recipeApi = {
         return axiosClient.put(`/recipes/${id}`, data);
     },
 
-    //Upload ảnh
+    //Upload ảnh 
+    
     // uploadImage: async (id: string, file: any): Promise<{ imageUrl: string }> => {
     //     const formData = new FormData();
     //     formData.append('image', {

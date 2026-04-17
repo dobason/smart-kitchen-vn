@@ -27,7 +27,7 @@ import { EditableIngredientItem, IngredientGroup } from '@/types/ingredient';
 import { StepItem } from '@/types/step';
 import { INITIAL_GROUPS } from '@/constants/ingredientData';
 import { INITIAL_STEPS } from '@/constants/stepData';
-import recipeApi from '@/services/recipeServices';
+import { useRecipeDetail, useUpdateRecipe } from '@/hooks/use-recipe';
 
 /* ─── Sub-components ─────────────────────────────────────────────── */
 
@@ -194,8 +194,6 @@ export default function RecipeEditScreen() {
   const { t } = useLocale();
   const { id } = useLocalSearchParams();
   const MAX_NAME = 50;
-  const [isLoading, setIsLoading] = React.useState(true);
-  const [isSaving, setIsSaving] = React.useState(false);
 
   const [name, setName] = React.useState('');
   const [time, setTime] = React.useState('');
@@ -209,34 +207,21 @@ export default function RecipeEditScreen() {
   const [groups, setGroups] = React.useState<IngredientGroup[]>([]);
   const [steps, setSteps] = React.useState<StepItem[]>([]);
 
+  const { data: recipeData, isLoading, isError } = useRecipeDetail(id as string);
+  const updateMutation = useUpdateRecipe(id as string);
+
   React.useEffect(() => {
-    const fetchRecipeData = async () => {
-      if(!id) return;
-      
-      try {
-        setIsLoading(true);
-        const data = await recipeApi.getDetail(id as string);
-
-        // Cập nhật State với dữ liệu từ Backend
-        setName(data.name || '');
-        setTime(data.timeMinutes?.toString() || '');
-        setCalories(data.calories?.toString() || '');
-        setProtein(data.protein?.toString() || '');
-        setCarbs(data.carbs?.toString() || '');
-        setFats(data.fats?.toString() || '');
-        setGroups(data.ingredientGroups || []);
-        setSteps(data.steps || []);
-
-      } catch (error) {
-        console.error("Lỗi fetch data:", error);
-        Alert.alert("Lỗi", "Không thể tải thông tin công thức.");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchRecipeData();
-  }, [id]);
+    if (recipeData) {
+      setName(recipeData.name || '');
+      setTime(recipeData.timeMinutes?.toString() || '');
+      setCalories(recipeData.calories?.toString() || '');
+      setProtein(recipeData.protein?.toString() || '');
+      setCarbs(recipeData.carbs?.toString() || '');
+      setFats(recipeData.fats?.toString() || '');
+      setGroups(recipeData.ingredientGroups || []);
+      setSteps(recipeData.steps || []);
+    }
+  }, [recipeData]);
 
   /* ─── Ingredient Helpers ─── */
   const updateIngredient = (
@@ -307,35 +292,32 @@ export default function RecipeEditScreen() {
   };
 
   //Xử lý lưu
-  const handleSave = async () => {
+  const handleSave = () => {
     if(!id) return;
     
-    try {
-      setIsSaving(true);
+    // Chuyển đổi dữ liệu chuỗi từ TextInput về dạng số (Number)
+    const payload = {
+      name,
+      timeMinutes: Number(time) || 0,
+      calories: Number(calories) || 0,
+      protein: Number(protein) || 0,
+      carbs: Number(carbs) || 0,
+      fats: Number(fats) || 0,
+      ingredientGroups: groups,
+      steps: steps
+    }; 
 
-      // Chuyển đổi dữ liệu chuỗi từ TextInput về dạng số (Number)
-      const payload = {
-        name,
-        timeMinutes: Number(time) || 0,
-        calories: Number(calories) || 0,
-        protein: Number(protein) || 0,
-        carbs: Number(carbs) || 0,
-        fats: Number(fats) || 0,
-        ingredientGroups: groups,
-        steps: steps
-      }; 
-
-      //Gửi request
-      await recipeApi.update(id as string, payload);
-      Alert.alert(t('other.successSave'), t('other.successUpdate'), [
-        { text: 'OK', onPress: () => router.back() }, 
-      ]);
-    }catch (error) {
-      console.error("Lỗi khi lưu:", error);
-      Alert.alert("Thất bại", "Không thể cập nhật công thức. Vui lòng thử lại.");
-    } finally {
-      setIsSaving(false);
-    }
+    updateMutation.mutate(payload, {
+      onSuccess: () => {
+        Alert.alert(t('other.successSave'), t('other.successUpdate'), [
+          { text: 'OK', onPress: () => router.back() }, 
+        ]);
+      },
+      onError: (error) => {
+        console.error("Lỗi khi lưu:", error);
+        Alert.alert("Thất bại", "Không thể cập nhật công thức. Vui lòng thử lại.");
+      }
+    });
   };
 
   /* ─── Render UI ─── */
@@ -350,8 +332,8 @@ export default function RecipeEditScreen() {
         <VietnamText className="text-base font-bold text-gray-900 tracking-[1px]">{t('other.edit')}</VietnamText>
 
         {/* Nút Save có hiệu ứng loading */}
-        <RoundedButton onPress={handleSave} className="rounded-full px-5 py-2" disabled={isSaving}>
-          {isSaving ? (
+        <RoundedButton onPress={handleSave} className="rounded-full px-5 py-2" disabled={updateMutation.isPending}>
+          {updateMutation.isPending ? (
             <ActivityIndicator size="small" color="white" />
           ) : (
             <VietnamText className="text-white font-semibold text-sm">{t('other.save')}</VietnamText>
