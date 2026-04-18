@@ -4,7 +4,7 @@ const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY!;
 
 if (!publishableKey) {
   throw new Error(
-    'Missing Publishable Key. Please set EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY in your .env',
+    'Missing Publishable Key. Please set EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY in your .env'
   );
 }
 
@@ -20,6 +20,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useColorScheme } from 'nativewind';
 import * as React from 'react';
 import { BeVietnamPro_400Regular, useFonts } from '@expo-google-fonts/be-vietnam-pro';
+import { setTokenGetter } from '@/services/axiosClient';
 import { LocaleProvider } from '@/providers/locale-provider';
 import { IngredientsProvider } from '@/providers/ingredients-provider';
 import { SavedRecipesProvider } from '@/providers/saved-recipes-provider';
@@ -32,7 +33,9 @@ export {
 export default function RootLayout() {
   const queryClient = new QueryClient();
   const { setColorScheme } = useColorScheme();
-  React.useEffect(() => { setColorScheme('light'); }, []);
+  React.useEffect(() => {
+    setColorScheme('light');
+  }, []);
   const clerkPublishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY;
 
   if (!clerkPublishableKey) {
@@ -65,7 +68,12 @@ SplashScreen.setOptions({
 });
 
 function Routes() {
-  const { isSignedIn, isLoaded } = useAuth();
+  const { isSignedIn, isLoaded, getToken } = useAuth();
+
+  React.useEffect(() => {
+    setTokenGetter(() => getToken());
+  }, [getToken]);
+
   const bypassAuthInDev =
     __DEV__ && process.env.EXPO_PUBLIC_BYPASS_AUTH_IN_DEV?.toLowerCase() === 'true';
   const effectiveIsSignedIn = isSignedIn === true || bypassAuthInDev;
@@ -98,7 +106,10 @@ function Routes() {
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="search-results" options={{ headerShown: false }} />
         <Stack.Screen name="ai-recipe" options={{ headerShown: false }} />
-        <Stack.Screen name="recipe-generating" options={{ headerShown: false, gestureEnabled: false }} />
+        <Stack.Screen
+          name="recipe-generating"
+          options={{ headerShown: false, gestureEnabled: false }}
+        />
         <Stack.Screen name="ingredients-picker" options={{ headerShown: false }} />
       </Stack.Protected>
 
