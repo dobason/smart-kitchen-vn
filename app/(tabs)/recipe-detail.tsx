@@ -9,6 +9,7 @@ import { INGREDIENTS } from '@/constants/ingredientData';
 import { SEARCH_RECIPES } from '@/constants/recipeData';
 import { STEPS } from '@/constants/stepData';
 import { useLocale } from '@/hooks/use-locale';
+import { useDeleteRecipe, useRecipeById } from '@/hooks/use-recipe';
 import { useSavedRecipes } from '@/hooks/use-saved-recipes';
 import type { SearchRecipeItem } from '@/types/recipe';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -27,7 +28,19 @@ import {
   XIcon,
 } from 'lucide-react-native';
 import * as React from 'react';
-import { Image, Modal, Pressable, ScrollView, TouchableOpacity, View, KeyboardAvoidingView, TextInput, Platform } from 'react-native';
+import {
+  ActivityIndicator,
+  Alert,
+  Image,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  Pressable,
+  ScrollView,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 type RecipeDetailParams = {
@@ -72,6 +85,30 @@ export default function RecipeDetailScreen() {
   const recipeCalories = singleParam(params.recipeCalories);
   const recipeTimeMinutes = singleParam(params.recipeTimeMinutes);
 
+  const { data: apiRecipeData } = useRecipeById(recipeId ?? '');
+  const deleteRecipeMutation = useDeleteRecipe();
+
+  const recipeFromApi = React.useMemo<SearchRecipeItem | undefined>(() => {
+    if (!apiRecipeData) {
+      return undefined;
+    }
+
+    const apiRecipe = apiRecipeData as SearchRecipeItem & { totalTime?: number };
+    const calories = Number(apiRecipe.calories);
+    const timeMinutes = Number(apiRecipe.timeMinutes ?? apiRecipe.totalTime);
+
+    return {
+      id: apiRecipe.id,
+      name: apiRecipe.name,
+      description: apiRecipe.description || recipeDescription || '',
+      calories: Number.isFinite(calories) ? calories : 0,
+      timeMinutes: Number.isFinite(timeMinutes) ? timeMinutes : 0,
+      imageUrl: apiRecipe.imageUrl || recipeImageUrl || SEARCH_RECIPES[0].imageUrl,
+      tags: apiRecipe.tags || [],
+      cookware: apiRecipe.cookware || [],
+    };
+  }, [apiRecipeData, recipeDescription, recipeImageUrl]);
+
   const recipeFromParams = React.useMemo<SearchRecipeItem | undefined>(() => {
     if (!recipeId || !recipeName || !recipeDescription || !recipeImageUrl) {
       return undefined;
@@ -101,9 +138,10 @@ export default function RecipeDetailScreen() {
     [getSavedRecipeById, recipeId]
   );
 
-  const recipe = recipeFromSaved ?? recipeFromCatalog ?? recipeFromParams ?? SEARCH_RECIPES[0];
+  const recipe = recipeFromApi ?? recipeFromSaved ?? recipeFromCatalog ?? recipeFromParams ?? SEARCH_RECIPES[0];
 
   const recipeIsSaved = isSaved(recipe.id);
+  const canDeleteRecipe = recipeIsSaved || !!apiRecipeData;
   const displayCookbooks = getRecipeCookbooks(recipe.id);
   const displayCookbookBadges = React.useMemo(() => {
     if (!recipeIsSaved) {
@@ -133,8 +171,23 @@ export default function RecipeDetailScreen() {
   }
 
   function handleDeleteSavedRecipe() {
-    removeSavedRecipe(recipe.id);
-    setDeleteConfirmVisible(false);
+    if (!recipeId || !apiRecipeData) {
+      removeSavedRecipe(recipe.id);
+      setDeleteConfirmVisible(false);
+      return;
+    }
+
+    deleteRecipeMutation.mutate(recipeId, {
+      onSuccess: () => {
+        removeSavedRecipe(recipe.id);
+        setDeleteConfirmVisible(false);
+        Alert.alert('Thành công', 'Đã xóa công thức thành công.', [{ text: 'OK', onPress: handleBack }]);
+      },
+      onError: (error) => {
+        console.error('Lỗi khi xóa công thức:', error);
+        Alert.alert('Thất bại', 'Không thể xóa công thức. Vui lòng thử lại.');
+      },
+    });
   }
 
   return (
@@ -168,7 +221,7 @@ export default function RecipeDetailScreen() {
                 <Icon as={PencilIcon} size={18} className="text-white" />
               </CircleButton>
 
-              {recipeIsSaved ? (
+              {canDeleteRecipe ? (
                 <CircleButton
                   variant="ghost"
                   className="h-10 w-10 items-center justify-center rounded-full bg-black/35"
@@ -399,10 +452,15 @@ export default function RecipeDetailScreen() {
 
               <Pressable
                 onPress={handleDeleteSavedRecipe}
+                disabled={deleteRecipeMutation.isPending}
                 className="flex-1 items-center justify-center rounded-full bg-[#EB404F] py-4">
-                <VietnamText className="text-[18px] font-bold text-white">
-                  {t('other.delete').toUpperCase()}
-                </VietnamText>
+                {deleteRecipeMutation.isPending ? (
+                  <ActivityIndicator color="white" />
+                ) : (
+                  <VietnamText className="text-[18px] font-bold text-white">
+                    {t('other.delete').toUpperCase()}
+                  </VietnamText>
+                )}
               </Pressable>
             </View>
           </View>
