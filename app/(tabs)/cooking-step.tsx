@@ -1,12 +1,11 @@
 import * as React from 'react';
-import { View, ScrollView, TouchableOpacity, Modal } from 'react-native';
+import { View, ScrollView, Modal, ActivityIndicator } from 'react-native';
 import LottieView from 'lottie-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import {
   XIcon,
   BookOpenCheckIcon,
-  MicIcon,
   ChevronRightIcon,
   CornerUpLeftIcon,
 } from 'lucide-react-native';
@@ -17,24 +16,68 @@ import { RoundedButton } from '@/components/in-app-ui/rounded-button';
 import { CircleButton } from '@/components/in-app-ui/circle-button';
 import { STEPS } from '@/constants/stepData';
 import { useLocale } from '@/hooks/use-locale';
-
-const TOTAL_STEPS = STEPS.length; // 6
+import { useStepList } from '@/hooks/use-step';
 
 interface CookingStepScreenProps {
   /** 1-based current step index (defaults to 1 for demo) */
   currentStep?: number;
 }
 
+type CookingStepParams = {
+  recipeId?: string | string[];
+};
+
 export default function CookingStepScreen({ currentStep = 1 }: CookingStepScreenProps) {
   const router = useRouter();
+  const params = useLocalSearchParams<CookingStepParams>();
+  const recipeId = Array.isArray(params.recipeId) ? params.recipeId[0] : params.recipeId;
   const [step, setStep] = React.useState(currentStep);
   const [showSuccess, setShowSuccess] = React.useState(false);
+  const { data: apiSteps, isLoading } = useStepList(recipeId);
 
-  const stepData = STEPS[step - 1];
+  const steps = React.useMemo(() => {
+    if (apiSteps && apiSteps.length > 0) {
+      return apiSteps;
+    }
+
+    return STEPS;
+  }, [apiSteps]);
+
+  const totalSteps = steps.length || 1;
+  const stepData = steps[step - 1];
+
   const { t } = useLocale();
 
+  React.useEffect(() => {
+    setStep((prev) => Math.min(Math.max(prev, 1), totalSteps));
+  }, [totalSteps]);
+
+  const goToIngredients = React.useCallback(() => {
+    if (recipeId) {
+      router.push({
+        pathname: '/(tabs)/cooking-ingredients',
+        params: { recipeId },
+      });
+      return;
+    }
+
+    router.push('/(tabs)/cooking-ingredients');
+  }, [recipeId, router]);
+
+  const goToRecipeDetail = React.useCallback(() => {
+    if (recipeId) {
+      router.push({
+        pathname: '/(tabs)/recipe-detail',
+        params: { recipeId },
+      });
+      return;
+    }
+
+    router.push('/(tabs)/recipe-detail');
+  }, [recipeId, router]);
+
   const handleNext = () => {
-    if (step < TOTAL_STEPS) {
+    if (step < totalSteps) {
       setStep((s) => s + 1);
     } else {
       setShowSuccess(true);
@@ -45,7 +88,7 @@ export default function CookingStepScreen({ currentStep = 1 }: CookingStepScreen
     if (step > 1) {
       setStep((s) => s - 1);
     } else {
-      router.push('/(tabs)/cooking-ingredients');
+      goToIngredients();
     }
   };
 
@@ -58,7 +101,7 @@ export default function CookingStepScreen({ currentStep = 1 }: CookingStepScreen
           <CircleButton
             variant="ghost"
             className="h-9 w-9 items-center justify-center bg-gray-100"
-            onPress={() => router.push('/(tabs)/cooking-ingredients')}>
+            onPress={goToIngredients}>
             <Icon as={XIcon} size={18} className="text-gray-700" />
           </CircleButton>
 
@@ -67,7 +110,7 @@ export default function CookingStepScreen({ currentStep = 1 }: CookingStepScreen
             <VietnamText className="text-lg font-bold text-gray-900">
               {t('steps.step')} {step}
             </VietnamText>
-            <VietnamText className="text-lg text-gray-400">/ {TOTAL_STEPS}</VietnamText>
+            <VietnamText className="text-lg text-gray-400">/ {totalSteps}</VietnamText>
           </View>
 
           {/* Recipe icon */}
@@ -78,7 +121,7 @@ export default function CookingStepScreen({ currentStep = 1 }: CookingStepScreen
 
         {/* ── Segment Progress Bar ── */}
         <View className="flex-row gap-1.5">
-          {Array.from({ length: TOTAL_STEPS }).map((_, i) => (
+          {Array.from({ length: totalSteps }).map((_, i) => (
             <View
               key={i}
               className={`flex-1 rounded-full ${i < step ? 'bg-primary' : 'bg-[#E5E7EB]'} h-1`}
@@ -88,24 +131,30 @@ export default function CookingStepScreen({ currentStep = 1 }: CookingStepScreen
       </View>
 
       {/* ── Content ── */}
-      <ScrollView
-        className="flex-1 px-5 pt-6"
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: 120 }}>
-        {/* Main instruction */}
-        <VietnamText className="mb-6 text-2xl leading-relaxed text-gray-900">
-          {stepData?.text}
-        </VietnamText>
+      {isLoading ? (
+        <View className="flex-1 items-center justify-center">
+          <ActivityIndicator size="large" color="#00B075" />
+        </View>
+      ) : (
+        <ScrollView
+          className="flex-1 px-5 pt-6"
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ paddingBottom: 120 }}>
+          {/* Main instruction */}
+          <VietnamText className="mb-6 text-2xl leading-relaxed text-gray-900">
+            {stepData?.text}
+          </VietnamText>
 
-        {/* Tip card */}
-        {stepData?.tip ? (
-          <View className="rounded-2xl p-4" style={{ backgroundColor: '#FEFDE8' }}>
-            <VietnamText className="text-lg leading-relaxed text-gray-700">
-              📌 {stepData.tip}
-            </VietnamText>
-          </View>
-        ) : null}
-      </ScrollView>
+          {/* Tip card */}
+          {stepData?.tip ? (
+            <View className="rounded-2xl p-4" style={{ backgroundColor: '#FEFDE8' }}>
+              <VietnamText className="text-lg leading-relaxed text-gray-700">
+                📌 {stepData.tip}
+              </VietnamText>
+            </View>
+          ) : null}
+        </ScrollView>
+      )}
       {/* ── Footer Navigation ── */}
       <View className="absolute bottom-0 left-0 right-0 flex-row gap-3 bg-background px-5 pb-6 pt-3">
         {/* Back button */}
@@ -131,7 +180,7 @@ export default function CookingStepScreen({ currentStep = 1 }: CookingStepScreen
               className="ml-5 mt-5 h-10 w-10 items-center justify-center bg-white/40"
               onPress={() => {
                 setShowSuccess(false);
-                router.push('/(tabs)/recipe-detail');
+                goToRecipeDetail();
               }}>
               <Icon as={XIcon} size={20} color="#555" />
             </CircleButton>
@@ -159,7 +208,7 @@ export default function CookingStepScreen({ currentStep = 1 }: CookingStepScreen
               size="lg"
               onPress={() => {
                 setShowSuccess(false);
-                router.push('/(tabs)/recipe-detail');
+                goToRecipeDetail();
               }}>
               <VietnamText className="text-base text-white">{t('other.success')}</VietnamText>
             </RoundedButton>

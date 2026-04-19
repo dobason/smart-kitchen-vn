@@ -9,6 +9,7 @@ import { INGREDIENTS } from '@/constants/ingredientData';
 import { SEARCH_RECIPES } from '@/constants/recipeData';
 import { STEPS } from '@/constants/stepData';
 import { useLocale } from '@/hooks/use-locale';
+import { useStepList } from '@/hooks/use-step';
 import { useSavedRecipes } from '@/hooks/use-saved-recipes';
 import type { SearchRecipeItem } from '@/types/recipe';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -102,6 +103,15 @@ export default function RecipeDetailScreen() {
   );
 
   const recipe = recipeFromSaved ?? recipeFromCatalog ?? recipeFromParams ?? SEARCH_RECIPES[0];
+  const { data: recipeSteps } = useStepList(recipe.id);
+
+  const displaySteps = React.useMemo(() => {
+    if (recipeSteps && recipeSteps.length > 0) {
+      return recipeSteps;
+    }
+
+    return STEPS;
+  }, [recipeSteps]);
 
   const recipeIsSaved = isSaved(recipe.id);
   const displayCookbooks = getRecipeCookbooks(recipe.id);
@@ -296,8 +306,13 @@ export default function RecipeDetailScreen() {
           </VietnamText>
 
           <View className="mb-4 rounded-2xl bg-amber-50 p-4">
-            {STEPS.map((step, index) => (
-              <StepCard key={index} {...step} isLast={index === STEPS.length - 1} />
+            {displaySteps.map((step, index) => (
+              <StepCard
+                key={step.id ?? String(index)}
+                {...step}
+                number={step.number ?? index + 1}
+                isLast={index === displaySteps.length - 1}
+              />
             ))}
           </View>
 
@@ -331,7 +346,12 @@ export default function RecipeDetailScreen() {
           <RoundedButton
             className="flex-1"
             size="lg"
-            onPress={() => router.push('/(tabs)/cooking-ingredients')}>
+            onPress={() =>
+              router.push({
+                pathname: '/(tabs)/cooking-ingredients',
+                params: { recipeId: recipe.id },
+              })
+            }>
             <View className="h-8 w-8 items-center justify-center rounded-full">
               <Icon as={PlayIcon} size={16} color="white" />
             </View>

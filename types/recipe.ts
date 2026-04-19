@@ -1,6 +1,17 @@
 import { IngredientGroup } from './ingredient';
 import { StepItem } from './step';
 
+export type SearchRecipeItem = {
+  id: string;
+  name: string;
+  description: string;
+  calories: number;
+  timeMinutes: number;
+  imageUrl: string;
+  tags: string[];
+  cookware?: string[];
+};
+
 export type RecipeDetail = {
   id: string;
   name: string;

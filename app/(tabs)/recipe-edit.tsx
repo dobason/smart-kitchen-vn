@@ -17,10 +17,16 @@ import { Icon } from '@/components/ui/icon';
 import { CircleButton } from '@/components/in-app-ui/circle-button';
 import { RoundedButton } from '@/components/in-app-ui/rounded-button';
 import { useLocale } from '@/hooks/use-locale';
+import {
+  buildStepPayload,
+  mapApiStepToStepItem,
+  useCreateStep,
+  useDeleteStep,
+  useStepList,
+  useUpdateStep,
+} from '@/hooks/use-step';
 import { EditableIngredientItem } from '@/types/ingredient';
 import { StepItem } from '@/types/step';
-import { INITIAL_GROUPS } from '@/constants/ingredientData';
-import { INITIAL_STEPS } from '@/constants/stepData';
 import { useRecipeDetail, useUpdateRecipe, useRecipeForm } from '@/hooks/use-recipe';
 
 /* ─── Sub-components ─────────────────────────────────────────────── */
@@ -130,12 +136,16 @@ function StepRow({
   onRemove,
   onChangeText,
   onChangeTip,
+  onBlurText,
+  onBlurTip,
 }: {
   step: StepItem;
   index: number;
   onRemove: () => void;
   onChangeText: (v: string) => void;
   onChangeTip: (v: string) => void;
+  onBlurText?: () => void;
+  onBlurTip?: () => void;
 }) {
   return (
     <View className="mb-3 flex-row">
@@ -150,6 +160,7 @@ function StepRow({
           <TextInput
             value={step.text}
             onChangeText={onChangeText}
+            onEndEditing={onBlurText}
             multiline
             className="min-h-[44px] flex-1 text-sm text-gray-800"
             style={{ fontFamily: 'BeVietnamPro_400Regular' }}
@@ -161,19 +172,18 @@ function StepRow({
         </View>
 
         {/* Tip card */}
-        {step.tip ? (
-          <View className="flex-row gap-1.5 rounded-xl bg-[#FEFDE8] px-3 py-2.5">
-            <VietnamText className="text-base">📌</VietnamText>
-            <TextInput
-              value={step.tip}
-              onChangeText={onChangeTip}
-              multiline
-              className="min-h-[36px] flex-1 text-[13px] text-gray-600"
-              style={{ fontFamily: 'BeVietnamPro_400Regular' }}
-              placeholder="Mẹo nhỏ..."
-            />
-          </View>
-        ) : null}
+        <View className="flex-row gap-1.5 rounded-xl bg-[#FEFDE8] px-3 py-2.5">
+          <VietnamText className="text-base">📌</VietnamText>
+          <TextInput
+            value={step.tip ?? ''}
+            onChangeText={onChangeTip}
+            onEndEditing={onBlurTip}
+            multiline
+            className="min-h-[36px] flex-1 text-[13px] text-gray-600"
+            style={{ fontFamily: 'BeVietnamPro_400Regular' }}
+            placeholder="Mẹo nhỏ..."
+          />
+        </View>
       </View>
     </View>
   );
@@ -185,12 +195,22 @@ export default function RecipeEditScreen() {
   const router = useRouter();
   const { t } = useLocale();
   const { recipeId } = useLocalSearchParams();
+  const recipeIdParam = Array.isArray(recipeId) ? recipeId[0] : recipeId;
+  const recipeIdNumber = React.useMemo(() => {
+    const value = Number(recipeIdParam);
+    return Number.isFinite(value) ? value : undefined;
+  }, [recipeIdParam]);
   const MAX_NAME = 50;
 
   const [cookbook, setCookbook] = React.useState('Dinner');
+  const [steps, setSteps] = React.useState<StepItem[]>([]);
 
-  const { data: recipeData, isLoading } = useRecipeDetail(recipeId as string);
-  const updateMutation = useUpdateRecipe(recipeId as string);
+  const { data: recipeData, isLoading } = useRecipeDetail(recipeIdParam as string);
+  const { data: apiSteps, isFetching: isStepLoading } = useStepList(recipeIdNumber);
+  const updateMutation = useUpdateRecipe(recipeIdParam as string);
+  const createStepMutation = useCreateStep();
+  const updateStepMutation = useUpdateStep();
+  const deleteStepMutation = useDeleteStep();
 
   const {
     name,
@@ -206,18 +226,99 @@ export default function RecipeEditScreen() {
     fats,
     setFats,
     groups,
-    steps,
     updateIngredient,
     removeIngredient,
     addIngredient,
-    updateStep,
-    removeStep,
-    addStep,
     buildPayload,
   } = useRecipeForm(recipeData);
 
+  React.useEffect(() => {
+    if (apiSteps && apiSteps.length > 0) {
+      setSteps(apiSteps);
+      return;
+    }
+
+    if (recipeData?.steps && recipeData.steps.length > 0) {
+      setSteps(recipeData.steps);
+    }
+  }, [apiSteps, recipeData]);
+
+  const handleUpdateStepField = (idx: number, field: 'text' | 'tip', value: string) => {
+    setSteps((prev) => prev.map((item, index) => (index === idx ? { ...item, [field]: value } : item)));
+  };
+
+  const handleAddStep = () => {
+    if (!recipeIdNumber) {
+      setSteps((prev) => [...prev, { id: Date.now().toString(), number: prev.length + 1, text: '', tip: '' }]);
+      return;
+    }
+
+    createStepMutation.mutate(
+      {
+        recipeId: recipeIdNumber,
+        stepNumber: steps.length + 1,
+        instruction: 'Buoc nau moi',
+        tip: '',
+      },
+      {
+        onSuccess: (createdStep) => {
+          setSteps((prev) => [...prev, mapApiStepToStepItem(createdStep, prev.length + 1)]);
+        },
+        onError: () => {
+          Alert.alert('That bai', 'Khong the them buoc nau. Vui long thu lai.');
+        },
+      }
+    );
+  };
+
+  const handlePersistStep = (idx: number) => {
+    const step = steps[idx];
+
+    if (!step || !step.id || !recipeIdNumber) {
+      return;
+    }
+
+    updateStepMutation.mutate({
+      id: step.id,
+      data: buildStepPayload(recipeIdNumber, step, idx + 1),
+    });
+  };
+
+  const handleRemoveStep = (idx: number) => {
+    const step = steps[idx];
+
+    if (step?.id && recipeIdNumber) {
+      deleteStepMutation.mutate(
+        { id: step.id, recipeId: recipeIdNumber },
+        {
+          onSuccess: () => {
+            setSteps((prev) => prev.filter((_, index) => index !== idx));
+          },
+          onError: () => {
+            Alert.alert('That bai', 'Khong the xoa buoc nau. Vui long thu lai.');
+          },
+        }
+      );
+      return;
+    }
+
+    setSteps((prev) => prev.filter((_, index) => index !== idx));
+  };
+
+  const goToRecipeDetail = () => {
+    if (recipeIdParam) {
+      router.push({
+        pathname: '/(tabs)/recipe-detail',
+        params: { recipeId: recipeIdParam },
+      });
+      return;
+    }
+
+    router.push('/(tabs)/recipe-detail');
+  };
+
   const handleSave = () => {
-    if (!recipeId) return;
+    if (!recipeIdParam) return;
     const payload = buildPayload();
 
     updateMutation.mutate(payload, {
@@ -241,7 +342,7 @@ export default function RecipeEditScreen() {
         <CircleButton
           variant="ghost"
           className="h-10 w-10 items-center justify-center rounded-full p-1"
-          onPress={() => router.push('/(tabs)/recipe-detail')}>
+          onPress={goToRecipeDetail}>
           <Icon as={ArrowLeftIcon} size={22} color="#1f2937" />
         </CircleButton>
 
@@ -408,23 +509,32 @@ export default function RecipeEditScreen() {
 
             {steps?.map((step, idx) => (
               <StepRow
-                key={step.id}
+                key={step.id ?? String(idx)}
                 step={step}
                 index={idx}
-                onRemove={() => removeStep(idx)}
-                onChangeText={(v) => updateStep(idx, 'text', v)}
-                onChangeTip={(v) => updateStep(idx, 'tip', v)}
+                onRemove={() => handleRemoveStep(idx)}
+                onChangeText={(v) => handleUpdateStepField(idx, 'text', v)}
+                onChangeTip={(v) => handleUpdateStepField(idx, 'tip', v)}
+                onBlurText={() => handlePersistStep(idx)}
+                onBlurTip={() => handlePersistStep(idx)}
               />
             ))}
 
             {/* Add step button */}
             <RoundedButton
-              onPress={addStep}
+              onPress={handleAddStep}
               variant="ghost"
               className="border-2 border-black text-black"
+              disabled={createStepMutation.isPending || isStepLoading}
               size={'lg'}>
-              <Icon as={PlusIcon} size={16} />
-              <VietnamText className="text-black">{t('steps.addStep')}</VietnamText>
+              {createStepMutation.isPending ? (
+                <ActivityIndicator size="small" color="black" />
+              ) : (
+                <>
+                  <Icon as={PlusIcon} size={16} />
+                  <VietnamText className="text-black">{t('steps.addStep')}</VietnamText>
+                </>
+              )}
             </RoundedButton>
           </View>
         </ScrollView>

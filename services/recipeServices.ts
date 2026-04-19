@@ -1,6 +1,5 @@
 import axiosClient from './axiosClient';
 import { RecipeDetail, UpdateRecipeRequest } from '../types/recipe';
-import { CookingIngredientItem, StepItem } from '@/types';
 
 const recipeApi = {
   //Lấy chi tiết công thức
