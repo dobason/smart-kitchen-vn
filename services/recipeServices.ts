@@ -12,6 +12,8 @@ const recipeApi = {
   //Tìm công thức theo Id
   getById: (id: string): Promise<RecipeDetail> => {
     return axiosClient.get(`/recipes/${id}`);
+  },
+  
   // Lấy danh sách công thức
   getAll: (params: GetRecipesParams): Promise<SearchRecipeItem[]> => {
     return axiosClient.get('/v1/recipes/', { params });
