@@ -88,6 +88,7 @@ export default function RecipeDetailScreen() {
       timeMinutes: Number.isFinite(timeMinutes) ? timeMinutes : 0,
       imageUrl: recipeImageUrl,
       tags: [],
+      cookware: [],
     };
   }, [recipeCalories, recipeDescription, recipeId, recipeImageUrl, recipeName, recipeTimeMinutes]);
 

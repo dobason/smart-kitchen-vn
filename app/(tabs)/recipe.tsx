@@ -14,6 +14,8 @@ import { ImportBottomSheet } from '@/components/import-bottom-sheet';
 import { useLocale } from '@/hooks/use-locale';
 import { useSavedRecipes } from '@/hooks/use-saved-recipes';
 import type { CookbookItem } from '@/context/saved-recipes-context';
+import { useAuth } from '@clerk/clerk-expo';
+import { useCookbooks, useCreateCookbook, useUpdateCookbook, useDeleteCookbook } from '@/hooks/use-cookbook';
 
 function normalizeRecipeSearchText(value: string) {
   return value
@@ -27,15 +29,21 @@ function normalizeRecipeSearchText(value: string) {
 export default function RecipeScreen() {
   const router = useRouter();
   const { t } = useLocale();
+  // LẤY USER ID TỪ CLERK
+  const { userId } = useAuth();
+
+  // KHỞI TẠO CÁC HOOKS CỦA REACT QUERY
+  const { data: apiCookbooks = [], isLoading: isLoadingCookbooks } = useCookbooks(userId || '');
+  const createCookbookMutation = useCreateCookbook();
+  const updateCookbookMutation = useUpdateCookbook();
+  const deleteCookbookMutation = useDeleteCookbook();
+
   const {
     savedRecipes,
     savedRecipeIds,
     toggleSavedRecipe,
     cookbooks,
     uncategorizedCookbookId,
-    createCookbook,
-    renameCookbook,
-    deleteCookbook,
     getCookbookCount,
     getRecipesByCookbook,
   } = useSavedRecipes();
@@ -71,9 +79,30 @@ export default function RecipeScreen() {
     });
   }, [recipeSearchQuery, savedRecipes]);
 
+  // KẾT HỢP DỮ LIỆU SỔ TAY MẶC ĐỊNH VÀ DỮ LIỆU TỪ SERVER
+  const allCookbooks = React.useMemo(() => {
+    const defaultCookbook = {
+      id: uncategorizedCookbookId,
+      name: 'Uncategorized',
+      image: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=500&q=80',
+      isDefault: true,
+      translationKey: 'cookbookDetail.uncategorized',
+    };
+
+    const serverCookbooks = apiCookbooks.map((dbBook: any) => ({
+      id: dbBook.id.toString(),
+      name: dbBook.name,
+      image: 'https://images.unsplash.com/photo-1547592180-85f173990554?w=500&q=80', // Ảnh mặc định
+      isDefault: false,
+      translationKey: undefined,
+    }));
+
+    return [defaultCookbook, ...serverCookbooks];
+  }, [apiCookbooks, uncategorizedCookbookId]);
+
   const cookbookCards = React.useMemo(
     () =>
-      cookbooks.map((book) => ({
+      allCookbooks.map((book) => ({
         ...book,
         displayName: book.translationKey ? String(t(book.translationKey)) : book.name,
         count: getCookbookCount(book.id),
@@ -82,7 +111,7 @@ export default function RecipeScreen() {
           .filter(Boolean)
           .slice(0, 3),
       })),
-    [cookbooks, getCookbookCount, getRecipesByCookbook, t]
+    [allCookbooks, getCookbookCount, getRecipesByCookbook, t]
   );
 
   const openRecipeDetail = (recipe: {
@@ -106,46 +135,44 @@ export default function RecipeScreen() {
     });
   };
 
-  const handleCreateCookbook = () => {
-    if (!newBookName.trim()) {
+  const handleCreateCookbook = async () => {
+    if (!newBookName.trim() || !userId) {
       Alert.alert(i18n.t('recipe.errorTitle'), i18n.t('recipe.errorEmptyName'));
       return;
     }
 
-    const created = createCookbook(newBookName);
-    if (!created) {
-      Alert.alert(i18n.t('recipe.errorTitle'), i18n.t('recipe.errorEmptyName'));
-      return;
+    try {
+      // Dùng mutateAsync của React Query
+      await createCookbookMutation.mutateAsync({ name: newBookName, userId });
+      setNewBookName('');
+      setIsAddModalVisible(false);
+    } catch (error) {
+      Alert.alert("Lỗi", "Không thể tạo sổ tay lúc này.");
     }
-
-    setNewBookName('');
-    setIsAddModalVisible(false);
   };
 
   const handleDeleteCookbook = () => {
-    if (!selectedBook || selectedBook.id === uncategorizedCookbookId) {
-      return;
-    }
+    if (!selectedBook || selectedBook.id === uncategorizedCookbookId) return;
 
-    const cookbookName = selectedBook.translationKey
-      ? String(t(selectedBook.translationKey))
-      : selectedBook.name;
+    const cookbookName = selectedBook.translationKey ? String(t(selectedBook.translationKey)) : selectedBook.name;
 
     Alert.alert(
       i18n.t('recipe.confirmDeleteCookbookTitle'),
       i18n.t('recipe.confirmDeleteCookbookMessage', { name: cookbookName }),
       [
-        {
-          text: i18n.t('other.cancel'),
-          style: 'cancel',
-        },
+        { text: i18n.t('other.cancel'), style: 'cancel' },
         {
           text: i18n.t('other.delete'),
           style: 'destructive',
-          onPress: () => {
-            deleteCookbook(selectedBook.id);
-            setIsMenuVisible(false);
-            setSelectedBook(null);
+          onPress: async () => {
+            try {
+              // Dùng mutateAsync
+              await deleteCookbookMutation.mutateAsync(selectedBook.id);
+              setIsMenuVisible(false);
+              setSelectedBook(null);
+            } catch (error) {
+              Alert.alert("Lỗi", "Không thể xóa sổ tay.");
+            }
           },
         },
       ]
@@ -343,12 +370,15 @@ export default function RecipeScreen() {
 
       <RenameCookbookModal 
         visible={isRenameVisible} tempName={renameTempName} setTempName={setRenameTempName} onClose={() => setIsRenameVisible(false)}
-        onConfirm={() => {
-          if (!selectedBook) {
-            return;
+        onConfirm={async () => {
+          if (!selectedBook) return;
+          try {
+            // Dùng mutateAsync
+            await updateCookbookMutation.mutateAsync({ id: selectedBook.id, data: { name: renameTempName } });
+            setIsRenameVisible(false);
+          } catch (error) {
+             Alert.alert("Lỗi", "Không thể cập nhật tên.");
           }
-          renameCookbook(selectedBook.id, renameTempName);
-          setIsRenameVisible(false);
         }}
       />
     </SafeAreaView>
