@@ -1,8 +1,19 @@
 import axiosClient from './axiosClient';
-import { RecipeDetail, UpdateRecipeRequest } from '../types/recipe';
+import { RecipeDetail, SearchRecipeItem, UpdateRecipeRequest } from '../types/recipe';
 import { CookingIngredientItem, StepItem } from '@/types';
 
+export type GetRecipesParams = {
+  userId: string;
+  sourceType?: 'MANUAL';
+  search?: string;
+};
+
 const recipeApi = {
+  // Lấy danh sách công thức
+  getAll: (params: GetRecipesParams): Promise<SearchRecipeItem[]> => {
+    return axiosClient.get('/v1/recipes/', { params });
+  },
+
   //Lấy chi tiết công thức
   getDetail: (id: string): Promise<RecipeDetail> => {
     return axiosClient.get(`/recipes/${id}`);
