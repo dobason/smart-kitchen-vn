@@ -3,6 +3,8 @@ import { useUser } from '@clerk/clerk-expo';
 import recipeApi from '@/services/recipeServices';
 import { queryKeys } from '@/lib/queryKeys';
 
+const RECIPES_SYNC_INTERVAL_MS = 5000;
+
 /**
  * Hook lấy danh sách công thức của user hiện tại.
  *
@@ -11,16 +13,24 @@ import { queryKeys } from '@/lib/queryKeys';
  */
 export function useRecipes(searchQuery?: string) {
   const { user } = useUser();
-  const userId = user?.id ?? '';
+  const userId = user?.id;
+  const bypassAuthInDev =
+    __DEV__ && process.env.EXPO_PUBLIC_BYPASS_AUTH_IN_DEV?.toLowerCase() === 'true';
+  const canFetchRecipes = Boolean(userId) || bypassAuthInDev;
 
   return useQuery({
-    queryKey: queryKeys.recipe.list(userId, searchQuery),
+    queryKey: queryKeys.recipe.list(userId ?? 'guest', searchQuery),
     queryFn: () =>
       recipeApi.getAll({
-        userId,
         sourceType: 'MANUAL',
+        ...(userId ? { userId } : {}),
         ...(searchQuery ? { search: searchQuery } : {}),
       }),
-    enabled: !!userId, // chỉ fetch khi đã đăng nhập
+    enabled: canFetchRecipes,
+    refetchInterval: canFetchRecipes ? RECIPES_SYNC_INTERVAL_MS : false,
+    refetchIntervalInBackground: true,
+    refetchOnMount: 'always',
+    refetchOnReconnect: true,
+    refetchOnWindowFocus: true,
   });
 }

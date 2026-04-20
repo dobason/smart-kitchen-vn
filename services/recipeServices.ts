@@ -3,7 +3,7 @@ import { RecipeDetail, SearchRecipeItem, UpdateRecipeRequest } from '../types/re
 import { CookingIngredientItem, StepItem } from '@/types';
 
 export type GetRecipesParams = {
-  userId: string;
+  userId?: string;
   sourceType?: 'MANUAL';
   search?: string;
 };
@@ -11,7 +11,7 @@ export type GetRecipesParams = {
 const recipeApi = {
   //Tìm công thức theo Id
   getById: (id: string): Promise<RecipeDetail> => {
-    return axiosClient.get(`/recipes/${id}`);
+    return axiosClient.get(`/v1/recipes/${id}`);
   },
   
   // Lấy danh sách công thức
@@ -26,12 +26,12 @@ const recipeApi = {
 
   //Cập nhật công thức bao gồm info, ingredients, steps
   update: (id: string, data: UpdateRecipeRequest): Promise<RecipeDetail> => {
-    return axiosClient.put(`/recipes/${id}`, data);
+    return axiosClient.put(`/v1/recipes/${id}`, data);
   },
 
   //Xóa công thức
   deleteById: (id: string): Promise<void> => {
-    return axiosClient.delete(`/recipes/${id}`);
+    return axiosClient.delete(`/v1/recipes/${id}`);
   },
 
   //Upload ảnh
@@ -44,7 +44,7 @@ const recipeApi = {
   //         type: 'image/jpeg',
   //     } as any);
 
-  //     return axiosClient.post(`/recipes/${id}/upload-image`, formData, {
+  //     return axiosClient.post(`/v1/recipes/${id}/upload-image`, formData, {
   //         headers: { 'Content-Type': 'multipart/form-data' },
   //     });
   // },
