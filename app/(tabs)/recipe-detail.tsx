@@ -9,9 +9,9 @@ import { INGREDIENTS } from '@/constants/ingredientData';
 import { SEARCH_RECIPES } from '@/constants/recipeData';
 import { STEPS } from '@/constants/stepData';
 import { useLocale } from '@/hooks/use-locale';
-import { useStepList } from '@/hooks/use-step';
+import { useDeleteRecipe, useRecipeById } from '@/hooks/use-recipe';
 import { useSavedRecipes } from '@/hooks/use-saved-recipes';
-import type { SearchRecipeItem } from '@/types/recipe';
+import type { RecipeDetail, SearchRecipeItem } from '@/types/recipe';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import {
   ArrowLeftIcon,
@@ -28,7 +28,19 @@ import {
   XIcon,
 } from 'lucide-react-native';
 import * as React from 'react';
-import { Image, Modal, Pressable, ScrollView, TouchableOpacity, View, KeyboardAvoidingView, TextInput, Platform } from 'react-native';
+import {
+  ActivityIndicator,
+  Alert,
+  Image,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  Pressable,
+  ScrollView,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 type RecipeDetailParams = {
@@ -73,6 +85,45 @@ export default function RecipeDetailScreen() {
   const recipeCalories = singleParam(params.recipeCalories);
   const recipeTimeMinutes = singleParam(params.recipeTimeMinutes);
 
+  const { data: apiRecipeData } = useRecipeById(recipeId ?? '');
+  const deleteRecipeMutation = useDeleteRecipe();
+
+  const recipeFromApi = React.useMemo<SearchRecipeItem | undefined>(() => {
+    if (!apiRecipeData) {
+      return undefined;
+    }
+
+    const apiRecipe = apiRecipeData as RecipeDetail & {
+      totalTime?: number;
+      description?: string | null;
+      tags?: string[] | null;
+      cookware?: string[] | null;
+      imageRecipe?: string | null;
+    };
+
+    const calories = Number(apiRecipe.calories);
+    const timeMinutes = Number(apiRecipe.timeMinutes ?? apiRecipe.totalTime);
+    const imageUrl =
+      typeof apiRecipe.imageUrl === 'string' && apiRecipe.imageUrl.trim().length > 0
+        ? apiRecipe.imageUrl
+        : typeof apiRecipe.imageRecipe === 'string' && apiRecipe.imageRecipe.trim().length > 0
+          ? apiRecipe.imageRecipe
+          : recipeImageUrl || SEARCH_RECIPES[0].imageUrl;
+
+    return {
+      id: apiRecipe.id,
+      name: apiRecipe.name,
+      description: apiRecipe.description || recipeDescription || '',
+      calories: Number.isFinite(calories) ? calories : 0,
+      timeMinutes: Number.isFinite(timeMinutes) ? timeMinutes : 0,
+      imageUrl,
+      tags: Array.isArray(apiRecipe.tags) ? apiRecipe.tags.map((tag) => String(tag)) : [],
+      cookware: Array.isArray(apiRecipe.cookware)
+        ? apiRecipe.cookware.map((item) => String(item))
+        : [],
+    };
+  }, [apiRecipeData, recipeDescription, recipeImageUrl]);
+
   const recipeFromParams = React.useMemo<SearchRecipeItem | undefined>(() => {
     if (!recipeId || !recipeName || !recipeDescription || !recipeImageUrl) {
       return undefined;
@@ -102,18 +153,10 @@ export default function RecipeDetailScreen() {
     [getSavedRecipeById, recipeId]
   );
 
-  const recipe = recipeFromSaved ?? recipeFromCatalog ?? recipeFromParams ?? SEARCH_RECIPES[0];
-  const { data: recipeSteps } = useStepList(recipe.id);
-
-  const displaySteps = React.useMemo(() => {
-    if (recipeSteps && recipeSteps.length > 0) {
-      return recipeSteps;
-    }
-
-    return STEPS;
-  }, [recipeSteps]);
+  const recipe = recipeFromApi ?? recipeFromSaved ?? recipeFromCatalog ?? recipeFromParams ?? SEARCH_RECIPES[0];
 
   const recipeIsSaved = isSaved(recipe.id);
+  const canDeleteRecipe = recipeIsSaved || !!apiRecipeData;
   const displayCookbooks = getRecipeCookbooks(recipe.id);
   const displayCookbookBadges = React.useMemo(() => {
     if (!recipeIsSaved) {
@@ -143,8 +186,23 @@ export default function RecipeDetailScreen() {
   }
 
   function handleDeleteSavedRecipe() {
-    removeSavedRecipe(recipe.id);
-    setDeleteConfirmVisible(false);
+    if (!recipeId || !apiRecipeData) {
+      removeSavedRecipe(recipe.id);
+      setDeleteConfirmVisible(false);
+      return;
+    }
+
+    deleteRecipeMutation.mutate(recipeId, {
+      onSuccess: () => {
+        removeSavedRecipe(recipe.id);
+        setDeleteConfirmVisible(false);
+        Alert.alert('Thành công', 'Đã xóa công thức thành công.', [{ text: 'OK', onPress: handleBack }]);
+      },
+      onError: (error) => {
+        console.error('Lỗi khi xóa công thức:', error);
+        Alert.alert('Thất bại', 'Không thể xóa công thức. Vui lòng thử lại.');
+      },
+    });
   }
 
   return (
@@ -178,7 +236,7 @@ export default function RecipeDetailScreen() {
                 <Icon as={PencilIcon} size={18} className="text-white" />
               </CircleButton>
 
-              {recipeIsSaved ? (
+              {canDeleteRecipe ? (
                 <CircleButton
                   variant="ghost"
                   className="h-10 w-10 items-center justify-center rounded-full bg-black/35"
@@ -306,13 +364,8 @@ export default function RecipeDetailScreen() {
           </VietnamText>
 
           <View className="mb-4 rounded-2xl bg-amber-50 p-4">
-            {displaySteps.map((step, index) => (
-              <StepCard
-                key={step.id ?? String(index)}
-                {...step}
-                number={step.number ?? index + 1}
-                isLast={index === displaySteps.length - 1}
-              />
+            {STEPS.map((step, index) => (
+              <StepCard key={index} {...step} isLast={index === STEPS.length - 1} />
             ))}
           </View>
 
@@ -346,12 +399,7 @@ export default function RecipeDetailScreen() {
           <RoundedButton
             className="flex-1"
             size="lg"
-            onPress={() =>
-              router.push({
-                pathname: '/(tabs)/cooking-ingredients',
-                params: { recipeId: recipe.id },
-              })
-            }>
+            onPress={() => router.push('/(tabs)/cooking-ingredients')}>
             <View className="h-8 w-8 items-center justify-center rounded-full">
               <Icon as={PlayIcon} size={16} color="white" />
             </View>
@@ -419,10 +467,15 @@ export default function RecipeDetailScreen() {
 
               <Pressable
                 onPress={handleDeleteSavedRecipe}
+                disabled={deleteRecipeMutation.isPending}
                 className="flex-1 items-center justify-center rounded-full bg-[#EB404F] py-4">
-                <VietnamText className="text-[18px] font-bold text-white">
-                  {t('other.delete').toUpperCase()}
-                </VietnamText>
+                {deleteRecipeMutation.isPending ? (
+                  <ActivityIndicator color="white" />
+                ) : (
+                  <VietnamText className="text-[18px] font-bold text-white">
+                    {t('other.delete').toUpperCase()}
+                  </VietnamText>
+                )}
               </Pressable>
             </View>
           </View>

@@ -3,6 +3,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import recipeApi from '@/services/recipeServices';
 import { queryKeys } from '@/lib/queryKeys';
 import { IngredientGroup, EditableIngredientItem } from '@/types/ingredient';
+import { StepItem } from '@/types/step';
+import { UpdateRecipeRequest } from '@/types/recipe';
 
 export function useRecipeForm(recipeData: any) {
   const [name, setName] = useState('');
@@ -97,9 +99,13 @@ export function useRecipeForm(recipeData: any) {
 }
 
 export function useRecipeDetail(id: string) {
+  return useRecipeById(id);
+}
+
+export function useRecipeById(id: string) {
   return useQuery({
     queryKey: queryKeys.recipe.detail(id),
-    queryFn: () => recipeApi.getDetail(id),
+    queryFn: () => recipeApi.getById(id),
     enabled: !!id,
   });
 }
@@ -107,9 +113,21 @@ export function useRecipeDetail(id: string) {
 export function useUpdateRecipe(id: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (data: any) => recipeApi.update(id, data),
+    mutationFn: (data: UpdateRecipeRequest) => recipeApi.update(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.recipe.detail(id) });
+    },
+  });
+}
+
+export function useDeleteRecipe() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: string) => recipeApi.deleteById(id),
+    onSuccess: (_, deletedId) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.recipe.all });
+      queryClient.removeQueries({ queryKey: queryKeys.recipe.detail(deletedId) });
     },
   });
 }
