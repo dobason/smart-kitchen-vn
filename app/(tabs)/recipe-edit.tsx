@@ -233,15 +233,8 @@ export default function RecipeEditScreen() {
   } = useRecipeForm(recipeData);
 
   React.useEffect(() => {
-    if (apiSteps && apiSteps.length > 0) {
-      setSteps(apiSteps);
-      return;
-    }
-
-    if (recipeData?.steps && recipeData.steps.length > 0) {
-      setSteps(recipeData.steps);
-    }
-  }, [apiSteps, recipeData]);
+    setSteps(apiSteps ?? []);
+  }, [apiSteps]);
 
   const handleUpdateStepField = (idx: number, field: 'text' | 'tip', value: string) => {
     setSteps((prev) => prev.map((item, index) => (index === idx ? { ...item, [field]: value } : item)));

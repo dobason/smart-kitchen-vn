@@ -7,9 +7,9 @@ import { VietnamText } from '@/components/in-app-ui/vietnam-text';
 import { Icon } from '@/components/ui/icon';
 import { INGREDIENTS } from '@/constants/ingredientData';
 import { SEARCH_RECIPES } from '@/constants/recipeData';
-import { STEPS } from '@/constants/stepData';
 import { useLocale } from '@/hooks/use-locale';
 import { useDeleteRecipe, useRecipeById } from '@/hooks/use-recipe';
+import { useStepList } from '@/hooks/use-step';
 import { useSavedRecipes } from '@/hooks/use-saved-recipes';
 import type { RecipeDetail, SearchRecipeItem } from '@/types/recipe';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -154,6 +154,16 @@ export default function RecipeDetailScreen() {
   );
 
   const recipe = recipeFromApi ?? recipeFromSaved ?? recipeFromCatalog ?? recipeFromParams ?? SEARCH_RECIPES[0];
+  const { data: recipeSteps } = useStepList(recipe.id);
+
+  const displaySteps = recipeSteps ?? [];
+  const displayTips = React.useMemo(() => {
+    const tips = displaySteps
+      .map((step) => (typeof step.tip === 'string' ? step.tip.trim() : ''))
+      .filter((tip): tip is string => tip.length > 0);
+
+    return Array.from(new Set(tips));
+  }, [displaySteps]);
 
   const recipeIsSaved = isSaved(recipe.id);
   const canDeleteRecipe = recipeIsSaved || !!apiRecipeData;
@@ -364,8 +374,13 @@ export default function RecipeDetailScreen() {
           </VietnamText>
 
           <View className="mb-4 rounded-2xl bg-amber-50 p-4">
-            {STEPS.map((step, index) => (
-              <StepCard key={index} {...step} isLast={index === STEPS.length - 1} />
+            {displaySteps.map((step, index) => (
+              <StepCard
+                key={step.id ?? String(index)}
+                {...step}
+                number={step.number ?? index + 1}
+                isLast={index === displaySteps.length - 1}
+              />
             ))}
           </View>
 
@@ -376,15 +391,23 @@ export default function RecipeDetailScreen() {
             </RoundedButton>
           </View>
 
-          <View className="mb-5 rounded-2xl bg-amber-50 p-4">
-            <View className="mb-2 flex-row items-center gap-2">
-              <VietnamText className="text-xl">💡</VietnamText>
-              <VietnamText className="text-base font-bold text-gray-900">{t('other.tips')}</VietnamText>
+          {displayTips.length > 0 ? (
+            <View className="mb-5 rounded-2xl bg-amber-50 p-4">
+              <View className="mb-2 flex-row items-center gap-2">
+                <VietnamText className="text-xl">💡</VietnamText>
+                <VietnamText className="text-base font-bold text-gray-900">{t('other.tips')}</VietnamText>
+              </View>
+              <View className="gap-2">
+                {displayTips.map((tip, index) => (
+                  <VietnamText
+                    key={`${tip}-${index}`}
+                    className="text-sm leading-relaxed text-gray-600">
+                    • {tip}
+                  </VietnamText>
+                ))}
+              </View>
             </View>
-            <VietnamText className="text-sm leading-relaxed text-gray-600">
-              {t('recipe.detailTipsMessage')}
-            </VietnamText>
-          </View>
+          ) : null}
 
           <View className="h-20" />
         </View>
@@ -399,7 +422,12 @@ export default function RecipeDetailScreen() {
           <RoundedButton
             className="flex-1"
             size="lg"
-            onPress={() => router.push('/(tabs)/cooking-ingredients')}>
+            onPress={() =>
+              router.push({
+                pathname: '/(tabs)/cooking-ingredients',
+                params: { recipeId: recipe.id },
+              })
+            }>
             <View className="h-8 w-8 items-center justify-center rounded-full">
               <Icon as={PlayIcon} size={16} color="white" />
             </View>

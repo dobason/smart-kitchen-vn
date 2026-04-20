@@ -14,7 +14,6 @@ import { VietnamText } from '@/components/in-app-ui/vietnam-text';
 import { Icon } from '@/components/ui/icon';
 import { RoundedButton } from '@/components/in-app-ui/rounded-button';
 import { CircleButton } from '@/components/in-app-ui/circle-button';
-import { STEPS } from '@/constants/stepData';
 import { useLocale } from '@/hooks/use-locale';
 import { useStepList } from '@/hooks/use-step';
 
@@ -35,20 +34,20 @@ export default function CookingStepScreen({ currentStep = 1 }: CookingStepScreen
   const [showSuccess, setShowSuccess] = React.useState(false);
   const { data: apiSteps, isLoading } = useStepList(recipeId);
 
-  const steps = React.useMemo(() => {
-    if (apiSteps && apiSteps.length > 0) {
-      return apiSteps;
-    }
+  const steps = apiSteps ?? [];
 
-    return STEPS;
-  }, [apiSteps]);
-
-  const totalSteps = steps.length || 1;
+  const totalSteps = steps.length;
   const stepData = steps[step - 1];
+  const displayedStep = totalSteps === 0 ? 0 : step;
 
   const { t } = useLocale();
 
   React.useEffect(() => {
+    if (totalSteps === 0) {
+      setStep(0);
+      return;
+    }
+
     setStep((prev) => Math.min(Math.max(prev, 1), totalSteps));
   }, [totalSteps]);
 
@@ -77,6 +76,10 @@ export default function CookingStepScreen({ currentStep = 1 }: CookingStepScreen
   }, [recipeId, router]);
 
   const handleNext = () => {
+    if (totalSteps === 0) {
+      return;
+    }
+
     if (step < totalSteps) {
       setStep((s) => s + 1);
     } else {
@@ -108,7 +111,7 @@ export default function CookingStepScreen({ currentStep = 1 }: CookingStepScreen
           {/* Step title */}
           <View className="flex-row items-baseline gap-1">
             <VietnamText className="text-lg font-bold text-gray-900">
-              {t('steps.step')} {step}
+              {t('steps.step')} {displayedStep}
             </VietnamText>
             <VietnamText className="text-lg text-gray-400">/ {totalSteps}</VietnamText>
           </View>
