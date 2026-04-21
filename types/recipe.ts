@@ -1,6 +1,8 @@
 import { IngredientGroup } from './ingredient';
 import { StepItem } from './step';
 
+export type RecipeDetailSource = 'search-results' | 'recipe-tab' | 'unknown';
+
 export type SearchRecipeItem = {
   id: string;
   name: string;

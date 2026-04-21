@@ -547,6 +547,8 @@ export function SearchResultsContainer() {
         recipeCalories: String(recipe.calories),
         recipeTimeMinutes: String(recipe.timeMinutes),
         recipeImageUrl: recipe.imageUrl,
+        from: 'search-results',
+        ...(query.trim().length > 0 ? { returnQuery: query } : {}),
       },
     });
   }

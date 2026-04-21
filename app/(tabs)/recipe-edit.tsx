@@ -26,6 +26,13 @@ import ingredientApi from '@/services/ingredientServices';
 import { IngredientApiItem } from '@/types/ingredient';
 import { useUserRecipeEdits } from '@/hooks/use-user-recipe-edits';
 import { RecipeIngredientDisplayItem } from '@/types/recipe-ingredient';
+import type { RecipeDetailSource } from '@/types/recipe';
+
+type RecipeEditParams = {
+  recipeId?: string | string[];
+  from?: string | string[];
+  returnQuery?: string | string[];
+};
 
 /* ─── Sub-components ─────────────────────────────────────────────── */
 
@@ -402,8 +409,17 @@ export default function RecipeEditScreen() {
   const router = useRouter();
   const { t } = useLocale();
   const { upsertRecipeDraft } = useUserRecipeEdits();
-  const { recipeId } = useLocalSearchParams();
+  const { recipeId, from, returnQuery } = useLocalSearchParams<RecipeEditParams>();
   const recipeIdParam = Array.isArray(recipeId) ? recipeId[0] : recipeId;
+  const fromParam = Array.isArray(from) ? from[0] : from;
+  const returnQueryParam = Array.isArray(returnQuery) ? returnQuery[0] : returnQuery;
+  const source = React.useMemo<RecipeDetailSource>(() => {
+    if (fromParam === 'search-results' || fromParam === 'recipe-tab' || fromParam === 'unknown') {
+      return fromParam;
+    }
+
+    return 'unknown';
+  }, [fromParam]);
   const recipeIdNumber = React.useMemo(() => {
     const value = Number(recipeIdParam);
     return Number.isFinite(value) ? value : undefined;
@@ -604,17 +620,21 @@ export default function RecipeEditScreen() {
     setSteps((prev) => prev.filter((_, index) => index !== idx));
   };
 
-  const goToRecipeDetail = () => {
+  const goToRecipeDetail = React.useCallback(() => {
     if (recipeIdParam) {
-      router.push({
+      router.replace({
         pathname: '/(tabs)/recipe-detail',
-        params: { recipeId: recipeIdParam },
+        params: {
+          recipeId: recipeIdParam,
+          from: source,
+          ...(returnQueryParam ? { returnQuery: returnQueryParam } : {}),
+        },
       });
       return;
     }
 
-    router.push('/(tabs)/recipe-detail');
-  };
+    router.replace('/(tabs)/recipe-detail');
+  }, [recipeIdParam, returnQueryParam, router, source]);
 
   const handleSave = () => {
     if (!recipeIdParam) {
@@ -666,7 +686,7 @@ export default function RecipeEditScreen() {
     setIsSavingLocal(false);
 
     Alert.alert(t('other.successSave'), 'Da cap nhat cong thuc cho tai khoan cua ban.', [
-      { text: 'OK', onPress: () => router.back() },
+      { text: 'OK', onPress: goToRecipeDetail },
     ]);
   };
 

@@ -7,11 +7,11 @@ import { VietnamText } from '@/components/in-app-ui/vietnam-text';
 import { Icon } from '@/components/ui/icon';
 import { SEARCH_RECIPES } from '@/constants/recipeData';
 import { useLocale } from '@/hooks/use-locale';
-import { useDeleteRecipe, useRecipeById } from '@/hooks/use-recipe';
+import { useRecipeById } from '@/hooks/use-recipe';
 import { useRecipeIngredientList } from '@/hooks/use-recipe-ingredients';
 import { useStepList } from '@/hooks/use-step';
 import { useSavedRecipes } from '@/hooks/use-saved-recipes';
-import type { RecipeDetail, SearchRecipeItem } from '@/types/recipe';
+import type { RecipeDetail, RecipeDetailSource, SearchRecipeItem } from '@/types/recipe';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import {
   ArrowLeftIcon,
@@ -24,13 +24,11 @@ import {
   PlusIcon,
   ShareIcon,
   SparklesIcon,
-  Trash2Icon,
   XIcon,
 } from 'lucide-react-native';
 import * as React from 'react';
 import {
   ActivityIndicator,
-  Alert,
   Image,
   KeyboardAvoidingView,
   Modal,
@@ -50,6 +48,8 @@ type RecipeDetailParams = {
   recipeCalories?: string | string[];
   recipeTimeMinutes?: string | string[];
   recipeImageUrl?: string | string[];
+  from?: string | string[];
+  returnQuery?: string | string[];
 };
 
 function singleParam(value?: string | string[]) {
@@ -94,9 +94,18 @@ export default function RecipeDetailScreen() {
   const recipeImageUrl = singleParam(params.recipeImageUrl);
   const recipeCalories = singleParam(params.recipeCalories);
   const recipeTimeMinutes = singleParam(params.recipeTimeMinutes);
+  const fromParam = singleParam(params.from);
+  const returnQuery = singleParam(params.returnQuery);
+
+  const source = React.useMemo<RecipeDetailSource>(() => {
+    if (fromParam === 'search-results' || fromParam === 'recipe-tab' || fromParam === 'unknown') {
+      return fromParam;
+    }
+
+    return 'unknown';
+  }, [fromParam]);
 
   const { data: apiRecipeData } = useRecipeById(recipeId ?? '');
-  const deleteRecipeMutation = useDeleteRecipe();
   const baseServes = React.useMemo(() => {
     const apiRecipe =
       (apiRecipeData as
@@ -199,7 +208,6 @@ export default function RecipeDetailScreen() {
   }, [displaySteps]);
 
   const recipeIsSaved = isSaved(recipe.id);
-  const canDeleteRecipe = recipeIsSaved || !!apiRecipeData;
   const displayCookbooks = getRecipeCookbooks(recipe.id);
   const displayCookbookBadges = React.useMemo(() => {
     if (!recipeIsSaved) {
@@ -217,10 +225,29 @@ export default function RecipeDetailScreen() {
   }, [displayCookbooks, recipeIsSaved, t]);
 
   function handleBack() {
+    if (source === 'search-results') {
+      if (router.canGoBack()) {
+        router.back();
+        return;
+      }
+
+      router.replace({
+        pathname: '/search-results',
+        ...(returnQuery ? { params: { q: returnQuery } } : {}),
+      });
+      return;
+    }
+
+    if (source === 'recipe-tab') {
+      router.replace('/(tabs)/recipe');
+      return;
+    }
+
     if (router.canGoBack()) {
       router.back();
       return;
     }
+
     router.replace('/(tabs)/recipe');
   }
 
@@ -229,23 +256,8 @@ export default function RecipeDetailScreen() {
   }
 
   function handleDeleteSavedRecipe() {
-    if (!recipeId || !apiRecipeData) {
-      removeSavedRecipe(recipe.id);
-      setDeleteConfirmVisible(false);
-      return;
-    }
-
-    deleteRecipeMutation.mutate(recipeId, {
-      onSuccess: () => {
-        removeSavedRecipe(recipe.id);
-        setDeleteConfirmVisible(false);
-        Alert.alert('Thành công', 'Đã xóa công thức thành công.', [{ text: 'OK', onPress: handleBack }]);
-      },
-      onError: (error) => {
-        console.error('Lỗi khi xóa công thức:', error);
-        Alert.alert('Thất bại', 'Không thể xóa công thức. Vui lòng thử lại.');
-      },
-    });
+    removeSavedRecipe(recipe.id);
+    setDeleteConfirmVisible(false);
   }
 
   return (
@@ -273,27 +285,24 @@ export default function RecipeDetailScreen() {
                 onPress={() =>
                   router.push({
                     pathname: '/(tabs)/recipe-edit',
-                    params: { recipeId: recipe.id },
+                    params: {
+                      recipeId: recipe.id,
+                      from: source,
+                      ...(returnQuery ? { returnQuery } : {}),
+                    },
                   })
                 }>
                 <Icon as={PencilIcon} size={18} className="text-white" />
               </CircleButton>
 
-              {canDeleteRecipe ? (
+              {recipeIsSaved ? (
                 <CircleButton
                   variant="ghost"
                   className="h-10 w-10 items-center justify-center rounded-full bg-black/35"
                   onPress={() => setDeleteConfirmVisible(true)}>
-                  <Icon as={Trash2Icon} size={18} className="text-white" />
+                  <Icon as={XIcon} size={18} className="text-white" />
                 </CircleButton>
-              ) : (
-                <CircleButton
-                  variant="ghost"
-                  className="h-10 w-10 items-center justify-center rounded-full bg-black/35"
-                  onPress={handleSaveRecipe}>
-                  <Icon as={Bookmark} size={18} className="text-white" />
-                </CircleButton>
-              )}
+              ) : null}
             </View>
           </View>
 
@@ -546,15 +555,10 @@ export default function RecipeDetailScreen() {
 
               <Pressable
                 onPress={handleDeleteSavedRecipe}
-                disabled={deleteRecipeMutation.isPending}
                 className="flex-1 items-center justify-center rounded-full bg-[#EB404F] py-4">
-                {deleteRecipeMutation.isPending ? (
-                  <ActivityIndicator color="white" />
-                ) : (
-                  <VietnamText className="text-[18px] font-bold text-white">
-                    {t('other.delete').toUpperCase()}
-                  </VietnamText>
-                )}
+                <VietnamText className="text-[18px] font-bold text-white">
+                  BỎ LƯU
+                </VietnamText>
               </Pressable>
             </View>
           </View>
