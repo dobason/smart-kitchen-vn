@@ -1,8 +1,3 @@
-import {
-  INGREDIENT_LIBRARY,
-  getIngredientDisplayName,
-  getIngredientsByIds,
-} from '@/constants/ingredientData';
 import { IngredientConfirmPanel } from '@/components/in-app-ui/ingredient-confirm-panel';
 import { IngredientGridItem } from '@/components/in-app-ui/ingredient-grid-item';
 import { IngredientSearchInput } from '@/components/in-app-ui/ingredient-search-input';
@@ -10,10 +5,12 @@ import { VietnamText } from '@/components/in-app-ui/vietnam-text';
 import { Icon } from '@/components/ui/icon';
 import { useIngredients } from '@/hooks/use-ingredients';
 import { useLocale } from '@/hooks/use-locale';
+import { useAllIngredients } from '@/hooks/use-top-ingredients';
+import { IngredientItem } from '@/types/ingredient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { X } from 'lucide-react-native';
 import * as React from 'react';
-import { Pressable, ScrollView, View } from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 function toggleInList(value: string, current: string[]) {
@@ -46,19 +43,29 @@ export default function IngredientsPickerScreen() {
     setDraftSelectedIds(baseIngredientIds);
   }, [baseIngredientIds]);
 
-  const filteredIngredients = React.useMemo(() => {
-    const normalized = query.trim().toLowerCase();
-    if (!normalized) return INGREDIENT_LIBRARY;
+  const { ingredients: rawIngredients = [], isLoading: allLoading } = useAllIngredients();
 
-    return INGREDIENT_LIBRARY.filter((item) => {
-      const localizedName = getIngredientDisplayName(item, locale).toLowerCase();
-      return item.name.toLowerCase().includes(normalized) || localizedName.includes(normalized);
+  const allIngredients = React.useMemo<IngredientItem[]>(() => {
+    return rawIngredients.map((item) => ({
+      id: String(item.id),
+      name: item.name ?? '',
+      emoji: item.emoji ?? item.icon ?? '🥘',
+      bgColor: item.bgColor ?? '#F3F4F6',
+    }));
+  }, [rawIngredients]);
+
+  const filteredIngredients = React.useMemo(() => {
+    const normalizedQuery = query.trim().toLowerCase();
+    if (!normalizedQuery) return allIngredients;
+
+    return allIngredients.filter((item) => {
+      return item.name.toLowerCase().includes(normalizedQuery);
     });
-  }, [query, locale]);
+  }, [query, allIngredients]);
 
   const selectedIngredients = React.useMemo(
-    () => getIngredientsByIds(draftSelectedIds),
-    [draftSelectedIds]
+    () => allIngredients.filter((item) => draftSelectedIds.includes(item.id)),
+    [draftSelectedIds, allIngredients]
   );
 
   function handleClose() {
@@ -102,24 +109,37 @@ export default function IngredientsPickerScreen() {
       <ScrollView
         className="flex-1"
         contentContainerClassName={selectedIngredients.length > 0 ? 'px-4 pb-[290px]' : 'px-4 pb-7'}>
+
+        {/* ── FULL API LIBRARY ─────────────────────────────────── */}
         <VietnamText className="mt-7 text-[20px] font-bold text-[#08090A]">
           {t('ingredientsPicker.youMightHave')}
         </VietnamText>
-
+        
         <View className="mt-5 flex-row flex-wrap">
-          {filteredIngredients.map((ingredient) => (
-            <View key={ingredient.id} className="mb-7 w-1/4 items-center">
-              <IngredientGridItem
-                ingredient={ingredient}
-                size={82}
-                label={getIngredientDisplayName(ingredient, locale)}
-                selected={draftSelectedIds.includes(ingredient.id)}
-                onPress={() =>
-                  setDraftSelectedIds((prev) => toggleInList(ingredient.id, prev))
-                }
-              />
+          {allLoading ? (
+            <View className="w-full h-20 items-center justify-center">
+              <ActivityIndicator size="small" color="#CE232A" />
             </View>
-          ))}
+          ) : (
+            filteredIngredients.map((ingredient) => (
+              <View key={ingredient.id} className="mb-7 w-1/4 items-center">
+                <IngredientGridItem
+                  ingredient={{
+                    id: ingredient.id,
+                    name: ingredient.name,
+                    emoji: ingredient.emoji,
+                    bgColor: ingredient.bgColor,
+                  }}
+                  size={72}
+                  label={ingredient.name}
+                  selected={draftSelectedIds.includes(ingredient.id)}
+                  onPress={() =>
+                    setDraftSelectedIds((prev) => toggleInList(ingredient.id, prev))
+                  }
+                />
+              </View>
+            ))
+          )}
         </View>
       </ScrollView>
 
@@ -134,10 +154,11 @@ export default function IngredientsPickerScreen() {
             }
             onConfirm={handleConfirm}
             accentColor="#CE232A"
-            getIngredientLabel={(ingredient) => getIngredientDisplayName(ingredient, locale)}
+            getIngredientLabel={(ingredient) => ingredient.name}
           />
         </View>
       ) : null}
     </SafeAreaView>
   );
 }
+
