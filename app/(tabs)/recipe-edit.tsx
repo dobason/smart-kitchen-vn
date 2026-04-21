@@ -11,6 +11,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { ArrowLeftIcon, CameraIcon, CheckIcon, PlusIcon, XIcon } from 'lucide-react-native';
+import { useQuery } from '@tanstack/react-query';
 
 import { VietnamText } from '@/components/in-app-ui/vietnam-text';
 import { Icon } from '@/components/ui/icon';
@@ -34,6 +35,8 @@ import {
 } from '@/hooks/use-step';
 import { StepItem } from '@/types/step';
 import { useRecipeDetail, useUpdateRecipe, useRecipeForm } from '@/hooks/use-recipe';
+import ingredientApi from '@/services/ingredientServices';
+import { IngredientApiItem } from '@/types/ingredient';
 
 /* ─── Sub-components ─────────────────────────────────────────────── */
 
@@ -105,11 +108,42 @@ type EditableRecipeIngredientRow = {
   isDraft: boolean;
 };
 
+type IngredientCatalogResponse =
+  | IngredientApiItem[]
+  | {
+      data?: IngredientApiItem[];
+      items?: IngredientApiItem[];
+    };
+
+function normalizeIngredientCatalog(payload: IngredientCatalogResponse): IngredientApiItem[] {
+  if (Array.isArray(payload)) {
+    return payload;
+  }
+
+  if (Array.isArray(payload?.data)) {
+    return payload.data;
+  }
+
+  if (Array.isArray(payload?.items)) {
+    return payload.items;
+  }
+
+  return [];
+}
+
+function normalizeIngredientName(value: string): string {
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim();
+}
+
 function IngredientItemRow({
   item,
   onSave,
   onRemove,
-  onChangeIngredientId,
+  onChangeIngredientName,
   onChangeQty,
   onChangeUnit,
   onChangeNote,
@@ -118,7 +152,7 @@ function IngredientItemRow({
   item: EditableRecipeIngredientRow;
   onSave: () => void;
   onRemove: () => void;
-  onChangeIngredientId: (v: string) => void;
+  onChangeIngredientName: (v: string) => void;
   onChangeQty: (v: string) => void;
   onChangeUnit: (v: string) => void;
   onChangeNote: (v: string) => void;
@@ -128,7 +162,7 @@ function IngredientItemRow({
     <View className="mb-2 gap-1.5 rounded-xl border border-gray-200 px-2.5 py-2.5">
       <View className="flex-row items-center justify-between">
         <VietnamText className="text-[12px] font-medium text-gray-500">
-          {item.ingredientName || `Ingredient #${item.ingredientId || '-'}`}
+          {item.ingredientName || 'Ingredient'}
         </VietnamText>
         {item.isDraft ? (
           <VietnamText className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-700">
@@ -137,16 +171,20 @@ function IngredientItemRow({
         ) : null}
       </View>
 
+      <TextInput
+        value={item.ingredientName}
+        onChangeText={onChangeIngredientName}
+        editable={item.isDraft}
+        placeholder="Ingredient"
+        className={
+          item.isDraft
+            ? 'rounded-lg bg-gray-100 px-2.5 py-2 text-sm text-gray-800'
+            : 'rounded-lg bg-gray-50 px-2.5 py-2 text-sm text-gray-500'
+        }
+        style={{ fontFamily: 'BeVietnamPro_400Regular' }}
+      />
+
       <View className="flex-row items-center gap-1.5">
-        <TextInput
-          value={item.ingredientId}
-          onChangeText={onChangeIngredientId}
-          editable={item.isDraft}
-          placeholder="ID"
-          className="w-[56px] rounded-lg bg-gray-100 px-2 py-2 text-center text-sm text-gray-800"
-          style={{ fontFamily: 'BeVietnamPro_400Regular' }}
-          keyboardType="number-pad"
-        />
         <TextInput
           value={item.quantity}
           onChangeText={onChangeQty}
@@ -268,6 +306,35 @@ export default function RecipeEditScreen() {
   const [steps, setSteps] = React.useState<StepItem[]>([]);
   const [ingredientRows, setIngredientRows] = React.useState<EditableRecipeIngredientRow[]>([]);
 
+  const { data: ingredientCatalog = [] } = useQuery<IngredientApiItem[]>({
+    queryKey: ['ingredients', 'all'],
+    queryFn: async () => {
+      const payload = await ingredientApi.getAll();
+      return normalizeIngredientCatalog(payload as IngredientCatalogResponse);
+    },
+  });
+
+  const ingredientIdByName = React.useMemo(() => {
+    const map = new Map<string, number>();
+
+    ingredientCatalog.forEach((item) => {
+      const ingredientId = Number(item.id);
+      const ingredientName = typeof item.name === 'string' ? item.name.trim() : '';
+
+      if (!Number.isFinite(ingredientId) || ingredientName.length === 0) {
+        return;
+      }
+
+      const key = normalizeIngredientName(ingredientName);
+
+      if (!map.has(key)) {
+        map.set(key, ingredientId);
+      }
+    });
+
+    return map;
+  }, [ingredientCatalog]);
+
   const { data: recipeData, isLoading } = useRecipeDetail(recipeIdParam as string);
   const { data: apiRecipeIngredients, isFetching: isIngredientLoading } =
     useRecipeIngredientList(recipeIdNumber);
@@ -351,10 +418,18 @@ export default function RecipeEditScreen() {
       return;
     }
 
-    const ingredientId = Number(row.ingredientId);
+    let ingredientId = Number(row.ingredientId);
 
     if (!Number.isFinite(ingredientId)) {
-      Alert.alert('That bai', 'Vui long nhap ingredientId hop le.');
+      const matchedIngredientId = ingredientIdByName.get(normalizeIngredientName(row.ingredientName));
+
+      if (matchedIngredientId !== undefined) {
+        ingredientId = matchedIngredientId;
+      }
+    }
+
+    if (!Number.isFinite(ingredientId)) {
+      Alert.alert('That bai', 'Khong tim thay ingredient phu hop. Vui long kiem tra ten nguyen lieu.');
       return;
     }
 
@@ -656,7 +731,9 @@ export default function RecipeEditScreen() {
                 item={item}
                 onSave={() => handlePersistIngredient(index)}
                 onRemove={() => handleRemoveIngredient(index)}
-                onChangeIngredientId={(v) => handleIngredientFieldChange(index, 'ingredientId', v)}
+                onChangeIngredientName={(v) =>
+                  handleIngredientFieldChange(index, 'ingredientName', v)
+                }
                 onChangeQty={(v) => handleIngredientFieldChange(index, 'quantity', v)}
                 onChangeUnit={(v) => handleIngredientFieldChange(index, 'unit', v)}
                 onChangeNote={(v) => handleIngredientFieldChange(index, 'note', v)}
