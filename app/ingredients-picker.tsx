@@ -1,8 +1,3 @@
-import {
-  INGREDIENT_LIBRARY,
-  getIngredientDisplayName,
-  getIngredientsByIds,
-} from '@/constants/ingredientData';
 import { IngredientConfirmPanel } from '@/components/in-app-ui/ingredient-confirm-panel';
 import { IngredientGridItem } from '@/components/in-app-ui/ingredient-grid-item';
 import { IngredientSearchInput } from '@/components/in-app-ui/ingredient-search-input';
@@ -10,6 +5,8 @@ import { VietnamText } from '@/components/in-app-ui/vietnam-text';
 import { Icon } from '@/components/ui/icon';
 import { useIngredients, useGetIngredients, useCreateIngredient } from '@/hooks/use-ingredients'; 
 import { useLocale } from '@/hooks/use-locale';
+import { useAllIngredients } from '@/hooks/use-top-ingredients';
+import { IngredientItem } from '@/types/ingredient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { X, Plus } from 'lucide-react-native';
 import * as React from 'react';
@@ -123,6 +120,8 @@ export default function IngredientsPickerScreen() {
       <ScrollView
         className="flex-1"
         contentContainerClassName={selectedIngredients.length > 0 ? 'px-4 pb-[290px]' : 'px-4 pb-7'}>
+
+        {/* ── FULL API LIBRARY ─────────────────────────────────── */}
         <VietnamText className="mt-7 text-[20px] font-bold text-[#08090A]">
           {t('ingredientsPicker.youMightHave')}
         </VietnamText>

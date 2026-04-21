@@ -5,12 +5,13 @@ import { RoundedButton } from '@/components/in-app-ui/rounded-button';
 import { StepCard } from '@/components/in-app-ui/step-card';
 import { VietnamText } from '@/components/in-app-ui/vietnam-text';
 import { Icon } from '@/components/ui/icon';
-import { INGREDIENTS } from '@/constants/ingredientData';
 import { SEARCH_RECIPES } from '@/constants/recipeData';
-import { STEPS } from '@/constants/stepData';
 import { useLocale } from '@/hooks/use-locale';
+import { useRecipeById } from '@/hooks/use-recipe';
+import { useRecipeIngredientList } from '@/hooks/use-recipe-ingredients';
+import { useStepList } from '@/hooks/use-step';
 import { useSavedRecipes } from '@/hooks/use-saved-recipes';
-import type { SearchRecipeItem } from '@/types/recipe';
+import type { RecipeDetail, RecipeDetailSource, SearchRecipeItem } from '@/types/recipe';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import {
   ArrowLeftIcon,
@@ -23,11 +24,21 @@ import {
   PlusIcon,
   ShareIcon,
   SparklesIcon,
-  Trash2Icon,
   XIcon,
 } from 'lucide-react-native';
 import * as React from 'react';
-import { Image, Modal, Pressable, ScrollView, TouchableOpacity, View, KeyboardAvoidingView, TextInput, Platform } from 'react-native';
+import {
+  ActivityIndicator,
+  Image,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  Pressable,
+  ScrollView,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 type RecipeDetailParams = {
@@ -37,6 +48,8 @@ type RecipeDetailParams = {
   recipeCalories?: string | string[];
   recipeTimeMinutes?: string | string[];
   recipeImageUrl?: string | string[];
+  from?: string | string[];
+  returnQuery?: string | string[];
 };
 
 function singleParam(value?: string | string[]) {
@@ -44,6 +57,16 @@ function singleParam(value?: string | string[]) {
     return value[0];
   }
   return value;
+}
+
+function toPositiveNumber(value: unknown): number | undefined {
+  const parsed = Number(value);
+
+  if (!Number.isFinite(parsed) || parsed <= 0) {
+    return undefined;
+  }
+
+  return parsed;
 }
 
 export default function RecipeDetailScreen() {
@@ -71,6 +94,75 @@ export default function RecipeDetailScreen() {
   const recipeImageUrl = singleParam(params.recipeImageUrl);
   const recipeCalories = singleParam(params.recipeCalories);
   const recipeTimeMinutes = singleParam(params.recipeTimeMinutes);
+  const fromParam = singleParam(params.from);
+  const returnQuery = singleParam(params.returnQuery);
+
+  const source = React.useMemo<RecipeDetailSource>(() => {
+    if (fromParam === 'search-results' || fromParam === 'recipe-tab' || fromParam === 'unknown') {
+      return fromParam;
+    }
+
+    return 'unknown';
+  }, [fromParam]);
+  const hasSearchReturnContext = React.useMemo(
+    () => source === 'search-results' || (returnQuery?.trim().length ?? 0) > 0,
+    [returnQuery, source]
+  );
+
+  const { data: apiRecipeData } = useRecipeById(recipeId ?? '');
+  const baseServes = React.useMemo(() => {
+    const apiRecipe =
+      (apiRecipeData as
+        | {
+            serves?: number | string | null;
+            serving?: number | string | null;
+            servings?: number | string | null;
+          }
+        | undefined) ?? undefined;
+
+    return (
+      toPositiveNumber(apiRecipe?.serves) ??
+      toPositiveNumber(apiRecipe?.serving) ??
+      toPositiveNumber(apiRecipe?.servings) ??
+      4
+    );
+  }, [apiRecipeData]);
+
+  const recipeFromApi = React.useMemo<SearchRecipeItem | undefined>(() => {
+    if (!apiRecipeData) {
+      return undefined;
+    }
+
+    const apiRecipe = apiRecipeData as RecipeDetail & {
+      totalTime?: number;
+      description?: string | null;
+      tags?: string[] | null;
+      cookware?: string[] | null;
+      imageRecipe?: string | null;
+    };
+
+    const calories = Number(apiRecipe.calories);
+    const timeMinutes = Number(apiRecipe.timeMinutes ?? apiRecipe.totalTime);
+    const imageUrl =
+      typeof apiRecipe.imageUrl === 'string' && apiRecipe.imageUrl.trim().length > 0
+        ? apiRecipe.imageUrl
+        : typeof apiRecipe.imageRecipe === 'string' && apiRecipe.imageRecipe.trim().length > 0
+          ? apiRecipe.imageRecipe
+          : recipeImageUrl || SEARCH_RECIPES[0].imageUrl;
+
+    return {
+      id: apiRecipe.id,
+      name: apiRecipe.name,
+      description: apiRecipe.description || recipeDescription || '',
+      calories: Number.isFinite(calories) ? calories : 0,
+      timeMinutes: Number.isFinite(timeMinutes) ? timeMinutes : 0,
+      imageUrl,
+      tags: Array.isArray(apiRecipe.tags) ? apiRecipe.tags.map((tag) => String(tag)) : [],
+      cookware: Array.isArray(apiRecipe.cookware)
+        ? apiRecipe.cookware.map((item) => String(item))
+        : [],
+    };
+  }, [apiRecipeData, recipeDescription, recipeImageUrl]);
 
   const recipeFromParams = React.useMemo<SearchRecipeItem | undefined>(() => {
     if (!recipeId || !recipeName || !recipeDescription || !recipeImageUrl) {
@@ -102,7 +194,23 @@ export default function RecipeDetailScreen() {
     [getSavedRecipeById, recipeId]
   );
 
-  const recipe = recipeFromSaved ?? recipeFromCatalog ?? recipeFromParams ?? SEARCH_RECIPES[0];
+  const recipe = recipeFromApi ?? recipeFromSaved ?? recipeFromCatalog ?? recipeFromParams ?? SEARCH_RECIPES[0];
+  const { data: recipeSteps } = useStepList(recipe.id);
+  const { data: recipeIngredients, isLoading: isRecipeIngredientsLoading } =
+    useRecipeIngredientList(recipe.id, serves, baseServes);
+
+  React.useEffect(() => {
+    setServes(baseServes);
+  }, [baseServes, recipe.id]);
+
+  const displaySteps = recipeSteps ?? [];
+  const displayTips = React.useMemo(() => {
+    const tips = displaySteps
+      .map((step) => (typeof step.tip === 'string' ? step.tip.trim() : ''))
+      .filter((tip): tip is string => tip.length > 0);
+
+    return Array.from(new Set(tips));
+  }, [displaySteps]);
 
   const recipeIsSaved = isSaved(recipe.id);
   const displayCookbooks = getRecipeCookbooks(recipe.id);
@@ -122,10 +230,24 @@ export default function RecipeDetailScreen() {
   }, [displayCookbooks, recipeIsSaved, t]);
 
   function handleBack() {
+    if (hasSearchReturnContext) {
+      router.replace({
+        pathname: '/search-results',
+        ...(returnQuery ? { params: { q: returnQuery } } : {}),
+      });
+      return;
+    }
+
+    if (source === 'recipe-tab') {
+      router.replace('/(tabs)/recipe');
+      return;
+    }
+
     if (router.canGoBack()) {
       router.back();
       return;
     }
+
     router.replace('/(tabs)/recipe');
   }
 
@@ -163,7 +285,11 @@ export default function RecipeDetailScreen() {
                 onPress={() =>
                   router.push({
                     pathname: '/(tabs)/recipe-edit',
-                    params: { recipeId: recipe.id },
+                    params: {
+                      recipeId: recipe.id,
+                      from: source,
+                      ...(returnQuery ? { returnQuery } : {}),
+                    },
                   })
                 }>
                 <Icon as={PencilIcon} size={18} className="text-white" />
@@ -174,16 +300,9 @@ export default function RecipeDetailScreen() {
                   variant="ghost"
                   className="h-10 w-10 items-center justify-center rounded-full bg-black/35"
                   onPress={() => setDeleteConfirmVisible(true)}>
-                  <Icon as={Trash2Icon} size={18} className="text-white" />
+                  <Icon as={XIcon} size={18} className="text-white" />
                 </CircleButton>
-              ) : (
-                <CircleButton
-                  variant="ghost"
-                  className="h-10 w-10 items-center justify-center rounded-full bg-black/35"
-                  onPress={handleSaveRecipe}>
-                  <Icon as={Bookmark} size={18} className="text-white" />
-                </CircleButton>
-              )}
+              ) : null}
             </View>
           </View>
 
@@ -279,9 +398,23 @@ export default function RecipeDetailScreen() {
 
           <VietnamText className="mb-2 text-sm text-gray-500">{t('ingredients.mainIngredients')}</VietnamText>
 
-          {INGREDIENTS.map((ingredient, index) => (
-            <IngredientRow key={index} {...ingredient} />
-          ))}
+          {isRecipeIngredientsLoading ? (
+            <View className="items-center py-6">
+              <ActivityIndicator size="small" color="#00B075" />
+            </View>
+          ) : recipeIngredients && recipeIngredients.length > 0 ? (
+            recipeIngredients.map((ingredient) => (
+              <IngredientRow
+                key={`${ingredient.recipeId}-${ingredient.ingredientId}`}
+                emoji={ingredient.emoji}
+                name={ingredient.name}
+                qty={ingredient.quantityLabel}
+                bg={ingredient.bg}
+              />
+            ))
+          ) : (
+            <VietnamText className="mb-1 text-sm text-gray-500">No ingredients found.</VietnamText>
+          )}
 
           <View className="mt-5 rounded-full p-0.5" style={{ borderWidth: 1.5 }}>
             <RoundedButton variant="ghost">
@@ -297,8 +430,13 @@ export default function RecipeDetailScreen() {
           </VietnamText>
 
           <View className="mb-4 rounded-2xl bg-amber-50 p-4">
-            {STEPS.map((step, index) => (
-              <StepCard key={index} {...step} isLast={index === STEPS.length - 1} />
+            {displaySteps.map((step, index) => (
+              <StepCard
+                key={step.id ?? String(index)}
+                {...step}
+                number={step.number ?? index + 1}
+                isLast={index === displaySteps.length - 1}
+              />
             ))}
           </View>
 
@@ -309,15 +447,23 @@ export default function RecipeDetailScreen() {
             </RoundedButton>
           </View>
 
-          <View className="mb-5 rounded-2xl bg-amber-50 p-4">
-            <View className="mb-2 flex-row items-center gap-2">
-              <VietnamText className="text-xl">💡</VietnamText>
-              <VietnamText className="text-base font-bold text-gray-900">{t('other.tips')}</VietnamText>
+          {displayTips.length > 0 ? (
+            <View className="mb-5 rounded-2xl bg-amber-50 p-4">
+              <View className="mb-2 flex-row items-center gap-2">
+                <VietnamText className="text-xl">💡</VietnamText>
+                <VietnamText className="text-base font-bold text-gray-900">{t('other.tips')}</VietnamText>
+              </View>
+              <View className="gap-2">
+                {displayTips.map((tip, index) => (
+                  <VietnamText
+                    key={`${tip}-${index}`}
+                    className="text-sm leading-relaxed text-gray-600">
+                    • {tip}
+                  </VietnamText>
+                ))}
+              </View>
             </View>
-            <VietnamText className="text-sm leading-relaxed text-gray-600">
-              {t('recipe.detailTipsMessage')}
-            </VietnamText>
-          </View>
+          ) : null}
 
           <View className="h-20" />
         </View>
@@ -332,7 +478,16 @@ export default function RecipeDetailScreen() {
           <RoundedButton
             className="flex-1"
             size="lg"
-            onPress={() => router.push('/(tabs)/cooking-ingredients')}>
+            onPress={() =>
+              router.push({
+                pathname: '/(tabs)/cooking-ingredients',
+                params: {
+                  recipeId: recipe.id,
+                  serves: String(serves),
+                  baseServes: String(baseServes),
+                },
+              })
+            }>
             <View className="h-8 w-8 items-center justify-center rounded-full">
               <Icon as={PlayIcon} size={16} color="white" />
             </View>
@@ -402,7 +557,7 @@ export default function RecipeDetailScreen() {
                 onPress={handleDeleteSavedRecipe}
                 className="flex-1 items-center justify-center rounded-full bg-[#EB404F] py-4">
                 <VietnamText className="text-[18px] font-bold text-white">
-                  {t('other.delete').toUpperCase()}
+                  BỎ LƯU
                 </VietnamText>
               </Pressable>
             </View>

@@ -13,4 +13,20 @@ export const queryKeys = {
     all: ['ingredients'] as const,
     detail: (id?: string) => ['ingredients','list', id || 'all_items'] as const,
   },
+  tag: {
+    all: ['tags'] as const,
+    list: () => ['tags', 'list'] as const,
+  },
+  step: {
+    all: ['steps'] as const,
+    byRecipe: (recipeId: string | number) => ['steps', 'recipe', String(recipeId)] as const,
+    detail: (id: string | number) => ['steps', String(id)] as const,
+  },
+  recipeIngredient: {
+    all: ['recipe-ingredients'] as const,
+    byRecipe: (recipeId: string | number) =>
+      ['recipe-ingredients', 'recipe', String(recipeId)] as const,
+    detail: (recipeId: string | number, ingredientId: string | number) =>
+      ['recipe-ingredients', 'recipe', String(recipeId), 'ingredient', String(ingredientId)] as const,
+  },
 };

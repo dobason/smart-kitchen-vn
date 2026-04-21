@@ -144,6 +144,7 @@ export default function RecipeScreen() {
         recipeCalories: String(recipe.calories),
         recipeTimeMinutes: String(recipe.timeMinutes),
         recipeImageUrl: recipe.imageUrl,
+        from: 'recipe-tab',
       },
     });
   };

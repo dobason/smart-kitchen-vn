@@ -5,6 +5,8 @@ import { StepItem } from '@/types';
 const BRAND = '#00B075';
 
 export function StepCard({ number, text, tip, isLast = false }: StepItem) {
+  const hasTip = typeof tip === 'string' && tip.trim().length > 0;
+
   return (
     <View className="flex-row">
       {/* Timeline */}
@@ -24,10 +26,12 @@ export function StepCard({ number, text, tip, isLast = false }: StepItem) {
         <VietnamText className="mb-3 text-base font-semibold text-gray-800">{text}</VietnamText>
 
         {/* Tip card */}
-        <View className="flex-row rounded-xl bg-white p-3 shadow-sm" style={{ elevation: 1 }}>
-          <VietnamText className="mr-2 text-xl">📌</VietnamText>
-          <VietnamText className="flex-1 text-sm text-gray-600">{tip}</VietnamText>
-        </View>
+        {hasTip ? (
+          <View className="flex-row rounded-xl bg-white p-3 shadow-sm" style={{ elevation: 1 }}>
+            <VietnamText className="mr-2 text-xl">📌</VietnamText>
+            <VietnamText className="flex-1 text-sm text-gray-600">{tip}</VietnamText>
+          </View>
+        ) : null}
       </View>
     </View>
   );

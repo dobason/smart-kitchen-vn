@@ -1,14 +1,18 @@
 import axiosClient from './axiosClient';
 import { RecipeDetail, SearchRecipeItem, UpdateRecipeRequest } from '../types/recipe';
-import { CookingIngredientItem, StepItem } from '@/types';
 
 export type GetRecipesParams = {
-  userId: string;
+  userId?: string;
   sourceType?: 'MANUAL';
   search?: string;
 };
 
 const recipeApi = {
+  //Tìm công thức theo Id
+  getById: (id: string): Promise<RecipeDetail> => {
+    return axiosClient.get(`/v1/recipes/${id}`);
+  },
+  
   // Lấy danh sách công thức
   getAll: (params: GetRecipesParams): Promise<SearchRecipeItem[]> => {
     return axiosClient.get('/v1/recipes/', { params });
@@ -34,7 +38,7 @@ const recipeApi = {
   //         type: 'image/jpeg',
   //     } as any);
 
-  //     return axiosClient.post(`/recipes/${id}/upload-image`, formData, {
+  //     return axiosClient.post(`/v1/recipes/${id}/upload-image`, formData, {
   //         headers: { 'Content-Type': 'multipart/form-data' },
   //     });
   // },
