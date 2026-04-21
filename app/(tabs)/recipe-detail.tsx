@@ -104,6 +104,10 @@ export default function RecipeDetailScreen() {
 
     return 'unknown';
   }, [fromParam]);
+  const hasSearchReturnContext = React.useMemo(
+    () => source === 'search-results' || (returnQuery?.trim().length ?? 0) > 0,
+    [returnQuery, source]
+  );
 
   const { data: apiRecipeData } = useRecipeById(recipeId ?? '');
   const baseServes = React.useMemo(() => {
@@ -225,12 +229,7 @@ export default function RecipeDetailScreen() {
   }, [displayCookbooks, recipeIsSaved, t]);
 
   function handleBack() {
-    if (source === 'search-results') {
-      if (router.canGoBack()) {
-        router.back();
-        return;
-      }
-
+    if (hasSearchReturnContext) {
       router.replace({
         pathname: '/search-results',
         ...(returnQuery ? { params: { q: returnQuery } } : {}),
