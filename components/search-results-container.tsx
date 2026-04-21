@@ -8,14 +8,14 @@ import {
   SEARCH_TAG_OPTIONS,
   SEARCH_TIME_FILTER_OPTIONS,
 } from '@/constants/searchFilterOptions';
-import { SEARCH_RECIPES } from '@/constants/recipeData';
 import { Icon } from '@/components/ui/icon';
 import { useLocale } from '@/hooks/use-locale';
+import { useAllRecipe } from '@/hooks/use-recipes';
 import { useSavedRecipes } from '@/hooks/use-saved-recipes';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { BrushCleaning, X } from 'lucide-react-native';
 import * as React from 'react';
-import { Modal, Pressable, ScrollView, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Modal, Pressable, ScrollView, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 function normalizeSearchText(value: string) {
@@ -410,6 +410,8 @@ export function SearchResultsContainer() {
   const [caloriesSheetVisible, setCaloriesSheetVisible] = React.useState(false);
   const [cookwareSheetVisible, setCookwareSheetVisible] = React.useState(false);
 
+  const { data: SEARCH_RECIPES = [], isLoading } = useAllRecipe();
+
   React.useEffect(() => {
     if (initialQuery) {
       setQuery(initialQuery);
@@ -430,7 +432,7 @@ export function SearchResultsContainer() {
       const normalizedDescription = normalizeSearchText(item.description);
       const searchableContent = `${normalizedName} ${normalizedDescription}`;
 
-      const normalizedItemTags = item.tags.map((tag) => normalizeSearchText(tag));
+      const normalizedItemTags = (item.tags ?? []).map((tag) => normalizeSearchText(tag));
       const normalizedItemCookware = (item.cookware ?? []).map((cookwareId) =>
         normalizeSearchText(cookwareId)
       );
@@ -606,7 +608,11 @@ export function SearchResultsContainer() {
           {t('searchResults.results', { count: filteredRecipes.length })}
         </VietnamText>
 
-        {filteredRecipes.length === 0 ? (
+        {isLoading ? (
+          <View className="mt-16 items-center px-6">
+            <ActivityIndicator size="large" color="#CE232A" />
+          </View>
+        ) : filteredRecipes.length === 0 ? (
           <View className="mt-16 items-center px-6">
             <VietnamText className="text-6xl">🪄</VietnamText>
             <VietnamText className="mt-2 text-3xl font-semibold text-[#5C5C63]">

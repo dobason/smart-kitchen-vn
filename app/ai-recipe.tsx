@@ -5,14 +5,7 @@ import { AISelectableChip } from '@/components/in-app-ui/ai-selectable-chip';
 import { AITimeOptionChip } from '@/components/in-app-ui/ai-time-option-chip';
 import { ShinyButton } from '@/components/in-app-ui/shiny-button';
 import { VietnamText } from '@/components/in-app-ui/vietnam-text';
-import {
-  ALLERGEN_FREE_OPTIONS,
-  COOKWARE_OPTIONS,
-  CUISINE_OPTIONS,
-  DIET_OPTIONS,
-  DISH_TYPE_OPTIONS,
-  TIME_OPTIONS,
-} from '@/constants/aiRecipeOptions';
+import { ALLERGEN_FREE_OPTIONS } from '@/constants/aiRecipeOptions';
 import { getIngredientDisplayName, getIngredientsByIds } from '@/constants/ingredientData';
 import { Icon } from '@/components/ui/icon';
 import { useIngredients } from '@/hooks/use-ingredients';
@@ -20,8 +13,11 @@ import { useLocale } from '@/hooks/use-locale';
 import { useRouter } from 'expo-router';
 import { X } from 'lucide-react-native';
 import * as React from 'react';
-import { Pressable, ScrollView, TextInput, View } from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useAllIngredients } from '@/hooks/use-top-ingredients';
+
+import { useTags } from '@/hooks/use-tags';
 
 function toggleInList(value: string, current: string[]) {
   if (current.includes(value)) {
@@ -35,10 +31,20 @@ export default function AIRecipeScreen() {
   const router = useRouter();
   const { aiIngredientIds, setAiIngredientIds } = useIngredients();
 
-  const selectedIngredients = React.useMemo(
-    () => getIngredientsByIds(aiIngredientIds),
-    [aiIngredientIds]
-  );
+  const { ingredients: allIngredients } = useAllIngredients();
+
+  const selectedIngredients = React.useMemo(() => {
+    return aiIngredientIds
+      .map((id) => {
+        const fromApi = allIngredients.find((i) => String(i.id) === String(id));
+        if (fromApi) return fromApi;
+
+        return getIngredientsByIds([id])[0];
+      })
+      .filter((i): i is any => !!i);
+  }, [aiIngredientIds, allIngredients]);
+
+  const { tags, isLoading: isTagsLoading } = useTags();
 
   const [selectedCookware, setSelectedCookware] = React.useState<string[]>([]);
   const [selectedDishTypes, setSelectedDishTypes] = React.useState<string[]>([]);
@@ -84,7 +90,9 @@ export default function AIRecipeScreen() {
           <Icon as={X} size={30} className="text-[#111827]" />
         </Pressable>
 
-        <VietnamText className="text-[24px] font-bold text-[#08090A]">{t('aiRecipe.title')}</VietnamText>
+        <VietnamText className="text-[24px] font-bold text-[#08090A]">
+          {t('aiRecipe.title')}
+        </VietnamText>
         <View className="h-10 w-10" />
       </View>
 
@@ -116,96 +124,122 @@ export default function AIRecipeScreen() {
           </ScrollView>
         </View>
 
-        <AISectionTitle title={t('aiRecipe.selectCookware')} className="mt-7" />
-        <View className="mt-3 flex-row flex-wrap gap-2.5">
-          {COOKWARE_OPTIONS.map((item) => (
-            <AISelectableChip
-              key={item.id}
-              label={String(t(item.labelKey))}
-              emoji={item.emoji}
-              selected={selectedCookware.includes(item.id)}
-              onPress={() => setSelectedCookware((prev) => toggleInList(item.id, prev))}
-            />
-          ))}
-        </View>
+        {isTagsLoading ? (
+          <View className="mt-10 flex-1 items-center justify-center">
+            <ActivityIndicator size="large" color="#CE232A" />
+          </View>
+        ) : (
+          <>
+            <AISectionTitle title={t('aiRecipe.selectCookware')} className="mt-7" />
+            <View className="mt-3 flex-row flex-wrap gap-2.5">
+              {tags
+                .filter((t) => t.category === 'Cookware')
+                .map((item) => (
+                  <AISelectableChip
+                    key={item.id}
+                    label={item.name}
+                    emoji={item.emoji}
+                    selected={selectedCookware.includes(String(item.id))}
+                    onPress={() =>
+                      setSelectedCookware((prev) => toggleInList(String(item.id), prev))
+                    }
+                  />
+                ))}
+            </View>
 
-        <AISectionTitle title={t('aiRecipe.dishType')} className="mt-7" />
-        <View className="mt-3 flex-row flex-wrap gap-2.5">
-          {DISH_TYPE_OPTIONS.map((item) => (
-            <AISelectableChip
-              key={item.id}
-              label={String(t(item.labelKey))}
-              emoji={item.emoji}
-              selected={selectedDishTypes.includes(item.id)}
-              onPress={() => setSelectedDishTypes((prev) => toggleInList(item.id, prev))}
-            />
-          ))}
-        </View>
+            <AISectionTitle title={t('aiRecipe.dishType')} className="mt-7" />
+            <View className="mt-3 flex-row flex-wrap gap-2.5">
+              {tags
+                .filter((t) => t.category === 'Dish Type')
+                .map((item) => (
+                  <AISelectableChip
+                    key={item.id}
+                    label={item.name}
+                    emoji={item.emoji}
+                    selected={selectedDishTypes.includes(String(item.id))}
+                    onPress={() =>
+                      setSelectedDishTypes((prev) => toggleInList(String(item.id), prev))
+                    }
+                  />
+                ))}
+            </View>
 
-        <AISectionTitle title={t('aiRecipe.diet')} className="mt-7" />
-        <View className="mt-3 flex-row flex-wrap gap-2.5">
-          {DIET_OPTIONS.map((item) => (
-            <AISelectableChip
-              key={item.id}
-              label={String(t(item.labelKey))}
-              emoji={item.emoji}
-              selected={selectedDiet.includes(item.id)}
-              onPress={() => setSelectedDiet((prev) => toggleInList(item.id, prev))}
-            />
-          ))}
-        </View>
+            <AISectionTitle title={t('aiRecipe.diet')} className="mt-7" />
+            <View className="mt-3 flex-row flex-wrap gap-2.5">
+              {tags
+                .filter((t) => t.category === 'Diet')
+                .map((item) => (
+                  <AISelectableChip
+                    key={item.id}
+                    label={item.name}
+                    emoji={item.emoji}
+                    selected={selectedDiet.includes(String(item.id))}
+                    onPress={() => setSelectedDiet((prev) => toggleInList(String(item.id), prev))}
+                  />
+                ))}
+            </View>
 
-        <AISectionTitle title={t('aiRecipe.cuisine')} className="mt-7" />
-        <View className="mt-3 flex-row flex-wrap gap-2.5">
-          {CUISINE_OPTIONS.map((item) => (
-            <AISelectableChip
-              key={item.id}
-              label={String(t(item.labelKey))}
-              emoji={item.emoji}
-              selected={selectedCuisine.includes(item.id)}
-              onPress={() => setSelectedCuisine((prev) => toggleInList(item.id, prev))}
-            />
-          ))}
-        </View>
+            <AISectionTitle title={t('aiRecipe.cuisine')} className="mt-7" />
+            <View className="mt-3 flex-row flex-wrap gap-2.5">
+              {tags
+                .filter((t) => t.category === 'Cuisine')
+                .map((item) => (
+                  <AISelectableChip
+                    key={item.id}
+                    label={item.name}
+                    emoji={item.emoji}
+                    selected={selectedCuisine.includes(String(item.id))}
+                    onPress={() =>
+                      setSelectedCuisine((prev) => toggleInList(String(item.id), prev))
+                    }
+                  />
+                ))}
+            </View>
 
-        <AISectionTitle title={t('aiRecipe.time')} className="mt-7" />
-        <View className="mt-3 flex-row justify-between">
-          {TIME_OPTIONS.map((item) => (
-            <AITimeOptionChip
-              key={item.id}
-              label={String(t(item.labelKey))}
-              emoji={item.emoji}
-              selected={selectedTime === item.id}
-              onPress={() => setSelectedTime((prev) => (prev === item.id ? null : item.id))}
-            />
-          ))}
-        </View>
+            <AISectionTitle title={t('aiRecipe.time')} className="mt-7" />
+            <View className="mt-3 flex-row flex-wrap gap-2.5">
+              {tags
+                .filter((t) => t.category === 'Time')
+                .map((item) => (
+                  <AISelectableChip
+                    key={item.id}
+                    label={item.name}
+                    emoji={item.emoji}
+                    selected={selectedTime === String(item.id)}
+                    onPress={() =>
+                      setSelectedTime((prev) => (prev === String(item.id) ? null : String(item.id)))
+                    }
+                  />
+                ))}
+            </View>
 
-        <AISectionTitle title={t('aiRecipe.allergenFree')} className="mt-7" />
-        <View className="mt-3 flex-row flex-wrap gap-2.5">
-          {ALLERGEN_FREE_OPTIONS.map((item) => (
-            <AISelectableChip
-              key={item.id}
-              label={String(t(item.labelKey))}
-              emoji={item.emoji}
-              selected={selectedAllergenFree.includes(item.id)}
-              onPress={() => setSelectedAllergenFree((prev) => toggleInList(item.id, prev))}
-            />
-          ))}
-        </View>
+            <AISectionTitle title={t('aiRecipe.allergenFree')} className="mt-7" />
+            <View className="mt-3 flex-row flex-wrap gap-2.5">
+              {ALLERGEN_FREE_OPTIONS.map((item) => (
+                <AISelectableChip
+                  key={item.id}
+                  label={String(t(item.labelKey))}
+                  emoji={item.emoji}
+                  selected={selectedAllergenFree.includes(item.id)}
+                  onPress={() => setSelectedAllergenFree((prev) => toggleInList(item.id, prev))}
+                />
+              ))}
+            </View>
 
-        <AISectionTitle title={t('aiRecipe.extraCommand')} className="mt-7" />
-        <View className="mb-5 mt-3 rounded-2xl border border-[#E6E8EC] bg-[#F5F7F8] px-4 py-3">
-          <TextInput
-            value={extraCommand}
-            onChangeText={setExtraCommand}
-            multiline
-            textAlignVertical="top"
-            placeholder={t('aiRecipe.extraPlaceholder')}
-            placeholderTextColor="#9CA3AF"
-            className="min-h-[44px] text-[17px] leading-6 text-[#111827]"
-          />
-        </View>
+            <AISectionTitle title={t('aiRecipe.extraCommand')} className="mt-7" />
+            <View className="mb-5 mt-3 rounded-2xl border border-[#E6E8EC] bg-[#F5F7F8] px-4 py-3">
+              <TextInput
+                value={extraCommand}
+                onChangeText={setExtraCommand}
+                multiline
+                textAlignVertical="top"
+                placeholder={t('aiRecipe.extraPlaceholder')}
+                placeholderTextColor="#9CA3AF"
+                className="min-h-[44px] text-[17px] leading-6 text-[#111827]"
+              />
+            </View>
+          </>
+        )}
       </ScrollView>
 
       <View className="border-t border-[#E6E8EC] bg-white px-4 pb-4 pt-3">
