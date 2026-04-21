@@ -2,6 +2,9 @@ import { useQuery } from '@tanstack/react-query';
 import { useUser } from '@clerk/clerk-expo';
 import recipeApi from '@/services/recipeServices';
 import { queryKeys } from '@/lib/queryKeys';
+import * as React from 'react';
+import { useUserRecipeEdits } from '@/hooks/use-user-recipe-edits';
+import type { SearchRecipeItem } from '@/types/recipe';
 
 const RECIPES_SYNC_INTERVAL_MS = 5000;
 
@@ -13,12 +16,14 @@ const RECIPES_SYNC_INTERVAL_MS = 5000;
  */
 export function useRecipes(searchQuery?: string) {
   const { user } = useUser();
+  const { getRecipeDraftMap } = useUserRecipeEdits();
+  const recipeDraftMap = getRecipeDraftMap();
   const userId = user?.id;
   const bypassAuthInDev =
     __DEV__ && process.env.EXPO_PUBLIC_BYPASS_AUTH_IN_DEV?.toLowerCase() === 'true';
   const canFetchRecipes = Boolean(userId) || bypassAuthInDev;
 
-  return useQuery({
+  const recipesQuery = useQuery<SearchRecipeItem[]>({
     queryKey: queryKeys.recipe.list(userId ?? 'guest', searchQuery),
     queryFn: () =>
       recipeApi.getAll({
@@ -33,4 +38,28 @@ export function useRecipes(searchQuery?: string) {
     refetchOnReconnect: true,
     refetchOnWindowFocus: true,
   });
+
+  const mergedData = React.useMemo(() => {
+    const data = recipesQuery.data ?? [];
+
+    return data.map((recipe) => {
+      const recipeDraft = recipeDraftMap[recipe.id];
+
+      if (!recipeDraft) {
+        return recipe;
+      }
+
+      return {
+        ...recipe,
+        name: recipeDraft.recipe.name,
+        calories: recipeDraft.recipe.calories,
+        timeMinutes: recipeDraft.recipe.totalTime,
+      };
+    });
+  }, [recipeDraftMap, recipesQuery.data]);
+
+  return {
+    ...recipesQuery,
+    data: mergedData,
+  };
 }

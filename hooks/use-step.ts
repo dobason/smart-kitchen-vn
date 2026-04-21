@@ -2,6 +2,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { queryKeys } from '@/lib/queryKeys';
 import stepApi from '@/services/stepServices';
 import { CreateStepRequest, StepApiItem, StepItem, UpdateStepRequest } from '@/types/step';
+import * as React from 'react';
+import { useUserRecipeEdits } from '@/hooks/use-user-recipe-edits';
 
 type StepListResponse =
   | StepApiItem[]
@@ -54,8 +56,11 @@ export function buildStepPayload(
 export function useStepList(recipeId?: string | number) {
   const parsedRecipeId = Number(recipeId);
   const hasValidRecipeId = Number.isFinite(parsedRecipeId);
+  const normalizedRecipeId = recipeId !== undefined ? String(recipeId) : '';
+  const { getRecipeDraft } = useUserRecipeEdits();
+  const recipeDraft = getRecipeDraft(normalizedRecipeId);
 
-  return useQuery({
+  const stepQuery = useQuery({
     queryKey: queryKeys.step.byRecipe(hasValidRecipeId ? parsedRecipeId : ''),
     queryFn: async () => {
       if (!hasValidRecipeId) {
@@ -71,6 +76,22 @@ export function useStepList(recipeId?: string | number) {
     },
     enabled: hasValidRecipeId,
   });
+
+  const mergedData = React.useMemo(() => {
+    if (recipeDraft?.steps) {
+      return recipeDraft.steps.map((step, index) => ({
+        ...step,
+        number: step.number ?? index + 1,
+      }));
+    }
+
+    return stepQuery.data ?? [];
+  }, [recipeDraft, stepQuery.data]);
+
+  return {
+    ...stepQuery,
+    data: mergedData,
+  };
 }
 
 export function useCreateStep() {

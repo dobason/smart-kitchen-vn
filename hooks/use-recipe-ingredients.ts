@@ -4,6 +4,7 @@ import { queryKeys } from '@/lib/queryKeys';
 import ingredientApi from '@/services/ingredientServices';
 import recipeIngredientApi from '@/services/recipeIngredientServices';
 import { IngredientApiItem } from '@/types/ingredient';
+import { useUserRecipeEdits } from '@/hooks/use-user-recipe-edits';
 import {
   CreateRecipeIngredientRequest,
   RecipeIngredientApiItem,
@@ -315,8 +316,11 @@ export function useRecipeIngredientList(
 ) {
   const parsedRecipeId = Number(recipeId);
   const hasValidRecipeId = Number.isFinite(parsedRecipeId);
+  const normalizedRecipeId = recipeId !== undefined ? String(recipeId) : '';
   const normalizedServes = sanitizePositiveNumber(serves, 1);
   const normalizedBaseServes = sanitizePositiveNumber(baseServes, 1);
+  const { getRecipeDraft } = useUserRecipeEdits();
+  const recipeDraft = getRecipeDraft(normalizedRecipeId);
 
   const recipeIngredientQuery = useQuery<RecipeIngredientDisplayItem[]>({
     queryKey: queryKeys.recipeIngredient.byRecipe(hasValidRecipeId ? parsedRecipeId : ''),
@@ -344,15 +348,20 @@ export function useRecipeIngredientList(
     enabled: hasValidRecipeId,
   });
 
+  const sourceData = React.useMemo(
+    () => recipeDraft?.ingredients ?? recipeIngredientQuery.data ?? [],
+    [recipeDraft, recipeIngredientQuery.data]
+  );
+
   const scaledData = React.useMemo(() => {
-    const data = recipeIngredientQuery.data ?? [];
+    const data = sourceData;
 
     if (normalizedServes === normalizedBaseServes) {
       return data;
     }
 
     return data.map((item) => scaleDisplayItem(item, normalizedServes, normalizedBaseServes));
-  }, [normalizedBaseServes, normalizedServes, recipeIngredientQuery.data]);
+  }, [normalizedBaseServes, normalizedServes, sourceData]);
 
   return {
     ...recipeIngredientQuery,

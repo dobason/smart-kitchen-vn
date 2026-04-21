@@ -18,25 +18,14 @@ import { Icon } from '@/components/ui/icon';
 import { CircleButton } from '@/components/in-app-ui/circle-button';
 import { RoundedButton } from '@/components/in-app-ui/rounded-button';
 import { useLocale } from '@/hooks/use-locale';
-import {
-  buildRecipeIngredientPayload,
-  useCreateRecipeIngredient,
-  useDeleteRecipeIngredient,
-  useRecipeIngredientList,
-  useUpdateRecipeIngredient,
-} from '@/hooks/use-recipe-ingredients';
-import {
-  buildStepPayload,
-  mapApiStepToStepItem,
-  useCreateStep,
-  useDeleteStep,
-  useStepList,
-  useUpdateStep,
-} from '@/hooks/use-step';
+import { useRecipeIngredientList } from '@/hooks/use-recipe-ingredients';
+import { useStepList } from '@/hooks/use-step';
 import { StepItem } from '@/types/step';
-import { useRecipeDetail, useUpdateRecipe, useRecipeForm } from '@/hooks/use-recipe';
+import { useRecipeDetail, useRecipeForm } from '@/hooks/use-recipe';
 import ingredientApi from '@/services/ingredientServices';
 import { IngredientApiItem } from '@/types/ingredient';
+import { useUserRecipeEdits } from '@/hooks/use-user-recipe-edits';
+import { RecipeIngredientDisplayItem } from '@/types/recipe-ingredient';
 
 /* ─── Sub-components ─────────────────────────────────────────────── */
 
@@ -137,6 +126,124 @@ function normalizeIngredientName(value: string): string {
     .replace(/[\u0300-\u036f]/g, '')
     .toLowerCase()
     .trim();
+}
+
+function parseNumberish(value: string): number | undefined {
+  const trimmed = value.trim();
+
+  if (trimmed.length === 0) {
+    return undefined;
+  }
+
+  const normalized = trimmed.replace(',', '.');
+  const fractionMatch = normalized.match(/^(-?\d+(?:\.\d+)?)\s*\/\s*(-?\d+(?:\.\d+)?)$/);
+
+  if (fractionMatch) {
+    const numerator = Number(fractionMatch[1]);
+    const denominator = Number(fractionMatch[2]);
+
+    if (Number.isFinite(numerator) && Number.isFinite(denominator) && denominator !== 0) {
+      return numerator / denominator;
+    }
+  }
+
+  const parsed = Number(normalized);
+  return Number.isFinite(parsed) ? parsed : undefined;
+}
+
+function formatNumberCompact(value: number): string {
+  return value.toFixed(2).replace(/\.?0+$/, '');
+}
+
+function formatQuantityLabelFromNumber(quantity: number | undefined, unit: string): string {
+  const unitText = unit.trim();
+
+  if (quantity === undefined) {
+    return unitText.length > 0 ? unitText : '--';
+  }
+
+  const quantityText = formatNumberCompact(quantity);
+  const merged = `${quantityText} ${unitText}`.trim();
+
+  return merged.length > 0 ? merged : '--';
+}
+
+function resolveIngredientIdFromRow(
+  row: EditableRecipeIngredientRow,
+  ingredientIdByName: Map<string, number>
+): number | undefined {
+  const directId = Number(row.ingredientId);
+
+  if (Number.isFinite(directId)) {
+    return directId;
+  }
+
+  const normalizedName = normalizeIngredientName(row.ingredientName);
+
+  if (!normalizedName) {
+    return undefined;
+  }
+
+  return ingredientIdByName.get(normalizedName);
+}
+
+function buildLocalRecipeIngredients(
+  recipeId: number,
+  rows: EditableRecipeIngredientRow[],
+  ingredientIdByName: Map<string, number>,
+  ingredientNameById: Map<number, string>
+): RecipeIngredientDisplayItem[] | null {
+  const mappedItems: RecipeIngredientDisplayItem[] = [];
+
+  for (const row of rows) {
+    const isCompletelyEmptyRow =
+      row.ingredientId.trim().length === 0 &&
+      row.ingredientName.trim().length === 0 &&
+      row.quantity.trim().length === 0 &&
+      row.unit.trim().length === 0 &&
+      row.note.trim().length === 0;
+
+    if (isCompletelyEmptyRow) {
+      continue;
+    }
+
+    const ingredientId = resolveIngredientIdFromRow(row, ingredientIdByName);
+
+    if (ingredientId === undefined) {
+      return null;
+    }
+
+    const quantityValue = parseNumberish(row.quantity);
+    const unit = row.unit.trim();
+    const note = row.note.trim();
+    const fallbackName = ingredientNameById.get(ingredientId) ?? `Ingredient #${ingredientId}`;
+    const ingredientName = row.ingredientName.trim() || fallbackName;
+
+    mappedItems.push({
+      recipeId,
+      ingredientId,
+      name: ingredientName,
+      quantityValue,
+      quantityLabel: formatQuantityLabelFromNumber(quantityValue, unit),
+      unit,
+      note,
+      emoji: '🥘',
+      bg: '#F3F4F6',
+    });
+  }
+
+  return mappedItems;
+}
+
+function normalizeStepsForDraft(recipeId: number, currentSteps: StepItem[]): StepItem[] {
+  return currentSteps.map((step, index) => ({
+    ...step,
+    id: step.id ?? `local-step-${recipeId}-${Date.now()}-${index}`,
+    number: index + 1,
+    recipeId,
+    text: step.text ?? '',
+    tip: step.tip ?? '',
+  }));
 }
 
 function IngredientItemRow({
@@ -294,6 +401,7 @@ function StepRow({
 export default function RecipeEditScreen() {
   const router = useRouter();
   const { t } = useLocale();
+  const { upsertRecipeDraft } = useUserRecipeEdits();
   const { recipeId } = useLocalSearchParams();
   const recipeIdParam = Array.isArray(recipeId) ? recipeId[0] : recipeId;
   const recipeIdNumber = React.useMemo(() => {
@@ -305,6 +413,9 @@ export default function RecipeEditScreen() {
   const [cookbook] = React.useState('Dinner');
   const [steps, setSteps] = React.useState<StepItem[]>([]);
   const [ingredientRows, setIngredientRows] = React.useState<EditableRecipeIngredientRow[]>([]);
+  const [isSavingLocal, setIsSavingLocal] = React.useState(false);
+  const initializedStepsRecipeKeyRef = React.useRef<string | null>(null);
+  const initializedIngredientsRecipeKeyRef = React.useRef<string | null>(null);
 
   const { data: ingredientCatalog = [] } = useQuery<IngredientApiItem[]>({
     queryKey: ['ingredients', 'all'],
@@ -335,17 +446,27 @@ export default function RecipeEditScreen() {
     return map;
   }, [ingredientCatalog]);
 
+  const ingredientNameById = React.useMemo(() => {
+    const map = new Map<number, string>();
+
+    ingredientCatalog.forEach((item) => {
+      const ingredientId = Number(item.id);
+      const ingredientName = typeof item.name === 'string' ? item.name.trim() : '';
+
+      if (!Number.isFinite(ingredientId) || ingredientName.length === 0) {
+        return;
+      }
+
+      map.set(ingredientId, ingredientName);
+    });
+
+    return map;
+  }, [ingredientCatalog]);
+
   const { data: recipeData, isLoading } = useRecipeDetail(recipeIdParam as string);
   const { data: apiRecipeIngredients, isFetching: isIngredientLoading } =
     useRecipeIngredientList(recipeIdNumber);
   const { data: apiSteps, isFetching: isStepLoading } = useStepList(recipeIdNumber);
-  const updateMutation = useUpdateRecipe(recipeIdParam as string);
-  const createRecipeIngredientMutation = useCreateRecipeIngredient();
-  const updateRecipeIngredientMutation = useUpdateRecipeIngredient();
-  const deleteRecipeIngredientMutation = useDeleteRecipeIngredient();
-  const createStepMutation = useCreateStep();
-  const updateStepMutation = useUpdateStep();
-  const deleteStepMutation = useDeleteStep();
 
   const {
     name,
@@ -364,10 +485,31 @@ export default function RecipeEditScreen() {
   } = useRecipeForm(recipeData);
 
   React.useEffect(() => {
+    if (!recipeIdParam || apiSteps === undefined) {
+      return;
+    }
+
+    const recipeKey = String(recipeIdParam);
+
+    if (initializedStepsRecipeKeyRef.current === recipeKey) {
+      return;
+    }
+
     setSteps(apiSteps ?? []);
-  }, [apiSteps]);
+    initializedStepsRecipeKeyRef.current = recipeKey;
+  }, [apiSteps, recipeIdParam]);
 
   React.useEffect(() => {
+    if (!recipeIdParam || apiRecipeIngredients === undefined) {
+      return;
+    }
+
+    const recipeKey = String(recipeIdParam);
+
+    if (initializedIngredientsRecipeKeyRef.current === recipeKey) {
+      return;
+    }
+
     const mappedRows = (apiRecipeIngredients ?? []).map((item) => ({
       rowId: `${item.recipeId}-${item.ingredientId}`,
       ingredientId: String(item.ingredientId),
@@ -379,7 +521,8 @@ export default function RecipeEditScreen() {
     }));
 
     setIngredientRows(mappedRows);
-  }, [apiRecipeIngredients]);
+    initializedIngredientsRecipeKeyRef.current = recipeKey;
+  }, [apiRecipeIngredients, recipeIdParam]);
 
   const handleIngredientFieldChange = (
     index: number,
@@ -407,94 +550,38 @@ export default function RecipeEditScreen() {
   };
 
   const handlePersistIngredient = (index: number) => {
-    if (!recipeIdNumber) {
-      Alert.alert('That bai', 'Khong tim thay recipeId hop le.');
-      return;
-    }
-
     const row = ingredientRows[index];
 
     if (!row) {
       return;
     }
 
-    let ingredientId = Number(row.ingredientId);
+    const ingredientId = resolveIngredientIdFromRow(row, ingredientIdByName);
 
-    if (!Number.isFinite(ingredientId)) {
-      const matchedIngredientId = ingredientIdByName.get(normalizeIngredientName(row.ingredientName));
-
-      if (matchedIngredientId !== undefined) {
-        ingredientId = matchedIngredientId;
-      }
-    }
-
-    if (!Number.isFinite(ingredientId)) {
+    if (ingredientId === undefined) {
       Alert.alert('That bai', 'Khong tim thay ingredient phu hop. Vui long kiem tra ten nguyen lieu.');
       return;
     }
 
-    const payload = buildRecipeIngredientPayload(recipeIdNumber, ingredientId, {
-      quantity: row.quantity,
-      unit: row.unit,
-      note: row.note,
-    });
+    const fallbackName = ingredientNameById.get(ingredientId) ?? `Ingredient #${ingredientId}`;
+    const ingredientName = row.ingredientName.trim() || fallbackName;
 
-    if (row.isDraft) {
-      createRecipeIngredientMutation.mutate(payload, {
-        onError: () => {
-          Alert.alert('That bai', 'Khong the them nguyen lieu. Vui long thu lai.');
-        },
-      });
-      return;
-    }
-
-    updateRecipeIngredientMutation.mutate(
-      {
-        recipeId: recipeIdNumber,
-        ingredientId,
-        data: payload,
-      },
-      {
-        onError: () => {
-          Alert.alert('That bai', 'Khong the cap nhat nguyen lieu. Vui long thu lai.');
-        },
-      }
+    setIngredientRows((prev) =>
+      prev.map((item, itemIndex) =>
+        itemIndex === index
+          ? {
+              ...item,
+              ingredientId: String(ingredientId),
+              ingredientName,
+              isDraft: false,
+            }
+          : item
+      )
     );
   };
 
   const handleRemoveIngredient = (index: number) => {
-    const row = ingredientRows[index];
-
-    if (!row) {
-      return;
-    }
-
-    if (row.isDraft || !recipeIdNumber) {
-      setIngredientRows((prev) => prev.filter((_, itemIndex) => itemIndex !== index));
-      return;
-    }
-
-    const ingredientId = Number(row.ingredientId);
-
-    if (!Number.isFinite(ingredientId)) {
-      setIngredientRows((prev) => prev.filter((_, itemIndex) => itemIndex !== index));
-      return;
-    }
-
-    deleteRecipeIngredientMutation.mutate(
-      {
-        recipeId: recipeIdNumber,
-        ingredientId,
-      },
-      {
-        onSuccess: () => {
-          setIngredientRows((prev) => prev.filter((_, itemIndex) => itemIndex !== index));
-        },
-        onError: () => {
-          Alert.alert('That bai', 'Khong the xoa nguyen lieu. Vui long thu lai.');
-        },
-      }
-    );
+    setIngredientRows((prev) => prev.filter((_, itemIndex) => itemIndex !== index));
   };
 
   const handleUpdateStepField = (idx: number, field: 'text' | 'tip', value: string) => {
@@ -502,60 +589,18 @@ export default function RecipeEditScreen() {
   };
 
   const handleAddStep = () => {
-    if (!recipeIdNumber) {
-      setSteps((prev) => [...prev, { id: Date.now().toString(), number: prev.length + 1, text: '', tip: '' }]);
-      return;
-    }
-
-    createStepMutation.mutate(
+    setSteps((prev) => [
+      ...prev,
       {
-        recipeId: recipeIdNumber,
-        stepNumber: steps.length + 1,
-        instruction: 'Buoc nau moi',
+        id: `local-step-${Date.now()}-${prev.length + 1}`,
+        number: prev.length + 1,
+        text: '',
         tip: '',
       },
-      {
-        onSuccess: (createdStep) => {
-          setSteps((prev) => [...prev, mapApiStepToStepItem(createdStep, prev.length + 1)]);
-        },
-        onError: () => {
-          Alert.alert('That bai', 'Khong the them buoc nau. Vui long thu lai.');
-        },
-      }
-    );
-  };
-
-  const handlePersistStep = (idx: number) => {
-    const step = steps[idx];
-
-    if (!step || !step.id || !recipeIdNumber) {
-      return;
-    }
-
-    updateStepMutation.mutate({
-      id: step.id,
-      data: buildStepPayload(recipeIdNumber, step, idx + 1),
-    });
+    ]);
   };
 
   const handleRemoveStep = (idx: number) => {
-    const step = steps[idx];
-
-    if (step?.id && recipeIdNumber) {
-      deleteStepMutation.mutate(
-        { id: step.id, recipeId: recipeIdNumber },
-        {
-          onSuccess: () => {
-            setSteps((prev) => prev.filter((_, index) => index !== idx));
-          },
-          onError: () => {
-            Alert.alert('That bai', 'Khong the xoa buoc nau. Vui long thu lai.');
-          },
-        }
-      );
-      return;
-    }
-
     setSteps((prev) => prev.filter((_, index) => index !== idx));
   };
 
@@ -572,20 +617,57 @@ export default function RecipeEditScreen() {
   };
 
   const handleSave = () => {
-    if (!recipeIdParam) return;
-    const payload = buildPayload();
+    if (!recipeIdParam) {
+      return;
+    }
 
-    updateMutation.mutate(payload, {
-      onSuccess: () => {
-        Alert.alert(t('other.successSave'), t('other.successUpdate'), [
-          { text: 'OK', onPress: () => router.back() },
-        ]);
-      },
-      onError: (error) => {
-        console.error('Lỗi khi lưu:', error);
-        Alert.alert('Thất bại', 'Không thể cập nhật công thức. Vui lòng thử lại.');
-      },
+    if (!recipeIdNumber) {
+      Alert.alert('That bai', 'Khong tim thay recipeId hop le.');
+      return;
+    }
+
+    setIsSavingLocal(true);
+
+    const normalizedIngredients = buildLocalRecipeIngredients(
+      recipeIdNumber,
+      ingredientRows,
+      ingredientIdByName,
+      ingredientNameById
+    );
+
+    if (!normalizedIngredients) {
+      setIsSavingLocal(false);
+      Alert.alert('That bai', 'Co nguyen lieu chua hop le. Vui long kiem tra lai ten nguyen lieu.');
+      return;
+    }
+
+    const normalizedSteps = normalizeStepsForDraft(recipeIdNumber, steps);
+    const recipePayload = buildPayload();
+
+    upsertRecipeDraft({
+      recipeId: String(recipeIdParam),
+      recipe: recipePayload,
+      ingredients: normalizedIngredients,
+      steps: normalizedSteps,
     });
+
+    setIngredientRows(
+      normalizedIngredients.map((item, index) => ({
+        rowId: `${item.recipeId}-${item.ingredientId}-${index}`,
+        ingredientId: String(item.ingredientId),
+        ingredientName: item.name,
+        quantity: item.quantityValue !== undefined ? String(item.quantityValue) : '',
+        unit: item.unit,
+        note: item.note,
+        isDraft: false,
+      }))
+    );
+    setSteps(normalizedSteps);
+    setIsSavingLocal(false);
+
+    Alert.alert(t('other.successSave'), 'Da cap nhat cong thuc cho tai khoan cua ban.', [
+      { text: 'OK', onPress: () => router.back() },
+    ]);
   };
 
   /* ─── Render UI ─── */
@@ -608,8 +690,8 @@ export default function RecipeEditScreen() {
         <RoundedButton
           onPress={handleSave}
           className="rounded-full px-5 py-2"
-          disabled={updateMutation.isPending}>
-          {updateMutation.isPending ? (
+          disabled={isSavingLocal}>
+          {isSavingLocal ? (
             <ActivityIndicator size="small" color="white" />
           ) : (
             <VietnamText className="text-sm font-semibold text-white">
@@ -737,9 +819,6 @@ export default function RecipeEditScreen() {
                 onChangeQty={(v) => handleIngredientFieldChange(index, 'quantity', v)}
                 onChangeUnit={(v) => handleIngredientFieldChange(index, 'unit', v)}
                 onChangeNote={(v) => handleIngredientFieldChange(index, 'note', v)}
-                saveDisabled={
-                  createRecipeIngredientMutation.isPending || updateRecipeIngredientMutation.isPending
-                }
               />
             ))}
 
@@ -767,8 +846,6 @@ export default function RecipeEditScreen() {
                 onRemove={() => handleRemoveStep(idx)}
                 onChangeText={(v) => handleUpdateStepField(idx, 'text', v)}
                 onChangeTip={(v) => handleUpdateStepField(idx, 'tip', v)}
-                onBlurText={() => handlePersistStep(idx)}
-                onBlurTip={() => handlePersistStep(idx)}
               />
             ))}
 
@@ -777,9 +854,9 @@ export default function RecipeEditScreen() {
               onPress={handleAddStep}
               variant="ghost"
               className="border-2 border-black text-black"
-              disabled={createStepMutation.isPending || isStepLoading}
+              disabled={isStepLoading}
               size={'lg'}>
-              {createStepMutation.isPending ? (
+              {isStepLoading ? (
                 <ActivityIndicator size="small" color="black" />
               ) : (
                 <>
