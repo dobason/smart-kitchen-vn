@@ -16,6 +16,7 @@ import * as React from 'react';
 import { ActivityIndicator, Pressable, ScrollView, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAllIngredients } from '@/hooks/use-top-ingredients';
+import { IngredientApiItem, IngredientItem } from '@/types/ingredient';
 
 import { useTags } from '@/hooks/use-tags';
 
@@ -26,6 +27,15 @@ function toggleInList(value: string, current: string[]) {
   return [...current, value];
 }
 
+function toIngredientItem(item: IngredientApiItem): IngredientItem {
+  return {
+    id: String(item.id),
+    name: item.name ?? '',
+    emoji: item.emoji ?? item.icon ?? '🥘',
+    bgColor: item.bgColor ?? '#F3F4F6',
+  };
+}
+
 export default function AIRecipeScreen() {
   const { t, locale } = useLocale();
   const router = useRouter();
@@ -33,15 +43,17 @@ export default function AIRecipeScreen() {
 
   const { ingredients: allIngredients } = useAllIngredients();
 
-  const selectedIngredients = React.useMemo(() => {
+  const selectedIngredients = React.useMemo<IngredientItem[]>(() => {
     return aiIngredientIds
       .map((id) => {
-        const fromApi = allIngredients.find((i) => String(i.id) === String(id));
-        if (fromApi) return fromApi;
+        const fromApi = allIngredients.find((item) => String(item.id) === String(id));
+        if (fromApi) {
+          return toIngredientItem(fromApi);
+        }
 
         return getIngredientsByIds([id])[0];
       })
-      .filter((i): i is any => !!i);
+      .filter((ingredient): ingredient is IngredientItem => Boolean(ingredient));
   }, [aiIngredientIds, allIngredients]);
 
   const { tags, isLoading: isTagsLoading } = useTags();
@@ -117,7 +129,9 @@ export default function AIRecipeScreen() {
                 size={62}
                 label={getIngredientDisplayName(ingredient, locale)}
                 onRemove={() =>
-                  setAiIngredientIds((prev) => prev.filter((id) => id !== ingredient.id))
+                  setAiIngredientIds((prev) =>
+                    prev.filter((id) => String(id) !== String(ingredient.id))
+                  )
                 }
               />
             ))}

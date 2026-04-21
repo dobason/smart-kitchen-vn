@@ -6,6 +6,7 @@ import { Icon } from '@/components/ui/icon';
 import { useIngredients } from '@/hooks/use-ingredients';
 import { useLocale } from '@/hooks/use-locale';
 import { useAllIngredients } from '@/hooks/use-top-ingredients';
+import { IngredientItem } from '@/types/ingredient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { X } from 'lucide-react-native';
 import * as React from 'react';
@@ -42,28 +43,28 @@ export default function IngredientsPickerScreen() {
     setDraftSelectedIds(baseIngredientIds);
   }, [baseIngredientIds]);
 
-  const { ingredients: allIngredients, isLoading: allLoading } = useAllIngredients();
+  const { ingredients: rawIngredients = [], isLoading: allLoading } = useAllIngredients();
+
+  const allIngredients = React.useMemo<IngredientItem[]>(() => {
+    return rawIngredients.map((item) => ({
+      id: String(item.id),
+      name: item.name ?? '',
+      emoji: item.emoji ?? item.icon ?? '🥘',
+      bgColor: item.bgColor ?? '#F3F4F6',
+    }));
+  }, [rawIngredients]);
 
   const filteredIngredients = React.useMemo(() => {
-    const normalized = query.trim().toLowerCase();
-    if (!normalized) return allIngredients;
+    const normalizedQuery = query.trim().toLowerCase();
+    if (!normalizedQuery) return allIngredients;
 
     return allIngredients.filter((item) => {
-      // API already provides the correct language name
-      return item.name.toLowerCase().includes(normalized);
+      return item.name.toLowerCase().includes(normalizedQuery);
     });
   }, [query, allIngredients]);
 
   const selectedIngredients = React.useMemo(
-    () =>
-      allIngredients
-        .filter((item) => draftSelectedIds.includes(item.id))
-        .map((item) => ({
-          id: item.id,
-          name: item.name,
-          emoji: item.emoji,
-          bgColor: item.bgColor,
-        })),
+    () => allIngredients.filter((item) => draftSelectedIds.includes(item.id)),
     [draftSelectedIds, allIngredients]
   );
 

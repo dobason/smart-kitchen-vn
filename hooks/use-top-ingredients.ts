@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import ingredientApi from '@/services/ingredientServices';
 import { queryKeys } from '@/lib/queryKeys';
-import { ApiIngredientItem } from '@/types/ingredient';
+import { IngredientApiItem } from '@/types/ingredient';
 
 const TOP_N = 6;
 
@@ -13,7 +13,7 @@ const TOP_N = 6;
  *   { suggestions, isLoading, isError, error, refetch }
  */
 export function useTopIngredients() {
-  const query = useQuery<ApiIngredientItem[]>({
+  const query = useQuery<IngredientApiItem[]>({
     queryKey: queryKeys.ingredient.all,
     queryFn: () => ingredientApi.getAll(),
     // Data is stable — cache for 10 minutes, no background refetch on focus
@@ -22,7 +22,7 @@ export function useTopIngredients() {
   });
 
   // ✂️  Slice: keep only the first 6 items
-  const suggestions: ApiIngredientItem[] = (query.data ?? []).slice(0, TOP_N);
+  const suggestions: IngredientApiItem[] = (query.data ?? []).slice(0, TOP_N);
 
   return {
     suggestions,           // The top 6 ingredients (or [] while loading)
@@ -42,7 +42,7 @@ export function useTopIngredients() {
  *   { ingredients, isLoading, isError, error, refetch }
  */
 export function useAllIngredients() {
-  const query = useQuery<ApiIngredientItem[]>({
+  const query = useQuery<IngredientApiItem[]>({
     queryKey: queryKeys.ingredient.all,
     queryFn: () => ingredientApi.getAll(),
     staleTime: 10 * 60 * 1000,

@@ -22,6 +22,7 @@ export type IngredientApiItem = {
   name?: string | null;
   emoji?: string | null;
   icon?: string | null;
+  bgColor?: string | null;
 };
 
 export type CookingIngredientItem = {

@@ -32,18 +32,16 @@ export default function ExploreScreen() {
   const [searchText, setSearchText] = React.useState('');
 
   // Lọc trực tiếp từ allIngredients (dữ liệu API) thay vì dùng dữ liệu local
-  const selectedIngredientsForTagBar = React.useMemo(
-    () =>
-      allIngredients
-        .filter((item) => exploreIngredientIds.includes(item.id))
-        .map((item) => ({
-          id: item.id,
-          name: item.name, // Tên đã được xử lý từ API
-          emoji: item.emoji ?? '🥘',
-          bgColor: item.bgColor ?? '#F3F4F6',
-        })),
-    [exploreIngredientIds, allIngredients]
-  );
+  const selectedIngredientsForTagBar = React.useMemo(() => {
+    return (allIngredients ?? [])
+      .filter((item) => exploreIngredientIds.includes(String(item.id)))
+      .map((item) => ({
+        id: String(item.id),
+        name: item.name ?? '',
+        emoji: item.emoji ?? item.icon ?? '🥘',
+        bgColor: item.bgColor ?? '#F3F4F6',
+      }));
+  }, [exploreIngredientIds, allIngredients]);
 
   function handleSearch() {
     const fallback = INGREDIENT_LIBRARY[0]?.name ?? String(t('searchResults.defaultKeyword'));
@@ -88,29 +86,32 @@ export default function ExploreScreen() {
             <ActivityIndicator size="small" color="#CE232A" />
           ) : (
             // Success — map over the top-8 API ingredients as pill chips
-            suggestions.map((ingredient) => (
-              <Pressable
-                key={ingredient.id}
-                className="self-start"
-                onPress={() =>
-                  setExploreIngredientIds((prev) =>
-                    prev.includes(ingredient.id)
-                      ? prev.filter((id) => id !== ingredient.id)
-                      : [...prev, ingredient.id]
-                  )
-                }>
-                <IngredientPillChip
-                  ingredient={{
-                    id: ingredient.id,
-                    name: ingredient.name,
-                    emoji: ingredient.emoji ?? '🥘',
-                    bgColor: ingredient.bgColor ?? '#F3F4F6',
-                  }}
-                  selected={exploreIngredientIds.includes(ingredient.id)}
-                  label={ingredient.name}
-                />
-              </Pressable>
-            ))
+            suggestions.map((ingredient) => {
+              const id = String(ingredient.id);
+              const name = ingredient.name ?? '';
+              const emoji = ingredient.emoji ?? ingredient.icon ?? '🥘';
+              const bgColor = ingredient.bgColor ?? '#F3F4F6';
+              const isSelected = exploreIngredientIds.includes(id);
+
+              return (
+                <Pressable
+                  key={id}
+                  className="self-start"
+                  onPress={() =>
+                    setExploreIngredientIds((prev) =>
+                      prev.includes(id)
+                        ? prev.filter((prevId) => prevId !== id)
+                        : [...prev, id]
+                    )
+                  }>
+                  <IngredientPillChip
+                    ingredient={{ id, name, emoji, bgColor }}
+                    selected={isSelected}
+                    label={name}
+                  />
+                </Pressable>
+              );
+            })
           )}
         </View>
 

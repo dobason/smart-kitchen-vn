@@ -12,6 +12,7 @@ export const queryKeys = {
   tag: {
     all: ['tags'] as const,
     list: () => ['tags', 'list'] as const,
+  },
   step: {
     all: ['steps'] as const,
     byRecipe: (recipeId: string | number) => ['steps', 'recipe', String(recipeId)] as const,

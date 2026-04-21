@@ -668,11 +668,7 @@ export function SearchResultsContainer() {
           {t('searchResults.results', { count: filteredRecipes.length })}
         </VietnamText>
 
-        {isLoading ? (
-          <View className="mt-16 items-center px-6">
-            <ActivityIndicator size="large" color="#CE232A" />
-          </View>
-        {isLoadingRecipes || (isFetchingRecipes && recipesFromApi.length === 0) ? (
+        {isLoading || isLoadingRecipes || (isFetchingRecipes && recipesFromApi.length === 0) ? (
           <View className="mt-16 items-center px-6">
             <ActivityIndicator size="large" color="#CE232A" />
           </View>
