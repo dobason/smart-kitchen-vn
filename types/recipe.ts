@@ -11,7 +11,7 @@ export type SearchRecipeItem = {
   timeMinutes: number;
   imageUrl: string;
   tags: string[];
-  cookware?: string[];
+  cookware: string[];
 };
 
 export type RecipeDetail = {
