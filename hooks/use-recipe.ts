@@ -2,8 +2,6 @@ import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import recipeApi from '@/services/recipeServices';
 import { queryKeys } from '@/lib/queryKeys';
-import { IngredientGroup, EditableIngredientItem } from '@/types/ingredient';
-import { StepItem } from '@/types/step';
 import { UpdateRecipeRequest } from '@/types/recipe';
 
 export function useRecipeForm(recipeData: any) {
@@ -13,7 +11,6 @@ export function useRecipeForm(recipeData: any) {
   const [protein, setProtein] = useState('');
   const [carbs, setCarbs] = useState('');
   const [fats, setFats] = useState('');
-  const [groups, setGroups] = useState<IngredientGroup[]>([]);
 
   useEffect(() => {
     if (recipeData) {
@@ -23,49 +20,8 @@ export function useRecipeForm(recipeData: any) {
       setProtein(recipeData.protein?.toString() || '');
       setCarbs(recipeData.carbs?.toString() || '');
       setFats(recipeData.fats?.toString() || '');
-      setGroups(recipeData.ingredientGroups || []);
     }
   }, [recipeData]);
-
-  const updateIngredient = (
-    gIdx: number,
-    iIdx: number,
-    field: Exclude<keyof EditableIngredientItem, 'id'>,
-    value: string
-  ) => {
-    setGroups((prev) =>
-      prev.map((g, gi) =>
-        gi !== gIdx
-          ? g
-          : {
-              ...g,
-              items:
-                g.items?.map((item, ii) => (ii !== iIdx ? item : { ...item, [field]: value })) ||
-                [],
-            }
-      )
-    );
-  };
-
-  const removeIngredient = (gIdx: number, iIdx: number) => {
-    setGroups((prev) =>
-      prev.map((g, gi) =>
-        gi !== gIdx ? g : { ...g, items: g.items?.filter((_, ii) => ii !== iIdx) || [] }
-      )
-    );
-  };
-
-  const addIngredient = (gIdx: number) => {
-    const newItem: EditableIngredientItem = {
-      id: Date.now().toString(),
-      qty: '',
-      unit: '',
-      name: '',
-    };
-    setGroups((prev) =>
-      prev.map((g, gi) => (gi !== gIdx ? g : { ...g, items: [...(g.items || []), newItem] }))
-    );
-  };
 
   const buildPayload = () => ({
     name,
@@ -74,7 +30,6 @@ export function useRecipeForm(recipeData: any) {
     protein: Number(protein) || 0,
     carbs: Number(carbs) || 0,
     fats: Number(fats) || 0,
-    ingredientGroups: groups,
   });
 
   return {
@@ -90,10 +45,6 @@ export function useRecipeForm(recipeData: any) {
     setCarbs,
     fats,
     setFats,
-    groups,
-    updateIngredient,
-    removeIngredient,
-    addIngredient,
     buildPayload,
   };
 }

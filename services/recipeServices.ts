@@ -1,6 +1,5 @@
 import axiosClient from './axiosClient';
 import { RecipeDetail, SearchRecipeItem, UpdateRecipeRequest } from '../types/recipe';
-import { CookingIngredientItem, StepItem } from '@/types';
 
 export type GetRecipesParams = {
   userId?: string;

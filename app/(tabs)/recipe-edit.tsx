@@ -10,13 +10,20 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { ArrowLeftIcon, CameraIcon, PlusIcon, XIcon, PencilIcon } from 'lucide-react-native';
+import { ArrowLeftIcon, CameraIcon, CheckIcon, PlusIcon, XIcon } from 'lucide-react-native';
 
 import { VietnamText } from '@/components/in-app-ui/vietnam-text';
 import { Icon } from '@/components/ui/icon';
 import { CircleButton } from '@/components/in-app-ui/circle-button';
 import { RoundedButton } from '@/components/in-app-ui/rounded-button';
 import { useLocale } from '@/hooks/use-locale';
+import {
+  buildRecipeIngredientPayload,
+  useCreateRecipeIngredient,
+  useDeleteRecipeIngredient,
+  useRecipeIngredientList,
+  useUpdateRecipeIngredient,
+} from '@/hooks/use-recipe-ingredients';
 import {
   buildStepPayload,
   mapApiStepToStepItem,
@@ -25,7 +32,6 @@ import {
   useStepList,
   useUpdateStep,
 } from '@/hooks/use-step';
-import { EditableIngredientItem } from '@/types/ingredient';
 import { StepItem } from '@/types/step';
 import { useRecipeDetail, useUpdateRecipe, useRecipeForm } from '@/hooks/use-recipe';
 
@@ -89,43 +95,99 @@ function InfoField({
   );
 }
 
+type EditableRecipeIngredientRow = {
+  rowId: string;
+  ingredientId: string;
+  ingredientName: string;
+  quantity: string;
+  unit: string;
+  note: string;
+  isDraft: boolean;
+};
+
 function IngredientItemRow({
   item,
+  onSave,
   onRemove,
+  onChangeIngredientId,
   onChangeQty,
   onChangeUnit,
-  onChangeName,
+  onChangeNote,
+  saveDisabled,
 }: {
-  item: EditableIngredientItem;
+  item: EditableRecipeIngredientRow;
+  onSave: () => void;
   onRemove: () => void;
+  onChangeIngredientId: (v: string) => void;
   onChangeQty: (v: string) => void;
   onChangeUnit: (v: string) => void;
-  onChangeName: (v: string) => void;
+  onChangeNote: (v: string) => void;
+  saveDisabled?: boolean;
 }) {
   return (
-    <View className="mb-1.5 flex-row items-center gap-1.5">
-      <TextInput
-        value={item.qty}
-        onChangeText={onChangeQty}
-        className="w-[50px] rounded-lg bg-gray-100 px-2 py-2 text-center text-sm text-gray-800"
-        style={{ fontFamily: 'BeVietnamPro_400Regular' }}
-        keyboardType="decimal-pad"
-      />
-      <TextInput
-        value={item.unit}
-        onChangeText={onChangeUnit}
-        className="w-[68px] rounded-lg bg-gray-100 px-2 py-2 text-center text-sm text-gray-800"
-        style={{ fontFamily: 'BeVietnamPro_400Regular' }}
-      />
-      <TextInput
-        value={item.name}
-        onChangeText={onChangeName}
-        className="flex-1 rounded-lg bg-gray-100 px-2.5 py-2 text-sm text-gray-800"
-        style={{ fontFamily: 'BeVietnamPro_400Regular' }}
-      />
-      <TouchableOpacity onPress={onRemove} className="p-1">
-        <Icon as={XIcon} size={16} color="#9CA3AF" />
-      </TouchableOpacity>
+    <View className="mb-2 gap-1.5 rounded-xl border border-gray-200 px-2.5 py-2.5">
+      <View className="flex-row items-center justify-between">
+        <VietnamText className="text-[12px] font-medium text-gray-500">
+          {item.ingredientName || `Ingredient #${item.ingredientId || '-'}`}
+        </VietnamText>
+        {item.isDraft ? (
+          <VietnamText className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-700">
+            NEW
+          </VietnamText>
+        ) : null}
+      </View>
+
+      <View className="flex-row items-center gap-1.5">
+        <TextInput
+          value={item.ingredientId}
+          onChangeText={onChangeIngredientId}
+          editable={item.isDraft}
+          placeholder="ID"
+          className="w-[56px] rounded-lg bg-gray-100 px-2 py-2 text-center text-sm text-gray-800"
+          style={{ fontFamily: 'BeVietnamPro_400Regular' }}
+          keyboardType="number-pad"
+        />
+        <TextInput
+          value={item.quantity}
+          onChangeText={onChangeQty}
+          placeholder="Qty"
+          className="w-[64px] rounded-lg bg-gray-100 px-2 py-2 text-center text-sm text-gray-800"
+          style={{ fontFamily: 'BeVietnamPro_400Regular' }}
+          keyboardType="decimal-pad"
+        />
+        <TextInput
+          value={item.unit}
+          onChangeText={onChangeUnit}
+          placeholder="Unit"
+          className="w-[68px] rounded-lg bg-gray-100 px-2 py-2 text-center text-sm text-gray-800"
+          style={{ fontFamily: 'BeVietnamPro_400Regular' }}
+        />
+        <TextInput
+          value={item.note}
+          onChangeText={onChangeNote}
+          placeholder="Note"
+          className="flex-1 rounded-lg bg-gray-100 px-2.5 py-2 text-sm text-gray-800"
+          style={{ fontFamily: 'BeVietnamPro_400Regular' }}
+        />
+      </View>
+
+      <View className="flex-row justify-end gap-2">
+        <TouchableOpacity
+          onPress={onSave}
+          disabled={saveDisabled}
+          className="bg-brand h-8 w-8 items-center justify-center rounded-full">
+          {saveDisabled ? (
+            <ActivityIndicator size="small" color="white" />
+          ) : (
+            <Icon as={CheckIcon} size={16} color="white" />
+          )}
+        </TouchableOpacity>
+        <TouchableOpacity
+          onPress={onRemove}
+          className="h-8 w-8 items-center justify-center rounded-full bg-gray-100">
+          <Icon as={XIcon} size={16} color="#6B7280" />
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }
@@ -202,12 +264,18 @@ export default function RecipeEditScreen() {
   }, [recipeIdParam]);
   const MAX_NAME = 50;
 
-  const [cookbook, setCookbook] = React.useState('Dinner');
+  const [cookbook] = React.useState('Dinner');
   const [steps, setSteps] = React.useState<StepItem[]>([]);
+  const [ingredientRows, setIngredientRows] = React.useState<EditableRecipeIngredientRow[]>([]);
 
   const { data: recipeData, isLoading } = useRecipeDetail(recipeIdParam as string);
+  const { data: apiRecipeIngredients, isFetching: isIngredientLoading } =
+    useRecipeIngredientList(recipeIdNumber);
   const { data: apiSteps, isFetching: isStepLoading } = useStepList(recipeIdNumber);
   const updateMutation = useUpdateRecipe(recipeIdParam as string);
+  const createRecipeIngredientMutation = useCreateRecipeIngredient();
+  const updateRecipeIngredientMutation = useUpdateRecipeIngredient();
+  const deleteRecipeIngredientMutation = useDeleteRecipeIngredient();
   const createStepMutation = useCreateStep();
   const updateStepMutation = useUpdateStep();
   const deleteStepMutation = useDeleteStep();
@@ -225,16 +293,134 @@ export default function RecipeEditScreen() {
     setCarbs,
     fats,
     setFats,
-    groups,
-    updateIngredient,
-    removeIngredient,
-    addIngredient,
     buildPayload,
   } = useRecipeForm(recipeData);
 
   React.useEffect(() => {
     setSteps(apiSteps ?? []);
   }, [apiSteps]);
+
+  React.useEffect(() => {
+    const mappedRows = (apiRecipeIngredients ?? []).map((item) => ({
+      rowId: `${item.recipeId}-${item.ingredientId}`,
+      ingredientId: String(item.ingredientId),
+      ingredientName: item.name,
+      quantity: item.quantityValue !== undefined ? String(item.quantityValue) : '',
+      unit: item.unit,
+      note: item.note,
+      isDraft: false,
+    }));
+
+    setIngredientRows(mappedRows);
+  }, [apiRecipeIngredients]);
+
+  const handleIngredientFieldChange = (
+    index: number,
+    field: keyof Omit<EditableRecipeIngredientRow, 'rowId' | 'isDraft'>,
+    value: string
+  ) => {
+    setIngredientRows((prev) =>
+      prev.map((item, itemIndex) => (itemIndex === index ? { ...item, [field]: value } : item))
+    );
+  };
+
+  const handleAddIngredientRow = () => {
+    setIngredientRows((prev) => [
+      ...prev,
+      {
+        rowId: `draft-${Date.now()}`,
+        ingredientId: '',
+        ingredientName: '',
+        quantity: '',
+        unit: '',
+        note: '',
+        isDraft: true,
+      },
+    ]);
+  };
+
+  const handlePersistIngredient = (index: number) => {
+    if (!recipeIdNumber) {
+      Alert.alert('That bai', 'Khong tim thay recipeId hop le.');
+      return;
+    }
+
+    const row = ingredientRows[index];
+
+    if (!row) {
+      return;
+    }
+
+    const ingredientId = Number(row.ingredientId);
+
+    if (!Number.isFinite(ingredientId)) {
+      Alert.alert('That bai', 'Vui long nhap ingredientId hop le.');
+      return;
+    }
+
+    const payload = buildRecipeIngredientPayload(recipeIdNumber, ingredientId, {
+      quantity: row.quantity,
+      unit: row.unit,
+      note: row.note,
+    });
+
+    if (row.isDraft) {
+      createRecipeIngredientMutation.mutate(payload, {
+        onError: () => {
+          Alert.alert('That bai', 'Khong the them nguyen lieu. Vui long thu lai.');
+        },
+      });
+      return;
+    }
+
+    updateRecipeIngredientMutation.mutate(
+      {
+        recipeId: recipeIdNumber,
+        ingredientId,
+        data: payload,
+      },
+      {
+        onError: () => {
+          Alert.alert('That bai', 'Khong the cap nhat nguyen lieu. Vui long thu lai.');
+        },
+      }
+    );
+  };
+
+  const handleRemoveIngredient = (index: number) => {
+    const row = ingredientRows[index];
+
+    if (!row) {
+      return;
+    }
+
+    if (row.isDraft || !recipeIdNumber) {
+      setIngredientRows((prev) => prev.filter((_, itemIndex) => itemIndex !== index));
+      return;
+    }
+
+    const ingredientId = Number(row.ingredientId);
+
+    if (!Number.isFinite(ingredientId)) {
+      setIngredientRows((prev) => prev.filter((_, itemIndex) => itemIndex !== index));
+      return;
+    }
+
+    deleteRecipeIngredientMutation.mutate(
+      {
+        recipeId: recipeIdNumber,
+        ingredientId,
+      },
+      {
+        onSuccess: () => {
+          setIngredientRows((prev) => prev.filter((_, itemIndex) => itemIndex !== index));
+        },
+        onError: () => {
+          Alert.alert('That bai', 'Khong the xoa nguyen lieu. Vui long thu lai.');
+        },
+      }
+    );
+  };
 
   const handleUpdateStepField = (idx: number, field: 'text' | 'tip', value: string) => {
     setSteps((prev) => prev.map((item, index) => (index === idx ? { ...item, [field]: value } : item)));
@@ -456,42 +642,38 @@ export default function RecipeEditScreen() {
             </View>
 
             {/* ── INGREDIENTS ── */}
-            <SectionHeader
-              title={t('ingredients.INGREDIENTS')}
-              actionLabel={t('other.reOrder')}
-              onAction={() => {}}
-            />
+            <SectionHeader title={t('ingredients.INGREDIENTS')} />
 
-            {groups?.map((group, gIdx) => (
-              <View key={group.id} className="mb-3">
-                {/* Group Label */}
-                <View className="mb-1.5 flex-row items-center gap-1.5">
-                  <VietnamText className="text-[13px] font-medium text-gray-500">
-                    {group.label}
-                  </VietnamText>
-                  <TouchableOpacity className="p-0.5">
-                    <Icon as={PencilIcon} size={13} color="#6B7280" />
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    className="bg-brand ml-auto h-[26px] w-[26px] items-center justify-center rounded-full"
-                    onPress={() => addIngredient(gIdx)}>
-                    <Icon as={PlusIcon} size={16} color="white" />
-                  </TouchableOpacity>
-                </View>
-
-                {/* Ingredient rows */}
-                {group.items?.map((item, iIdx) => (
-                  <IngredientItemRow
-                    key={item.id}
-                    item={item}
-                    onRemove={() => removeIngredient(gIdx, iIdx)}
-                    onChangeQty={(v) => updateIngredient(gIdx, iIdx, 'qty', v)}
-                    onChangeUnit={(v) => updateIngredient(gIdx, iIdx, 'unit', v)}
-                    onChangeName={(v) => updateIngredient(gIdx, iIdx, 'name', v)}
-                  />
-                ))}
+            {isIngredientLoading && ingredientRows.length === 0 ? (
+              <View className="py-4">
+                <ActivityIndicator size="small" color="#00B075" />
               </View>
+            ) : null}
+
+            {ingredientRows.map((item, index) => (
+              <IngredientItemRow
+                key={item.rowId}
+                item={item}
+                onSave={() => handlePersistIngredient(index)}
+                onRemove={() => handleRemoveIngredient(index)}
+                onChangeIngredientId={(v) => handleIngredientFieldChange(index, 'ingredientId', v)}
+                onChangeQty={(v) => handleIngredientFieldChange(index, 'quantity', v)}
+                onChangeUnit={(v) => handleIngredientFieldChange(index, 'unit', v)}
+                onChangeNote={(v) => handleIngredientFieldChange(index, 'note', v)}
+                saveDisabled={
+                  createRecipeIngredientMutation.isPending || updateRecipeIngredientMutation.isPending
+                }
+              />
             ))}
+
+            <RoundedButton
+              onPress={handleAddIngredientRow}
+              variant="ghost"
+              className="mb-2 border-2 border-black text-black"
+              size="lg">
+              <Icon as={PlusIcon} size={16} />
+              <VietnamText className="text-black">Add ingredient</VietnamText>
+            </RoundedButton>
 
             {/* ── STEPS ── */}
             <SectionHeader

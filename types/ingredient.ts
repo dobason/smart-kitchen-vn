@@ -5,6 +5,13 @@ export type IngredientItem = {
   bgColor: string;
 };
 
+export type IngredientApiItem = {
+  id: number | string;
+  name?: string | null;
+  emoji?: string | null;
+  icon?: string | null;
+};
+
 export type CookingIngredientItem = {
   emoji: string;
   name: string;

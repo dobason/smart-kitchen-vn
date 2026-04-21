@@ -24,12 +24,16 @@ interface CookingStepScreenProps {
 
 type CookingStepParams = {
   recipeId?: string | string[];
+  serves?: string | string[];
+  baseServes?: string | string[];
 };
 
 export default function CookingStepScreen({ currentStep = 1 }: CookingStepScreenProps) {
   const router = useRouter();
   const params = useLocalSearchParams<CookingStepParams>();
   const recipeId = Array.isArray(params.recipeId) ? params.recipeId[0] : params.recipeId;
+  const serves = Array.isArray(params.serves) ? params.serves[0] : params.serves;
+  const baseServes = Array.isArray(params.baseServes) ? params.baseServes[0] : params.baseServes;
   const [step, setStep] = React.useState(currentStep);
   const [showSuccess, setShowSuccess] = React.useState(false);
   const { data: apiSteps, isLoading } = useStepList(recipeId);
@@ -55,13 +59,17 @@ export default function CookingStepScreen({ currentStep = 1 }: CookingStepScreen
     if (recipeId) {
       router.push({
         pathname: '/(tabs)/cooking-ingredients',
-        params: { recipeId },
+        params: {
+          recipeId,
+          ...(serves ? { serves } : {}),
+          ...(baseServes ? { baseServes } : {}),
+        },
       });
       return;
     }
 
     router.push('/(tabs)/cooking-ingredients');
-  }, [recipeId, router]);
+  }, [baseServes, recipeId, router, serves]);
 
   const goToRecipeDetail = React.useCallback(() => {
     if (recipeId) {
