@@ -24,6 +24,7 @@ import { setTokenGetter } from '@/services/axiosClient';
 import { LocaleProvider } from '@/providers/locale-provider';
 import { IngredientsProvider } from '@/providers/ingredients-provider';
 import { SavedRecipesProvider } from '@/providers/saved-recipes-provider';
+import { UserRecipeEditsProvider } from '@/providers/user-recipe-edits-provider';
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -48,11 +49,13 @@ export default function RootLayout() {
         <IngredientsProvider>
           <SavedRecipesProvider>
             <ClerkProvider publishableKey={clerkPublishableKey} tokenCache={tokenCache}>
-              <ThemeProvider value={NAV_THEME['light']}>
-                <StatusBar style="dark" />
-                <Routes />
-                <PortalHost />
-              </ThemeProvider>
+              <UserRecipeEditsProvider>
+                <ThemeProvider value={NAV_THEME['light']}>
+                  <StatusBar style="dark" />
+                  <Routes />
+                  <PortalHost />
+                </ThemeProvider>
+              </UserRecipeEditsProvider>
             </ClerkProvider>
           </SavedRecipesProvider>
         </IngredientsProvider>

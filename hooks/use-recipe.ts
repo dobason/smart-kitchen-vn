@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import recipeApi from '@/services/recipeServices';
 import { queryKeys } from '@/lib/queryKeys';
-import { IngredientGroup, EditableIngredientItem } from '@/types/ingredient';
-import { StepItem } from '@/types/step';
+import { UpdateRecipeRequest } from '@/types/recipe';
+import { useUserRecipeEdits } from '@/hooks/use-user-recipe-edits';
 
 export function useRecipeForm(recipeData: any) {
   const [name, setName] = useState('');
@@ -12,73 +12,17 @@ export function useRecipeForm(recipeData: any) {
   const [protein, setProtein] = useState('');
   const [carbs, setCarbs] = useState('');
   const [fats, setFats] = useState('');
-  const [groups, setGroups] = useState<IngredientGroup[]>([]);
-  const [steps, setSteps] = useState<StepItem[]>([]);
 
   useEffect(() => {
     if (recipeData) {
       setName(recipeData.name || '');
-      setTime(recipeData.totalTime?.toString() || '');
+      setTime((recipeData.totalTime ?? recipeData.timeMinutes)?.toString() || '');
       setCalories(recipeData.calories?.toString() || '');
       setProtein(recipeData.protein?.toString() || '');
       setCarbs(recipeData.carbs?.toString() || '');
       setFats(recipeData.fats?.toString() || '');
-      setGroups(recipeData.ingredientGroups || []);
-      setSteps(recipeData.steps || []);
     }
   }, [recipeData]);
-
-  const updateIngredient = (
-    gIdx: number,
-    iIdx: number,
-    field: Exclude<keyof EditableIngredientItem, 'id'>,
-    value: string
-  ) => {
-    setGroups((prev) =>
-      prev.map((g, gi) =>
-        gi !== gIdx
-          ? g
-          : {
-              ...g,
-              items:
-                g.items?.map((item, ii) => (ii !== iIdx ? item : { ...item, [field]: value })) ||
-                [],
-            }
-      )
-    );
-  };
-
-  const removeIngredient = (gIdx: number, iIdx: number) => {
-    setGroups((prev) =>
-      prev.map((g, gi) =>
-        gi !== gIdx ? g : { ...g, items: g.items?.filter((_, ii) => ii !== iIdx) || [] }
-      )
-    );
-  };
-
-  const addIngredient = (gIdx: number) => {
-    const newItem: EditableIngredientItem = {
-      id: Date.now().toString(),
-      qty: '',
-      unit: '',
-      name: '',
-    };
-    setGroups((prev) =>
-      prev.map((g, gi) => (gi !== gIdx ? g : { ...g, items: [...(g.items || []), newItem] }))
-    );
-  };
-
-  const removeStep = (idx: number) => {
-    setSteps((prev) => prev.filter((_, i) => i !== idx));
-  };
-
-  const updateStep = (idx: number, field: keyof StepItem, value: string) => {
-    setSteps((prev) => prev.map((s, i) => (i !== idx ? s : { ...s, [field]: value })));
-  };
-
-  const addStep = () => {
-    setSteps((prev) => [...prev, { id: Date.now().toString(), text: '', tip: '' }]);
-  };
 
   const buildPayload = () => ({
     name,
@@ -87,8 +31,6 @@ export function useRecipeForm(recipeData: any) {
     protein: Number(protein) || 0,
     carbs: Number(carbs) || 0,
     fats: Number(fats) || 0,
-    ingredientGroups: groups,
-    steps,
   });
 
   return {
@@ -104,32 +46,81 @@ export function useRecipeForm(recipeData: any) {
     setCarbs,
     fats,
     setFats,
-    groups,
-    steps,
-    updateIngredient,
-    removeIngredient,
-    addIngredient,
-    updateStep,
-    removeStep,
-    addStep,
     buildPayload,
   };
 }
 
 export function useRecipeDetail(id: string) {
-  return useQuery({
+  return useRecipeById(id);
+}
+
+function applyRecipeDraftToData(
+  recipeData: any,
+  draft?: {
+    recipe: {
+      name: string;
+      totalTime: number;
+      calories: number;
+      protein: number;
+      carbs: number;
+      fats: number;
+    };
+  }
+) {
+  if (!recipeData || !draft) {
+    return recipeData;
+  }
+
+  return {
+    ...recipeData,
+    name: draft.recipe.name,
+    totalTime: draft.recipe.totalTime,
+    timeMinutes: draft.recipe.totalTime,
+    calories: draft.recipe.calories,
+    protein: draft.recipe.protein,
+    carbs: draft.recipe.carbs,
+    fats: draft.recipe.fats,
+  };
+}
+
+export function useRecipeById(id: string) {
+  const { getRecipeDraft } = useUserRecipeEdits();
+  const recipeDraft = getRecipeDraft(id);
+  const recipeQuery = useQuery({
     queryKey: queryKeys.recipe.detail(id),
-    queryFn: () => recipeApi.getDetail(id),
+    queryFn: () => recipeApi.getById(id),
     enabled: !!id,
   });
+
+  const mergedData = useMemo(
+    () => applyRecipeDraftToData(recipeQuery.data, recipeDraft),
+    [recipeDraft, recipeQuery.data]
+  );
+
+  return {
+    ...recipeQuery,
+    data: mergedData,
+  };
 }
 
 export function useUpdateRecipe(id: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (data: any) => recipeApi.update(id, data),
+    mutationFn: (data: UpdateRecipeRequest) => recipeApi.update(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.recipe.detail(id) });
+    },
+  });
+}
+
+export function useDeleteRecipe() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: string) => recipeApi.deleteById(id),
+    onSuccess: (_, deletedId) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.recipe.all });
+      queryClient.removeQueries({ queryKey: queryKeys.recipe.detail(deletedId) });
     },
   });
 }

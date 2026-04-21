@@ -11,12 +11,17 @@ import {
 import { Icon } from '@/components/ui/icon';
 import { useLocale } from '@/hooks/use-locale';
 import { useAllRecipe } from '@/hooks/use-recipes';
+import { useRecipes } from '@/hooks/use-recipes';
 import { useSavedRecipes } from '@/hooks/use-saved-recipes';
+import type { SearchRecipeItem } from '@/types/recipe';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { BrushCleaning, X } from 'lucide-react-native';
 import * as React from 'react';
 import { ActivityIndicator, Modal, Pressable, ScrollView, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+
+const DEFAULT_RECIPE_IMAGE =
+  'https://images.unsplash.com/photo-1547592180-85f173990554?w=500&q=80';
 
 function normalizeSearchText(value: string) {
   return value
@@ -32,6 +37,36 @@ function splitSearchTerms(value: string) {
     .split(',')
     .map((part) => normalizeSearchText(part))
     .filter(Boolean);
+}
+
+type ApiRecipeItem = Partial<SearchRecipeItem> & {
+  totalTime?: number;
+  imageRecipe?: string | null;
+};
+
+function normalizeApiRecipe(item: ApiRecipeItem): SearchRecipeItem | null {
+  if (!item.id || !item.name) {
+    return null;
+  }
+
+  const calories = Number(item.calories ?? 0);
+  const timeMinutes = Number(item.timeMinutes ?? item.totalTime ?? 0);
+
+  return {
+    id: String(item.id),
+    name: String(item.name),
+    description: String(item.description ?? ''),
+    calories: Number.isFinite(calories) ? calories : 0,
+    timeMinutes: Number.isFinite(timeMinutes) ? timeMinutes : 0,
+    imageUrl:
+      typeof item.imageUrl === 'string' && item.imageUrl.trim().length > 0
+        ? item.imageUrl
+        : typeof item.imageRecipe === 'string' && item.imageRecipe.trim().length > 0
+          ? item.imageRecipe
+        : DEFAULT_RECIPE_IMAGE,
+    tags: Array.isArray(item.tags) ? item.tags.map((tag) => String(tag)) : [],
+    cookware: Array.isArray(item.cookware) ? item.cookware.map((id) => String(id)) : [],
+  };
 }
 
 type CookingTimeSheetProps = {
@@ -388,6 +423,12 @@ export function SearchResultsContainer() {
   const router = useRouter();
   const { t } = useLocale();
   const { savedRecipeIds, toggleSavedRecipe } = useSavedRecipes();
+  const {
+    data: apiRecipesData,
+    isLoading: isLoadingRecipes,
+    isFetching: isFetchingRecipes,
+    isError: isRecipesError,
+  } = useRecipes();
   const params = useLocalSearchParams<{ q?: string | string[] }>();
 
   const initialQuery = React.useMemo(() => {
@@ -418,6 +459,16 @@ export function SearchResultsContainer() {
     }
   }, [initialQuery]);
 
+  const recipesFromApi = React.useMemo<SearchRecipeItem[]>(() => {
+    if (!Array.isArray(apiRecipesData)) {
+      return [];
+    }
+
+    return apiRecipesData
+      .map((item) => normalizeApiRecipe(item as ApiRecipeItem))
+      .filter((item): item is SearchRecipeItem => Boolean(item));
+  }, [apiRecipesData]);
+
   const filteredRecipes = React.useMemo(() => {
     const keywordTerms = splitSearchTerms(query);
     const normalizedTags = selectedTags.map((tag) => normalizeSearchText(tag)).filter(Boolean);
@@ -427,7 +478,7 @@ export function SearchResultsContainer() {
 
     const activeTags = keywordTerms.length > 0 ? [] : normalizedTags;
 
-    return SEARCH_RECIPES.filter((item) => {
+    return recipesFromApi.filter((item) => {
       const normalizedName = normalizeSearchText(item.name);
       const normalizedDescription = normalizeSearchText(item.description);
       const searchableContent = `${normalizedName} ${normalizedDescription}`;
@@ -467,10 +518,17 @@ export function SearchResultsContainer() {
 
       return matchQuery && matchTag && matchTime && matchCalories && matchCookware;
     });
-  }, [query, selectedTags, selectedCookware, selectedMaxMinutes, selectedMaxCalories]);
+  }, [
+    query,
+    recipesFromApi,
+    selectedTags,
+    selectedCookware,
+    selectedMaxMinutes,
+    selectedMaxCalories,
+  ]);
 
   function toggleSave(id: string) {
-    const recipe = SEARCH_RECIPES.find((item) => item.id === id);
+    const recipe = recipesFromApi.find((item) => item.id === id);
     if (!recipe) {
       return;
     }
@@ -478,7 +536,7 @@ export function SearchResultsContainer() {
   }
 
   function handleOpenRecipe(id: string) {
-    const recipe = SEARCH_RECIPES.find((item) => item.id === id);
+    const recipe = recipesFromApi.find((item) => item.id === id);
     if (!recipe) {
       return;
     }
@@ -492,6 +550,8 @@ export function SearchResultsContainer() {
         recipeCalories: String(recipe.calories),
         recipeTimeMinutes: String(recipe.timeMinutes),
         recipeImageUrl: recipe.imageUrl,
+        from: 'search-results',
+        ...(query.trim().length > 0 ? { returnQuery: query } : {}),
       },
     });
   }
@@ -611,6 +671,16 @@ export function SearchResultsContainer() {
         {isLoading ? (
           <View className="mt-16 items-center px-6">
             <ActivityIndicator size="large" color="#CE232A" />
+          </View>
+        {isLoadingRecipes || (isFetchingRecipes && recipesFromApi.length === 0) ? (
+          <View className="mt-16 items-center px-6">
+            <ActivityIndicator size="large" color="#CE232A" />
+          </View>
+        ) : isRecipesError ? (
+          <View className="mt-16 items-center px-6">
+            <VietnamText className="mt-2 text-3xl font-semibold text-[#5C5C63]">
+              {t('recipe.errorTitle')}
+            </VietnamText>
           </View>
         ) : filteredRecipes.length === 0 ? (
           <View className="mt-16 items-center px-6">
