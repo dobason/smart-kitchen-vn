@@ -82,13 +82,13 @@ export default function CookbookDetailScreen() {
     });
   }, [recipeIdsKey]);
 
-  function handleBack() {
-    if (router.canGoBack()) {
-      router.back();
-      return;
-    }
-    router.replace('/(tabs)/recipe');
+function handleBack() {
+  if (router.canGoBack()) {
+    router.push('/(tabs)/recipe'); 
+    return;
   }
+  router.replace('/(tabs)/recipe');
+}
 
   function closeManageMode() {
     setIsManageMode(false);
@@ -196,7 +196,6 @@ export default function CookbookDetailScreen() {
             <Icon as={ChevronRight} size={22} className="text-[#8E8E93]" />
           </Pressable>
         ) : null}
-
         {recipes.length === 0 ? (
           <View className="items-center px-8 py-16">
             <VietnamText className="text-xl font-bold text-gray-900 text-center">

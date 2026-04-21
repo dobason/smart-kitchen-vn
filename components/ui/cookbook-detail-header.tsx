@@ -15,7 +15,7 @@ type Props = {
   canEdit?: boolean;
 };
 
-export function CookbookDetailHeader({ isManageMode, cookbookName, totalRecipes, onBack, onCloseManage, onEditPress, canEdit = true }: Props) {
+export function CookbookDetailHeader({ isManageMode, cookbookName, totalRecipes, onBack, onCloseManage, canEdit = true }: Props) {
   const { t } = useLocale();
   return (
     <View className="bg-white px-4 py-3 border-b border-gray-100">
@@ -25,30 +25,21 @@ export function CookbookDetailHeader({ isManageMode, cookbookName, totalRecipes,
             <Pressable onPress={onBack} className="p-2 -ml-2">
               <Icon as={ArrowLeft} size={24} className="text-gray-800" />
             </Pressable>
-            <View className="flex-row items-center gap-2">
-              <VietnamText className="text-xl font-bold text-gray-900">{cookbookName}</VietnamText>
-              {canEdit ? (
-                <Pressable onPress={onEditPress}>
-                  <Icon as={Pencil} size={16} className="text-[#CE232A]" />
-                </Pressable>
-              ) : null}
+            <View className="flex-1 items-center justify-center px-4">
+              <VietnamText 
+                className="text-center text-xl font-bold text-gray-900"
+              >
+                {cookbookName}
+              </VietnamText>
             </View>
-            <Pressable className="p-2 -mr-2">
-              <Icon as={Search} size={24} className="text-gray-800" />
-            </Pressable>
           </React.Fragment>
         ) : (
           <React.Fragment>
             <Pressable onPress={onCloseManage} className="p-2 -ml-2">
               <Icon as={X} size={24} className="text-gray-800" />
             </Pressable>
-            <View className="flex-row items-center gap-2">
+            <View className="items-center gap-2">
               <VietnamText className="text-xl font-bold text-gray-900">{cookbookName}</VietnamText>
-              {canEdit ? (
-                <Pressable onPress={onEditPress}>
-                  <Icon as={Pencil} size={16} className="text-[#CE232A]" />
-                </Pressable>
-              ) : null}
             </View>
             <View className="w-8" />
           </React.Fragment>

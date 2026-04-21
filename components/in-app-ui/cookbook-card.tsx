@@ -53,7 +53,7 @@ export function CookbookCard({ book, onMenuPress, showMenu = true }: CookbookCar
         />
       </View>
       <View className="mb-1 mt-4 pr-10">
-        <VietnamText className="text-[18px] font-bold text-[#16171A]" numberOfLines={1}>{book.name}</VietnamText>
+        <VietnamText className="text-sm font-bold text-[#16171A]" numberOfLines={5}>{book.name}</VietnamText>
         <VietnamText className="mt-1.5 text-[14px] text-[#7B808A]">
           {book.count} {t('recipePage.recipeTab')}
         </VietnamText>

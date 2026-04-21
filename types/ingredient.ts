@@ -44,4 +44,8 @@ export type IngredientGroup = {
   label: string;
   items: EditableIngredientItem[];
 };
- 
+
+export type CreateIngredientRequest ={
+  name: string;
+  icon?: string;
+}

@@ -1,16 +1,17 @@
-import axiosClient from './axiosClient';
-import { IngredientApiItem } from '@/types/ingredient';
+import axiosClient from "./axiosClient";
+import { CreateIngredientRequest, IngredientItem } from "../types/ingredient";
 
 const ingredientApi = {
-  // GET /v1/ingredients/
-  getAll: (): Promise<IngredientApiItem[]> => {
-    return axiosClient.get('/v1/ingredients/');
+  // Lấy danh sách hoặc Tìm kiếm nguyên liệu (Trả về mảng IngredientItem)
+  getAll: (searchKeyword?: string): Promise<IngredientItem[]> => {
+    const url = searchKeyword ? `/ingredients/?search=${searchKeyword}` : '/ingredients/';
+    return axiosClient.get(url);
   },
 
-  // GET /v1/ingredients/:id
-  getById: (id: string | number): Promise<IngredientApiItem> => {
-    return axiosClient.get(`/v1/ingredients/${id}`);
-  },
+  // Thêm nguyên liệu mới do người dùng tự gõ
+  create: (data: CreateIngredientRequest): Promise<IngredientItem> => {
+    return axiosClient.post('/ingredients/', data);
+  }
 };
 
 export default ingredientApi;

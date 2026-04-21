@@ -20,17 +20,12 @@ const recipeApi = {
 
   //Lấy chi tiết công thức
   getDetail: (id: string): Promise<RecipeDetail> => {
-    return recipeApi.getById(id);
+    return axiosClient.get(`/v1/recipes/${id}`);
   },
 
   //Cập nhật công thức bao gồm info, ingredients, steps
   update: (id: string, data: UpdateRecipeRequest): Promise<RecipeDetail> => {
     return axiosClient.put(`/v1/recipes/${id}`, data);
-  },
-
-  //Xóa công thức
-  deleteById: (id: string): Promise<void> => {
-    return axiosClient.delete(`/v1/recipes/${id}`);
   },
 
   //Upload ảnh
