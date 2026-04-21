@@ -87,31 +87,44 @@ export default function RecipeScreen() {
       image: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=500&q=80',
       isDefault: true,
       translationKey: 'cookbookDetail.uncategorized',
+      // Sổ tay mặc định vẫn đếm bằng hàm cũ
+      count: getCookbookCount(uncategorizedCookbookId),
+      previewImages: getRecipesByCookbook(uncategorizedCookbookId)
+        .map((recipe) => recipe.imageUrl)
+        .filter(Boolean)
+        .slice(0, 3),
     };
 
-    const serverCookbooks = apiCookbooks.map((dbBook: any) => ({
-      id: dbBook.id.toString(),
-      name: dbBook.name,
-      image: 'https://images.unsplash.com/photo-1547592180-85f173990554?w=500&q=80', // Ảnh mặc định
-      isDefault: false,
-      translationKey: undefined,
-    }));
+    const serverCookbooks = apiCookbooks.map((dbBook: any) => {
+      // 1. Trích xuất mảng các món ăn từ data Backend gửi về
+      const recipesInBook = dbBook.cookbookRecipes?.map((cr: any) => cr.recipe).filter(Boolean) || [];
+
+      return {
+        id: dbBook.id.toString(),
+        name: dbBook.name,
+        // 2. Lấy ảnh của món ăn đầu tiên làm ảnh bìa, nếu trống thì dùng ảnh mặc định
+        image: recipesInBook[0]?.imageUrl || 'https://images.unsplash.com/photo-1547592180-85f173990554?w=500&q=80',
+        isDefault: false,
+        translationKey: undefined,
+        // 3. Gắn số lượng thật và 3 ảnh thu nhỏ
+        count: recipesInBook.length,
+        previewImages: recipesInBook.map((r: any) => r.imageUrl).filter(Boolean).slice(0, 3)
+      };
+    });
 
     return [defaultCookbook, ...serverCookbooks];
-  }, [apiCookbooks, uncategorizedCookbookId]);
+  }, [apiCookbooks, uncategorizedCookbookId, getCookbookCount, getRecipesByCookbook]);
 
   const cookbookCards = React.useMemo(
     () =>
       allCookbooks.map((book) => ({
         ...book,
         displayName: book.translationKey ? String(t(book.translationKey)) : book.name,
-        count: getCookbookCount(book.id),
-        previewImages: getRecipesByCookbook(book.id)
-          .map((recipe) => recipe.imageUrl)
-          .filter(Boolean)
-          .slice(0, 3),
+        // Chỉ việc lấy count và previewImages đã xử lý ở trên đắp vào UI
+        count: book.count,
+        previewImages: book.previewImages,
       })),
-    [allCookbooks, getCookbookCount, getRecipesByCookbook, t]
+    [allCookbooks, t]
   );
 
   const openRecipeDetail = (recipe: {
@@ -143,11 +156,19 @@ export default function RecipeScreen() {
 
     try {
       // Dùng mutateAsync của React Query
-      await createCookbookMutation.mutateAsync({ name: newBookName, userId });
+      await createCookbookMutation.mutateAsync({ 
+   name: newBookName, 
+   userId: "user_3BbkvYViAMYnHhHcNQ7eWXdLyG1" 
+});
       setNewBookName('');
       setIsAddModalVisible(false);
-    } catch (error) {
+      } catch (error: any) {
+      // IN RA LỖI CHI TIẾT ĐỂ BẮT BỆNH
+      console.log("==== LỖI TẠO SỔ TAY ====");
+      console.log(error.response?.data || error.message || error);
+      
       Alert.alert("Lỗi", "Không thể tạo sổ tay lúc này.");
+    
     }
   };
 
@@ -287,7 +308,6 @@ export default function RecipeScreen() {
         </ScrollView>
       ) : (
         <ScrollView className="flex-1 bg-[#F2F2F5]" contentContainerClassName="pb-36 pt-3">
-          <View className="flex-row justify-end px-4 pb-3"><Icon as={ArrowDown10} size={20} className="text-[#535861]" /></View>
           <View className="px-4 flex-row flex-wrap gap-x-[4%] gap-y-5">
             
             {cookbookCards.map((book) => (
@@ -331,7 +351,7 @@ export default function RecipeScreen() {
         <View className="flex-1 bg-black/50 justify-center items-center px-6">
           <View className="bg-white w-full rounded-[24px] p-6 shadow-2xl">
             <VietnamText className="text-xl font-bold text-gray-900 mb-4 text-center">{i18n.t('recipe.createCookbookTitle')}</VietnamText>
-            <TextInput className="bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-base font-medium text-gray-900 mb-6" placeholder={i18n.t('recipe.cookbookNamePlaceholder')} value={newBookName} onChangeText={setNewBookName} autoFocus />
+            <TextInput className="bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-base font-medium text-gray-900 mb-6" placeholder={i18n.t('recipe.cookbookNamePlaceholder')} value={newBookName} onChangeText={setNewBookName} autoFocus/>
             <View className="flex-row gap-4">
               <Pressable onPress={() => setIsAddModalVisible(false)} className="flex-1 bg-gray-100 py-3.5 rounded-xl items-center"><VietnamText className="font-semibold text-gray-600 text-base">{i18n.t('recipe.cancel')}</VietnamText></Pressable>
               <Pressable onPress={handleCreateCookbook} className="flex-1 bg-[#CE232A] py-3.5 rounded-xl items-center"><VietnamText className="font-semibold text-white text-base">{i18n.t('recipe.create')}</VietnamText></Pressable>
