@@ -1,8 +1,8 @@
-import { SearchRecipeItem } from "@/types/recipe";
+import { SearchRecipeItem } from '@/types/recipe';
 
 export const SEARCH_RECIPES: SearchRecipeItem[] = [
   {
-    id: 'pho-bo',
+    id: '1',
     name: 'Súp phở',
     description: '600ml nước,100g bánh phở...',
     calories: 300,

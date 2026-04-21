@@ -13,46 +13,36 @@ import { UserMenu } from '@/components/user-menu';
 import { Icon } from '@/components/ui/icon';
 import { useIngredients } from '@/hooks/use-ingredients';
 import { useLocale } from '@/hooks/use-locale';
+import { useTopIngredients, useAllIngredients } from '@/hooks/use-top-ingredients';
 import { useRouter } from 'expo-router';
 import { Plus } from 'lucide-react-native';
 import * as React from 'react';
-import { Pressable, View } from 'react-native';
+import { ActivityIndicator, Pressable, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-
-const SAMPLE_INGREDIENT_IDS = [
-  'chicken',
-  'cucumber',
-  'pork',
-  'egg',
-  'tofu',
-  'potato',
-  'ground-meat',
-];
 
 export default function ExploreScreen() {
   const { t, locale } = useLocale();
   const router = useRouter();
   const { exploreIngredientIds, setExploreIngredientIds } = useIngredients();
 
-  const selectedIngredients = React.useMemo(
-    () => getIngredientsByIds(exploreIngredientIds),
-    [exploreIngredientIds]
-  );
+  // ── Top-8 ingredient suggestions from the API ───────────────────────────
+  const { suggestions, isLoading: suggestionsLoading } = useTopIngredients();
+  const { ingredients: allIngredients, isLoading: allLoading } = useAllIngredients();
 
   const [searchText, setSearchText] = React.useState('');
 
-  const sampleIngredients = React.useMemo(
-    () => getIngredientsByIds(SAMPLE_INGREDIENT_IDS),
-    []
-  );
-
+  // Lọc trực tiếp từ allIngredients (dữ liệu API) thay vì dùng dữ liệu local
   const selectedIngredientsForTagBar = React.useMemo(
     () =>
-      selectedIngredients.map((item) => ({
-        ...item,
-        name: getIngredientDisplayName(item, locale),
-      })),
-    [selectedIngredients, locale]
+      allIngredients
+        .filter((item) => exploreIngredientIds.includes(item.id))
+        .map((item) => ({
+          id: item.id,
+          name: item.name, // Tên đã được xử lý từ API
+          emoji: item.emoji ?? '🥘',
+          bgColor: item.bgColor ?? '#F3F4F6',
+        })),
+    [exploreIngredientIds, allIngredients]
   );
 
   function handleSearch() {
@@ -93,24 +83,35 @@ export default function ExploreScreen() {
         </View>
 
         <View className="mt-4 flex-row flex-wrap justify-center gap-x-2.5 gap-y-2.5">
-          {sampleIngredients.map((ingredient) => (
-            <Pressable
-              key={ingredient.id}
-              className="self-start"
-              onPress={() =>
-                setExploreIngredientIds((prev) =>
-                  prev.includes(ingredient.id)
-                    ? prev.filter((id) => id !== ingredient.id)
-                    : [...prev, ingredient.id]
-                )
-              }>
-              <IngredientPillChip
-                ingredient={ingredient}
-                selected={exploreIngredientIds.includes(ingredient.id)}
-                label={getIngredientDisplayName(ingredient, locale)}
-              />
-            </Pressable>
-          ))}
+          {suggestionsLoading ? (
+            // Loading state — show a small spinner while the API call runs
+            <ActivityIndicator size="small" color="#CE232A" />
+          ) : (
+            // Success — map over the top-8 API ingredients as pill chips
+            suggestions.map((ingredient) => (
+              <Pressable
+                key={ingredient.id}
+                className="self-start"
+                onPress={() =>
+                  setExploreIngredientIds((prev) =>
+                    prev.includes(ingredient.id)
+                      ? prev.filter((id) => id !== ingredient.id)
+                      : [...prev, ingredient.id]
+                  )
+                }>
+                <IngredientPillChip
+                  ingredient={{
+                    id: ingredient.id,
+                    name: ingredient.name,
+                    emoji: ingredient.emoji ?? '🥘',
+                    bgColor: ingredient.bgColor ?? '#F3F4F6',
+                  }}
+                  selected={exploreIngredientIds.includes(ingredient.id)}
+                  label={ingredient.name}
+                />
+              </Pressable>
+            ))
+          )}
         </View>
 
         <Pressable
@@ -120,7 +121,7 @@ export default function ExploreScreen() {
               params: { target: 'explore' },
             })
           }
-          className="mt-3 min-h-11 self-center flex-row items-center justify-center gap-2 rounded-full border border-[#CE232A] bg-white px-5">
+          className="mt-3 min-h-11 flex-row items-center justify-center gap-2 self-center rounded-full border border-[#CE232A] bg-white px-5">
           <Icon as={Plus} size={16} className="text-[#CE232A]" />
           <VietnamText className="text-center text-[15px] leading-5 text-[#1F2937]">
             {t('home.moreIngredients')}

@@ -63,3 +63,24 @@ export function useRecipes(searchQuery?: string) {
     data: mergedData,
   };
 }
+
+/**
+ * Hook lấy toàn bộ danh sách công thức (bao gồm cả AI sinh ra và thêm thủ công).
+ *
+ * @param searchQuery - Từ khoá tìm kiếm / lọc (optional).
+ */
+export function useAllRecipe(searchQuery?: string) {
+  const { user } = useUser();
+  const userId = user?.id ?? '';
+
+  return useQuery({
+    queryKey: ['recipes', 'allList', userId, searchQuery ?? ''] as const,
+    queryFn: () =>
+      recipeApi.getAll({
+        userId,
+        // Không truyền sourceType để lấy tất cả
+        ...(searchQuery ? { search: searchQuery } : {}),
+      }),
+    enabled: !!userId,
+  });
+}

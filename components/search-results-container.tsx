@@ -10,6 +10,7 @@ import {
 } from '@/constants/searchFilterOptions';
 import { Icon } from '@/components/ui/icon';
 import { useLocale } from '@/hooks/use-locale';
+import { useAllRecipe } from '@/hooks/use-recipes';
 import { useRecipes } from '@/hooks/use-recipes';
 import { useSavedRecipes } from '@/hooks/use-saved-recipes';
 import type { SearchRecipeItem } from '@/types/recipe';
@@ -450,6 +451,8 @@ export function SearchResultsContainer() {
   const [caloriesSheetVisible, setCaloriesSheetVisible] = React.useState(false);
   const [cookwareSheetVisible, setCookwareSheetVisible] = React.useState(false);
 
+  const { data: SEARCH_RECIPES = [], isLoading } = useAllRecipe();
+
   React.useEffect(() => {
     if (initialQuery) {
       setQuery(initialQuery);
@@ -480,7 +483,7 @@ export function SearchResultsContainer() {
       const normalizedDescription = normalizeSearchText(item.description);
       const searchableContent = `${normalizedName} ${normalizedDescription}`;
 
-      const normalizedItemTags = item.tags.map((tag) => normalizeSearchText(tag));
+      const normalizedItemTags = (item.tags ?? []).map((tag) => normalizeSearchText(tag));
       const normalizedItemCookware = (item.cookware ?? []).map((cookwareId) =>
         normalizeSearchText(cookwareId)
       );
@@ -665,6 +668,10 @@ export function SearchResultsContainer() {
           {t('searchResults.results', { count: filteredRecipes.length })}
         </VietnamText>
 
+        {isLoading ? (
+          <View className="mt-16 items-center px-6">
+            <ActivityIndicator size="large" color="#CE232A" />
+          </View>
         {isLoadingRecipes || (isFetchingRecipes && recipesFromApi.length === 0) ? (
           <View className="mt-16 items-center px-6">
             <ActivityIndicator size="large" color="#CE232A" />
