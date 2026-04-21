@@ -20,7 +20,21 @@ const cookbookApi = {
   // Xóa sổ tay
   delete: (id: string): Promise<void> => {
     return axiosClient.delete(`/v1/cookbooks/${id}`);
-  }
+  },
+
+  // Lấy danh sách công thức trong sổ tay
+  getRecipes: (cookbookId: string): Promise<any[]> => {
+    return axiosClient.get(`/v1/cookbook-recipes/?cookbookId=${cookbookId}`);
+  },
+
+  // Thêm công thức vào sổ tay
+  addRecipe: (cookbookId: number, recipeId: number): Promise<void> => {
+    return axiosClient.post('/v1/cookbook-recipes/', { cookbookId, recipeId });
+  },
+
+  removeRecipe: (cookbookId: number, recipeId: number): Promise<void> => {
+    return axiosClient.delete(`/v1/cookbook-recipes/${cookbookId}/${recipeId}`);
+  },
 };
 
 export default cookbookApi;

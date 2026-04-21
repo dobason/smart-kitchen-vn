@@ -500,16 +500,67 @@ export default function RecipeEditScreen() {
     buildPayload,
   } = useRecipeForm(recipeData);
 
-  //Xử lý lưu
-  const handleSave = () => {
-    if (!recipeId) return;
-    const payload = buildPayload();
+React.useEffect(() => {
+    if (!recipeIdParam || apiSteps === undefined) {
+      return;
+    }
 
-    updateMutation.mutate(payload, {
-      onSuccess: () => {
-        Alert.alert(t('other.successSave'), t('other.successUpdate'), [
-          { text: 'OK', onPress: () => router.back() },
-        ]);
+    const recipeKey = String(recipeIdParam);
+
+    if (initializedStepsRecipeKeyRef.current === recipeKey) {
+      return;
+    }
+
+    setSteps(apiSteps ?? []);
+    initializedStepsRecipeKeyRef.current = recipeKey;
+  }, [apiSteps, recipeIdParam]);
+
+  React.useEffect(() => {
+    if (!recipeIdParam || apiRecipeIngredients === undefined) {
+      return;
+    }
+
+    const recipeKey = String(recipeIdParam);
+
+    if (initializedIngredientsRecipeKeyRef.current === recipeKey) {
+      return;
+    }
+
+    const mappedRows = (apiRecipeIngredients ?? []).map((item) => ({
+      rowId: `${item.recipeId}-${item.ingredientId}`,
+      ingredientId: String(item.ingredientId),
+      ingredientName: item.name,
+      quantity: item.quantityValue !== undefined ? String(item.quantityValue) : '',
+      unit: item.unit,
+      note: item.note,
+      isDraft: false,
+    }));
+
+    setIngredientRows(mappedRows);
+    initializedIngredientsRecipeKeyRef.current = recipeKey;
+  }, [apiRecipeIngredients, recipeIdParam]);
+
+  const handleIngredientFieldChange = (
+    index: number,
+    field: keyof Omit<EditableRecipeIngredientRow, 'rowId' | 'isDraft'>,
+    value: string
+  ) => {
+    setIngredientRows((prev) =>
+      prev.map((item, itemIndex) => (itemIndex === index ? { ...item, [field]: value } : item))
+    );
+  };
+
+  const handleAddIngredientRow = () => {
+    setIngredientRows((prev) => [
+      ...prev,
+      {
+        rowId: `draft-${Date.now()}`,
+        ingredientId: '',
+        ingredientName: '',
+        quantity: '',
+        unit: '',
+        note: '',
+        isDraft: true,
       },
     ]);
   };

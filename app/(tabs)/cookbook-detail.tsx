@@ -11,6 +11,13 @@ import { Check, ChevronRight, Plus, Settings, X } from 'lucide-react-native';
 import * as React from 'react';
 import { Modal, Pressable, ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useAuth } from '@clerk/clerk-expo';
+import {
+  useCookbooks,
+  useAddRecipeToCookbook,
+  useCookbookRecipes,
+  useRemoveRecipeFromCookbook,
+} from '@/hooks/use-cookbook';
 
 type CookbookDetailParams = {
   id?: string | string[];
@@ -40,7 +47,10 @@ export default function CookbookDetailScreen() {
   const cookbookId = singleParam(params.id) ?? uncategorizedCookbookId;
   const passedName = singleParam(params.name) ?? '';
   const cookbook = getCookbookById(cookbookId);
-  const recipes = getRecipesByCookbook(cookbookId);
+  const isDefaultCookbook = cookbookId === uncategorizedCookbookId;
+  const localRecipes = getRecipesByCookbook(cookbookId);
+  const { data: serverRecipes = [] } = useCookbookRecipes(isDefaultCookbook ? '' : cookbookId);
+  const recipes = isDefaultCookbook ? localRecipes : serverRecipes;
   const [isAddRecipeVisible, setIsAddRecipeVisible] = React.useState(false);
   const [isManageMode, setIsManageMode] = React.useState(false);
   const [selectedIds, setSelectedIds] = React.useState<string[]>([]);
@@ -57,16 +67,22 @@ export default function CookbookDetailScreen() {
     return passedName || String(t('cookbook.COOKBOOK'));
   }, [cookbook?.name, cookbook?.translationKey, passedName, t]);
 
-  const isDefaultCookbook = cookbookId === uncategorizedCookbookId;
+  const { userId } = useAuth();
+  const { data: apiCookbooks = [] } = useCookbooks(userId || '');
+  const addRecipeToCookbook = useAddRecipeToCookbook();
+  const removeRecipeFromCookbook = useRemoveRecipeFromCookbook();
 
   const destinationCookbooks = React.useMemo(
-    () => cookbooks.filter((item) => !item.isDefault && item.id !== cookbookId),
-    [cookbookId, cookbooks]
+    () =>
+      apiCookbooks
+        .map((dbBook: any) => ({
+          id: dbBook.id.toString(),
+          name: dbBook.name,
+        }))
+        .filter((item: { id: string }) => item.id !== cookbookId),
+    [apiCookbooks, cookbookId]
   );
-  const recipeIdsKey = React.useMemo(
-    () => recipes.map((recipe) => recipe.id).join('|'),
-    [recipes]
-  );
+  const recipeIdsKey = React.useMemo(() => recipes.map((recipe) => recipe.id).join('|'), [recipes]);
 
   const selectedRecipeCount = selectedIds.length;
   const isAllSelected = recipes.length > 0 && selectedIds.length === recipes.length;
@@ -82,13 +98,13 @@ export default function CookbookDetailScreen() {
     });
   }, [recipeIdsKey]);
 
-function handleBack() {
-  if (router.canGoBack()) {
-    router.push('/(tabs)/recipe'); 
-    return;
+  function handleBack() {
+    if (router.canGoBack()) {
+      router.push('/(tabs)/recipe');
+      return;
+    }
+    router.replace('/(tabs)/recipe');
   }
-  router.replace('/(tabs)/recipe');
-}
 
   function closeManageMode() {
     setIsManageMode(false);
@@ -112,10 +128,8 @@ function handleBack() {
     setSelectedIds(recipes.map((recipe) => recipe.id));
   }
 
-  function handleManageAction() {
-    if (selectedRecipeCount === 0) {
-      return;
-    }
+  async function handleManageAction() {
+    if (selectedRecipeCount === 0) return;
 
     if (isDefaultCookbook) {
       setSelectedDestinationIds([]);
@@ -123,7 +137,16 @@ function handleBack() {
       return;
     }
 
-    removeRecipesFromCookbook(selectedIds, cookbookId);
+    const calls = selectedIds.map((recipeId) =>
+      removeRecipeFromCookbook
+        .mutateAsync({
+          cookbookId: Number(cookbookId),
+          recipeId: Number(recipeId),
+        })
+        .catch((err) => console.log('DELETE error:', err.response?.data))
+    );
+
+    await Promise.all(calls);
     closeManageMode();
   }
 
@@ -135,15 +158,29 @@ function handleBack() {
     );
   }
 
-  function handleConfirmMove() {
+  async function handleConfirmMove() {
     if (selectedDestinationIds.length === 0 || selectedIds.length === 0) {
       return;
     }
 
+    const calls: Promise<void>[] = [];
     selectedDestinationIds.forEach((destinationId) => {
-      assignRecipesToCookbook(selectedIds, destinationId);
+      selectedIds.forEach((recipeId) => {
+        calls.push(
+          addRecipeToCookbook
+            .mutateAsync({
+              cookbookId: Number(destinationId),
+              recipeId: Number(recipeId),
+            })
+            .catch((err) => {
+              console.log('POST error response:', err.response?.data); // ← add this
+              console.log('POST error status:', err.response?.status);
+            })
+        );
+      });
     });
 
+    await Promise.all(calls);
     closeManageMode();
   }
 
@@ -180,7 +217,9 @@ function handleBack() {
         canEdit={!isDefaultCookbook}
       />
 
-      <ScrollView className="flex-1" contentContainerClassName={isManageMode ? 'pb-36 pt-3' : 'pb-28 pt-3'}>
+      <ScrollView
+        className="flex-1"
+        contentContainerClassName={isManageMode ? 'pb-36 pt-3' : 'pb-28 pt-3'}>
         {!isManageMode ? (
           <Pressable
             onPress={() => setIsManageMode(true)}
@@ -198,7 +237,7 @@ function handleBack() {
         ) : null}
         {recipes.length === 0 ? (
           <View className="items-center px-8 py-16">
-            <VietnamText className="text-xl font-bold text-gray-900 text-center">
+            <VietnamText className="text-center text-xl font-bold text-gray-900">
               {t('recipe.noSavedRecipesTitle')}
             </VietnamText>
             <VietnamText className="mt-2 text-center text-base text-gray-500">
@@ -206,7 +245,7 @@ function handleBack() {
             </VietnamText>
           </View>
         ) : (
-          <View className="px-4 flex-row flex-wrap justify-between">
+          <View className="flex-row flex-wrap justify-between px-4">
             {recipes.map((recipe) => (
               <Pressable
                 key={recipe.id}
@@ -243,7 +282,7 @@ function handleBack() {
       {!isManageMode && !isDefaultCookbook ? (
         <Pressable
           onPress={() => setIsAddRecipeVisible(true)}
-          className="absolute bottom-8 right-6 bg-[#CE232A] w-16 h-16 rounded-full items-center justify-center shadow-lg shadow-red-600/40 z-10">
+          className="absolute bottom-8 right-6 z-10 h-16 w-16 items-center justify-center rounded-full bg-[#CE232A] shadow-lg shadow-red-600/40">
           <Icon as={Plus} size={32} className="text-white" />
         </Pressable>
       ) : null}
@@ -254,7 +293,11 @@ function handleBack() {
           selectedCount={selectedRecipeCount}
           onSelectAll={handleSelectAll}
           onActionPress={handleManageAction}
-          actionLabel={isDefaultCookbook ? String(t('cookbookDetail.moveTo')) : String(t('cookbookDetail.remove'))}
+          actionLabel={
+            isDefaultCookbook
+              ? String(t('cookbookDetail.moveTo'))
+              : String(t('cookbookDetail.remove'))
+          }
         />
       ) : null}
 
@@ -287,43 +330,64 @@ function handleBack() {
               </Pressable>
             </View>
 
-            <View className="gap-3">
-              {destinationCookbooks.map((destination) => {
-                const isSelected = selectedDestinationIds.includes(destination.id);
-                const displayName = destination.translationKey
-                  ? String(t(destination.translationKey))
-                  : destination.name;
+            {destinationCookbooks.length === 0 ? (
+              <View className="items-center gap-2 py-8">
+                <VietnamText className="text-center text-lg font-semibold text-[#6E6E76]">
+                  {t('cookbookDetail.noCookbooksAvailable')}
+                </VietnamText>
+                <VietnamText className="text-center text-sm text-[#A7A7AC]">
+                  {t('cookbookDetail.createCookbookFirst')}
+                </VietnamText>
+              </View>
+            ) : (
+              <View className="gap-3">
+                {destinationCookbooks.map((destination) => {
+                  const isSelected = selectedDestinationIds.includes(destination.id);
+                  const displayName = destination.name;
 
-                return (
-                  <Pressable
-                    key={destination.id}
-                    onPress={() => toggleDestinationSelection(destination.id)}
-                    className={`flex-row items-center justify-between rounded-2xl px-4 py-4 ${
-                      isSelected ? 'bg-[#FBECEE]' : 'bg-[#F3F3F6]'
-                    }`}>
-                    <VietnamText className="text-2xl font-semibold text-[#1C1C1E]">
-                      {displayName}
-                    </VietnamText>
-
-                    <View
-                      className={`h-9 w-9 items-center justify-center rounded-md border-2 ${
-                        isSelected ? 'border-[#CE232A] bg-[#CE232A]' : 'border-[#A7A7AC] bg-transparent'
+                  return (
+                    <Pressable
+                      key={destination.id}
+                      onPress={() => toggleDestinationSelection(destination.id)}
+                      className={`flex-row items-center justify-between rounded-2xl px-4 py-4 ${
+                        isSelected ? 'bg-[#FBECEE]' : 'bg-[#F3F3F6]'
                       }`}>
-                      {isSelected ? <Icon as={Check} size={20} className="text-white" /> : null}
-                    </View>
-                  </Pressable>
-                );
-              })}
-            </View>
+                      <VietnamText className="text-2xl font-semibold text-[#1C1C1E]">
+                        {displayName}
+                      </VietnamText>
+
+                      <View
+                        className={`h-9 w-9 items-center justify-center rounded-md border-2 ${
+                          isSelected
+                            ? 'border-[#CE232A] bg-[#CE232A]'
+                            : 'border-[#A7A7AC] bg-transparent'
+                        }`}>
+                        {isSelected ? <Icon as={Check} size={20} className="text-white" /> : null}
+                      </View>
+                    </Pressable>
+                  );
+                })}
+              </View>
+            )}
 
             <Pressable
-              onPress={handleConfirmMove}
-              disabled={selectedDestinationIds.length === 0}
+              onPress={
+                destinationCookbooks.length === 0
+                  ? () => setIsMoveSheetVisible(false)
+                  : handleConfirmMove
+              }
+              disabled={destinationCookbooks.length > 0 && selectedDestinationIds.length === 0}
               className={`mt-8 items-center rounded-full py-4 ${
-                selectedDestinationIds.length > 0 ? 'bg-[#CE232A]' : 'bg-[#E3A4A8]'
+                destinationCookbooks.length === 0
+                  ? 'bg-[#CE232A]'
+                  : selectedDestinationIds.length > 0
+                    ? 'bg-[#CE232A]'
+                    : 'bg-[#E3A4A8]'
               }`}>
               <VietnamText className="text-2xl font-bold text-white">
-                {t('cookbookDetail.move')}
+                {destinationCookbooks.length === 0
+                  ? t('cookbookDetail.close')
+                  : t('cookbookDetail.move')}
               </VietnamText>
             </Pressable>
           </View>
