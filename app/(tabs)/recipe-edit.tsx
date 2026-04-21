@@ -786,18 +786,6 @@ export default function RecipeEditScreen() {
               />
             </View>
 
-            {/* ── COOKBOOK ── */}
-            <SectionHeader
-              title={t('cookbook.COOKBOOK')}
-              actionLabel={t('other.edit')}
-              onAction={() => {}}
-            />
-            <View className="mb-1 flex-row">
-              <View className="rounded-full bg-gray-100 px-3.5 py-[7px]">
-                <VietnamText className="text-sm italic text-gray-700">📁 {cookbook}</VietnamText>
-              </View>
-            </View>
-
             {/* ── INGREDIENTS ── */}
             <SectionHeader title={t('ingredients.INGREDIENTS')} />
 
