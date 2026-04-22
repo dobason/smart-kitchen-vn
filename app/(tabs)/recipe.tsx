@@ -16,6 +16,7 @@ import { useSavedRecipes } from '@/hooks/use-saved-recipes';
 import type { CookbookItem } from '@/context/saved-recipes-context';
 import { useAuth } from '@clerk/clerk-expo';
 import { useCookbooks, useCreateCookbook, useUpdateCookbook, useDeleteCookbook } from '@/hooks/use-cookbook';
+import { useRecipes } from '@/hooks/use-recipes';
 
 function normalizeRecipeSearchText(value: string) {
   return value
@@ -37,6 +38,10 @@ export default function RecipeScreen() {
   const createCookbookMutation = useCreateCookbook();
   const updateCookbookMutation = useUpdateCookbook();
   const deleteCookbookMutation = useDeleteCookbook();
+  const [recipeSearchQuery, setRecipeSearchQuery] = React.useState('');
+
+  // LẤY DANH SÁCH RECIPES TỪ SERVER
+  const { data: serverRecipes = [], isLoading: isLoadingRecipes } = useRecipes(recipeSearchQuery);
 
   const {
     savedRecipes,
@@ -60,24 +65,11 @@ export default function RecipeScreen() {
   
   const [isImportVisible, setIsImportVisible] = React.useState(false);
   const [isLoadingAI, setIsLoadingAI] = React.useState(false);
-  const [recipeSearchQuery, setRecipeSearchQuery] = React.useState('');
 
   const filteredSavedRecipes = React.useMemo(() => {
-    const normalizedQuery = normalizeRecipeSearchText(recipeSearchQuery);
-
-    if (!normalizedQuery) {
-      return savedRecipes;
-    }
-
-    return savedRecipes.filter((recipe) => {
-      const normalizedName = normalizeRecipeSearchText(recipe.name);
-      const normalizedDescription = normalizeRecipeSearchText(recipe.description);
-      return (
-        normalizedName.includes(normalizedQuery) ||
-        normalizedDescription.includes(normalizedQuery)
-      );
-    });
-  }, [recipeSearchQuery, savedRecipes]);
+    // Ưu tiên dùng dữ liệu từ server, fallback về local savedRecipes nếu không có
+    return serverRecipes.length > 0 ? serverRecipes : savedRecipes;
+  }, [serverRecipes, savedRecipes]);
 
   // KẾT HỢP DỮ LIỆU SỔ TAY MẶC ĐỊNH VÀ DỮ LIỆU TỪ SERVER
   const allCookbooks = React.useMemo(() => {
@@ -157,10 +149,7 @@ export default function RecipeScreen() {
 
     try {
       // Dùng mutateAsync của React Query
-      await createCookbookMutation.mutateAsync({ 
-   name: newBookName, 
-   userId: "user_3BbkvYViAMYnHhHcNQ7eWXdLyG1" 
-});
+      await createCookbookMutation.mutateAsync({ name: newBookName, userId });
       setNewBookName('');
       setIsAddModalVisible(false);
       } catch (error: any) {

@@ -8,6 +8,7 @@ import { useSignUp } from '@clerk/clerk-expo';
 import { router, useLocalSearchParams } from 'expo-router';
 import * as React from 'react';
 import { type TextStyle, View } from 'react-native';
+import { userServices } from '@/services/userServices';
 
 const RESEND_CODE_INTERVAL_SECONDS = 30;
 
@@ -33,6 +34,14 @@ export function VerifyEmailForm() {
       // If verification was completed, set the session to active
       // and redirect the user
       if (signUpAttempt.status === 'complete') {
+        try {
+          if (signUpAttempt.createdUserId) {
+            await userServices.syncClerkUser(signUpAttempt.createdUserId);
+          }
+        } catch (e) {
+          console.log('Failed to sync user with backend:', e);
+        }
+
         await setActive({ session: signUpAttempt.createdSessionId });
         return;
       }

@@ -6,15 +6,17 @@ import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { VietnamText } from '@/components/in-app-ui/vietnam-text';
 import { LanguageToggle } from '@/components/in-app-ui/language-toggle';
-import { useSignIn } from '@clerk/clerk-expo';
+import { useClerk, useSignIn } from '@clerk/clerk-expo';
 import { Link } from 'expo-router';
 import * as React from 'react';
 import { type TextInput, View, Image } from 'react-native';
 import { useLocale } from '@/hooks/use-locale';
+import { userServices } from '@/services/userServices';
 
 export function SignInForm() {
   const { t } = useLocale();
   const { signIn, setActive, isLoaded } = useSignIn();
+  const clerk = useClerk();
   const [email, setEmail] = React.useState('');
   const [password, setPassword] = React.useState('');
   const passwordInputRef = React.useRef<TextInput>(null);
@@ -37,6 +39,17 @@ export function SignInForm() {
       if (signInAttempt.status === 'complete') {
         setError({ email: '', password: '' });
         await setActive({ session: signInAttempt.createdSessionId });
+
+        try {
+          const clerkUserId = clerk.session?.user?.id;
+          if (clerkUserId) {
+            await userServices.syncClerkUser(clerkUserId);
+          }
+        } catch (e) {
+          // Ignore if sync failed
+          console.log('Sync user failed:', e);
+        }
+
         return;
       }
       // TODO: Handle other statuses
