@@ -318,6 +318,7 @@
     "dinner": "Dinner",
     "camera": "Camera",
     "photo": "Photo",
-    "instruction": "Recipe import guide"
+    "instruction": "Recipe import guide",
+    "aiAnalyzing": "AI is analyzing data..."
   }
 }

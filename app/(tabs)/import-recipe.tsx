@@ -6,24 +6,75 @@ import { Camera, Image as ImageIcon, BookOpen, ChevronRight } from 'lucide-react
 import { Icon } from '@/components/ui/icon';
 import { VietnamText } from '@/components/in-app-ui/vietnam-text';
 import * as ImagePicker from 'expo-image-picker';
-import { useLocale } from '@/hooks/use-locale'; // Đã thêm useLocale
+import { useLocale } from '@/hooks/use-locale';
+import {
+  detectIngredientsFromImage,
+  generateRecipeFromInstruction,
+  getAiRecipeErrorMessage,
+  RecipeInstructionResponse,
+} from '@/services/aiRecipeServices';
+import { useAIRecipeSession } from '../../hooks/use-ai-recipe-session';
 
 export default function ImportRecipeScreen() {
   const [isLoading, setIsLoading] = React.useState(false);
-  const { t } = useLocale(); // Kích hoạt từ điển
+  const { t, locale } = useLocale();
+  const { setSession } = useAIRecipeSession();
 
   const handleClose = () => {
     router.navigate('/(tabs)/recipe'); 
   };
 
-  const simulateAILoading = (actionName: string) => {
+  const normalizeLanguage = React.useCallback(
+    () => (String(locale || '').toLowerCase().startsWith('vi') ? 'vi' : 'en'),
+    [locale]
+  );
+
+  const processImageToRecipe = React.useCallback(async (imageUri: string, actionName: string, mimeType?: string) => {
     setIsLoading(true);
-    setTimeout(() => {
+
+    try {
+      const ingredientsResponse = await detectIngredientsFromImage({
+        imageUri,
+        mimeType,
+        language: normalizeLanguage(),
+      });
+
+      if (!ingredientsResponse.ingredients || ingredientsResponse.ingredients.length === 0) {
+        throw new Error('No ingredients detected from image.');
+      }
+
+      const recipeResponse = await generateRecipeFromInstruction({
+        ingredients: ingredientsResponse.ingredients,
+        language: normalizeLanguage(),
+      });
+
+      if (
+        recipeResponse.ingredients.length === 0 &&
+        recipeResponse.steps.length === 0 &&
+        !recipeResponse.dish &&
+        !recipeResponse.time
+      ) {
+        throw new Error('Empty recipe returned from instruction API.');
+      }
+
+      setSession({
+        imageUri,
+        sourceLabel: actionName,
+        detectedIngredients: ingredientsResponse.ingredients,
+        recipe: recipeResponse,
+      });
+
+      router.replace('/ai-recipe-result');
+    } catch (error) {
+      console.error('Import recipe AI error:', error);
+      Alert.alert(
+        t('recipe.errorTitle') || 'Lỗi',
+        getAiRecipeErrorMessage(error) || 'Không thể phân tích ảnh hoặc sinh công thức. Vui lòng thử lại.'
+      );
+    } finally {
       setIsLoading(false);
-      Alert.alert(t('recipe.successTitle') || "Thành công!", t('recipe.successAnalyzed', { source: actionName }));
-      handleClose();
-    }, 3000);
-  };
+    }
+  }, [normalizeLanguage, setSession, t]);
 
   const handleCameraPress = async () => {
     const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
@@ -32,7 +83,10 @@ export default function ImportRecipeScreen() {
       return;
     }
     const result = await ImagePicker.launchCameraAsync({ allowsEditing: true, aspect: [4, 3], quality: 0.8 });
-    if (!result.canceled) simulateAILoading(t('recipe.aiSourceCamera') || "Camera");
+    const asset = result.assets?.[0];
+    if (!result.canceled && asset?.uri) {
+      await processImageToRecipe(asset.uri, t('recipe.aiSourceCamera') || 'Camera', asset.mimeType ?? undefined);
+    }
   };
 
   const handlePhotoPress = async () => {
@@ -42,7 +96,10 @@ export default function ImportRecipeScreen() {
       return;
     }
     const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images, allowsEditing: true, aspect: [4, 3], quality: 0.8 });
-    if (!result.canceled) simulateAILoading(t('recipe.aiSourcePhotoLibrary') || "Thư viện ảnh");
+    const asset = result.assets?.[0];
+    if (!result.canceled && asset?.uri) {
+      await processImageToRecipe(asset.uri, t('recipe.aiSourcePhotoLibrary') || 'Thư viện ảnh', asset.mimeType ?? undefined);
+    }
   };
 
   return (

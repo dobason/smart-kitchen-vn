@@ -8,6 +8,8 @@ import { Icon } from '@/components/ui/icon';
 import { VietnamText } from '@/components/in-app-ui/vietnam-text';
 import * as ImagePicker from 'expo-image-picker';
 import i18n from '@/lib/i18n';
+import { detectIngredientsFromImage, generateRecipeFromInstruction, getAiRecipeErrorMessage } from '@/services/aiRecipeServices';
+import { useAIRecipeSession } from '@/hooks/use-ai-recipe-session';
 import { RecipeCard } from '@/components/in-app-ui/recipe-card';
 import { CookbookCard } from '@/components/in-app-ui/cookbook-card';
 import { ImportBottomSheet } from '@/components/import-bottom-sheet';
@@ -16,6 +18,7 @@ import { useSavedRecipes } from '@/hooks/use-saved-recipes';
 import type { CookbookItem } from '@/context/saved-recipes-context';
 import { useAuth } from '@clerk/clerk-expo';
 import { useCookbooks, useCreateCookbook, useUpdateCookbook, useDeleteCookbook } from '@/hooks/use-cookbook';
+
 
 function normalizeRecipeSearchText(value: string) {
   return value
@@ -28,7 +31,8 @@ function normalizeRecipeSearchText(value: string) {
 
 export default function RecipeScreen() {
   const router = useRouter();
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
+  const { setSession } = useAIRecipeSession();
   // LẤY USER ID TỪ CLERK
   const { userId } = useAuth();
 
@@ -201,27 +205,81 @@ export default function RecipeScreen() {
     );
   };
 
-  const simulateAILoading = (actionName: string) => {
-    setIsLoadingAI(true);
-    setTimeout(() => {
-      setIsLoadingAI(false);
-      setIsImportVisible(false); 
-      Alert.alert(i18n.t('recipe.successTitle'), i18n.t('recipe.successAnalyzed', { source: actionName }));
-    }, 3000);
-  };
+  const normalizeLanguage = React.useCallback(
+    () => (String(locale || '').toLowerCase().startsWith('vi') ? 'vi' : 'en'),
+    [locale]
+  );
+
+  const processImageToRecipe = React.useCallback(
+    async (imageUri: string, actionName: string, mimeType?: string) => {
+      setIsLoadingAI(true);
+
+      try {
+        const ingredientsResponse = await detectIngredientsFromImage({
+          imageUri,
+          mimeType,
+          language: normalizeLanguage(),
+        });
+
+        if (!ingredientsResponse.ingredients || ingredientsResponse.ingredients.length === 0) {
+          throw new Error('No ingredients detected from image.');
+        }
+
+        const recipeResponse = await generateRecipeFromInstruction({
+          ingredients: ingredientsResponse.ingredients,
+          language: normalizeLanguage(),
+        });
+
+        if (
+          recipeResponse.ingredients.length === 0 &&
+          recipeResponse.steps.length === 0 &&
+          !recipeResponse.dish &&
+          !recipeResponse.time
+        ) {
+          throw new Error('Empty recipe returned from instruction API.');
+        }
+
+        setSession({
+          imageUri,
+          sourceLabel: actionName,
+          detectedIngredients: ingredientsResponse.ingredients,
+          recipe: recipeResponse,
+        });
+
+        setIsImportVisible(false);
+        router.replace('/ai-recipe-result' as never);
+      } catch (error) {
+        setIsImportVisible(false);
+        console.error('Recipe tab AI error:', error);
+        Alert.alert(
+          i18n.t('recipe.errorTitle'),
+          getAiRecipeErrorMessage(error) || 'Không thể phân tích ảnh hoặc sinh công thức. Vui lòng thử lại.'
+        );
+      } finally {
+        setIsLoadingAI(false);
+      }
+    },
+    [normalizeLanguage, router, setSession]
+  );
 
   const handleCameraPress = async () => {
     const permission = await ImagePicker.requestCameraPermissionsAsync();
     if (!permission.granted) { Alert.alert(i18n.t('recipe.errorTitle'), i18n.t('recipe.errorCameraPermission')); return; }
     const result = await ImagePicker.launchCameraAsync({ allowsEditing: true, aspect: [4, 3], quality: 0.8 });
-    if (!result.canceled) simulateAILoading(i18n.t('recipe.aiSourceCamera'));
+    const asset = result.assets?.[0];
+    if (!result.canceled && asset?.uri) {
+      await processImageToRecipe(asset.uri, i18n.t('recipe.aiSourceCamera'), asset.mimeType ?? undefined);
+    }
   };
 
   const handlePhotoPress = async () => {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permission.granted) { Alert.alert(i18n.t('recipe.errorTitle'), i18n.t('recipe.errorPhotoPermission')); return; }
     const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images, allowsEditing: true, aspect: [4, 3], quality: 0.8 });
-    if (!result.canceled) simulateAILoading(i18n.t('recipe.aiSourcePhotoLibrary'));
+    const asset = result.assets?.[0];
+    if (!result.canceled && asset?.uri) {
+      await processImageToRecipe(asset.uri, i18n.t('recipe.aiSourcePhotoLibrary'), asset.mimeType ?? undefined);
+    }
   };
 
   return (

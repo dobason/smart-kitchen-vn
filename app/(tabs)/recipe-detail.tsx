@@ -7,11 +7,19 @@ import { VietnamText } from '@/components/in-app-ui/vietnam-text';
 import { Icon } from '@/components/ui/icon';
 import { SEARCH_RECIPES } from '@/constants/recipeData';
 import { useLocale } from '@/hooks/use-locale';
+import { useAIRecipeSession } from '@/hooks/use-ai-recipe-session';
 import { useRecipeById } from '@/hooks/use-recipe';
 import { useRecipeIngredientList } from '@/hooks/use-recipe-ingredients';
 import { useStepList } from '@/hooks/use-step';
 import { useSavedRecipes } from '@/hooks/use-saved-recipes';
+import { useUserRecipeEdits } from '@/hooks/use-user-recipe-edits';
+import { generateRecipeFromInstruction } from '@/services/aiRecipeServices';
+import type { AIRecipeSession } from '@/context/ai-recipe-session-context';
+import { getLatestAIRecipeSession } from '@/lib/ai-recipe-session';
 import type { RecipeDetail, RecipeDetailSource, SearchRecipeItem } from '@/types/recipe';
+import type { CookingIngredientItem } from '@/types/ingredient';
+import type { StepItem } from '@/types/step';
+import type { RecipeIngredientDisplayItem } from '@/types/recipe-ingredient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import {
   ArrowLeftIcon,
@@ -29,6 +37,7 @@ import {
 import * as React from 'react';
 import {
   ActivityIndicator,
+  Alert,
   Image,
   KeyboardAvoidingView,
   Modal,
@@ -50,6 +59,7 @@ type RecipeDetailParams = {
   recipeImageUrl?: string | string[];
   from?: string | string[];
   returnQuery?: string | string[];
+  aiRecipe?: string | string[];
 };
 
 function singleParam(value?: string | string[]) {
@@ -69,16 +79,84 @@ function toPositiveNumber(value: unknown): number | undefined {
   return parsed;
 }
 
+function normalizeAiStepText(step: string): string {
+  return step.replace(/^\s*\d+[\.)\-:]?\s*/, '').replace(/\*\*/g, '').trim();
+}
+
+function parseAiTimeMinutes(value?: string | null): number {
+  const match = String(value ?? '').match(/\d+/);
+  return match ? Number(match[0]) : 0;
+}
+
+function buildAiDraftIngredients(recipeId: string, items: string[]): RecipeIngredientDisplayItem[] {
+  const numericRecipeId = Number(recipeId);
+
+  return items.map((item, index) => ({
+    recipeId: Number.isFinite(numericRecipeId) ? numericRecipeId : index + 1,
+    ingredientId: index + 1,
+    name: item,
+    quantityLabel: '',
+    quantityValue: undefined,
+    unit: '',
+    note: '',
+    emoji: '🥘',
+    bg: '#F3F4F6',
+  }));
+}
+
+function buildAiDraftSteps(recipeId: string, items: string[]): StepItem[] {
+  const numericRecipeId = Number(recipeId);
+
+  return items.map((item, index) => ({
+    id: `ai-step-${index + 1}`,
+    number: index + 1,
+    text: normalizeAiStepText(item),
+    tip: '',
+    recipeId: Number.isFinite(numericRecipeId) ? numericRecipeId : undefined,
+  }));
+}
+
+type AiEditPreview = {
+  name: string;
+  description: string;
+  timeMinutes: number;
+  ingredients: CookingIngredientItem[];
+  steps: StepItem[];
+};
+
+function parseAiRecipeSession(value?: string | string[]): AIRecipeSession | null {
+  const rawValue = singleParam(value);
+
+  if (!rawValue) {
+    return null;
+  }
+
+  try {
+    return JSON.parse(decodeURIComponent(rawValue)) as AIRecipeSession;
+  } catch {
+    return null;
+  }
+}
+
 export default function RecipeDetailScreen() {
   const [serves, setServes] = React.useState(4);
   const [imageVisible, setImageVisible] = React.useState(false);
   const [deleteConfirmVisible, setDeleteConfirmVisible] = React.useState(false);
   const [noteModalVisible, setNoteModalVisible] = React.useState(false);
   const [noteText, setNoteText] = React.useState('');
+  const [aiEditModalVisible, setAiEditModalVisible] = React.useState(false);
+  const [showAiSuccessModal, setShowAiSuccessModal] = React.useState(false);
+  const [aiEditType, setAiEditType] = React.useState<'swap' | 'optimize'>('swap');
+  const [aiEditPrompt, setAiEditPrompt] = React.useState('');
+  const [aiEditLoading, setAiEditLoading] = React.useState(false);
+  const [aiEditPreview, setAiEditPreview] = React.useState<AiEditPreview | null>(null);
 
   const router = useRouter();
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const params = useLocalSearchParams<RecipeDetailParams>();
+  const { session: storedAIRecipeSession, clearSession: clearAIRecipeSession } = useAIRecipeSession();
+  const { upsertRecipeDraft } = useUserRecipeEdits();
+  const moduleAIRecipeSession = getLatestAIRecipeSession();
 
   const {
     isSaved,
@@ -96,6 +174,14 @@ export default function RecipeDetailScreen() {
   const recipeTimeMinutes = singleParam(params.recipeTimeMinutes);
   const fromParam = singleParam(params.from);
   const returnQuery = singleParam(params.returnQuery);
+  const aiRecipeSessionFromParams = React.useMemo(
+    () => parseAiRecipeSession(params.aiRecipe),
+    [params.aiRecipe]
+  );
+  const aiRecipeSession = aiRecipeSessionFromParams ?? moduleAIRecipeSession ?? storedAIRecipeSession;
+  const isAiImportRoute = fromParam === 'ai-import';
+  const isAiImport = isAiImportRoute && aiRecipeSession !== null;
+  const isAiImportReady = !isAiImportRoute || aiRecipeSession !== null;
 
   const source = React.useMemo<RecipeDetailSource>(() => {
     if (fromParam === 'search-results' || fromParam === 'recipe-tab' || fromParam === 'unknown') {
@@ -109,8 +195,12 @@ export default function RecipeDetailScreen() {
     [returnQuery, source]
   );
 
-  const { data: apiRecipeData } = useRecipeById(recipeId ?? '');
+  const { data: apiRecipeData } = useRecipeById(isAiImportRoute ? '' : recipeId ?? '');
   const baseServes = React.useMemo(() => {
+    if (isAiImportRoute) {
+      return 4;
+    }
+
     const apiRecipe =
       (apiRecipeData as
         | {
@@ -126,9 +216,13 @@ export default function RecipeDetailScreen() {
       toPositiveNumber(apiRecipe?.servings) ??
       4
     );
-  }, [apiRecipeData]);
+  }, [apiRecipeData, isAiImportRoute]);
 
   const recipeFromApi = React.useMemo<SearchRecipeItem | undefined>(() => {
+    if (isAiImportRoute) {
+      return undefined;
+    }
+
     if (!apiRecipeData) {
       return undefined;
     }
@@ -162,7 +256,28 @@ export default function RecipeDetailScreen() {
         ? apiRecipe.cookware.map((item) => String(item))
         : [],
     };
-  }, [apiRecipeData, recipeDescription, recipeImageUrl]);
+  }, [apiRecipeData, isAiImportRoute, recipeDescription, recipeImageUrl]);
+
+  const recipeFromAiSession = React.useMemo<SearchRecipeItem | undefined>(() => {
+    if (!isAiImport || !aiRecipeSession) {
+      return undefined;
+    }
+
+    const timeMatch = String(aiRecipeSession.recipe.time ?? '').match(/\d+/);
+    const timeMinutes = timeMatch ? Number(timeMatch[0]) : 0;
+    const recipeNameFromSession = aiRecipeSession.recipe.dish?.trim() || 'AI Recipe';
+
+    return {
+      id: `ai-${recipeNameFromSession.toLowerCase().replace(/[^a-z0-9]+/g, '-') || 'recipe'}`,
+      name: recipeNameFromSession,
+      description: `Generated from ${aiRecipeSession.sourceLabel}`,
+      calories: 0,
+      timeMinutes: Number.isFinite(timeMinutes) ? timeMinutes : 0,
+      imageUrl: aiRecipeSession.imageUri,
+      tags: [],
+      cookware: [],
+    };
+  }, [aiRecipeSession, isAiImport]);
 
   const recipeFromParams = React.useMemo<SearchRecipeItem | undefined>(() => {
     if (!recipeId || !recipeName || !recipeDescription || !recipeImageUrl) {
@@ -194,26 +309,100 @@ export default function RecipeDetailScreen() {
     [getSavedRecipeById, recipeId]
   );
 
-  const recipe = recipeFromApi ?? recipeFromSaved ?? recipeFromCatalog ?? recipeFromParams ?? SEARCH_RECIPES[0];
-  const { data: recipeSteps } = useStepList(recipe.id);
+  const aiRecipeDraft = React.useMemo(() => {
+    if (!aiEditPreview) {
+      return null;
+    }
+
+    return {
+      name: aiEditPreview.name,
+      description: aiEditPreview.description,
+      timeMinutes: aiEditPreview.timeMinutes,
+    };
+  }, [aiEditPreview]);
+
+  const recipe =
+    recipeFromAiSession ?? recipeFromApi ?? recipeFromSaved ?? recipeFromCatalog ?? recipeFromParams ?? SEARCH_RECIPES[0];
+  const displayRecipe = aiEditPreview
+    ? {
+        ...recipe,
+        name: aiEditPreview.name,
+        description: aiEditPreview.description,
+        timeMinutes: aiEditPreview.timeMinutes,
+      }
+    : recipe;
+  const { data: recipeSteps } = useStepList(isAiImportRoute ? '' : recipe.id);
   const { data: recipeIngredients, isLoading: isRecipeIngredientsLoading } =
-    useRecipeIngredientList(recipe.id, serves, baseServes);
+    useRecipeIngredientList(isAiImportRoute ? '' : recipe.id, serves, baseServes);
+
+  const displayIngredientRows = React.useMemo(
+    () =>
+      aiEditPreview
+        ? aiEditPreview.ingredients.map((ingredient, index) => ({
+            key: `ai-preview-${index}`,
+            emoji: ingredient.emoji,
+            name: ingredient.name,
+            qty: ingredient.qty,
+            bg: ingredient.bg,
+          }))
+        : isAiImport
+          ? (aiRecipeSession?.recipe.ingredients ?? aiRecipeSession?.detectedIngredients ?? []).map(
+              (ingredient, index) => ({
+                key: `ai-import-${index}`,
+                emoji: '🥘',
+                name: ingredient,
+                qty: '',
+                bg: '#F3F4F6',
+              })
+            )
+          : (recipeIngredients ?? []).map((ingredient) => ({
+              key: `${ingredient.recipeId}-${ingredient.ingredientId}`,
+              emoji: ingredient.emoji,
+              name: ingredient.name,
+              qty: ingredient.quantityLabel,
+              bg: ingredient.bg,
+            })),
+    [aiEditPreview, aiRecipeSession, isAiImport, recipeIngredients]
+  );
 
   React.useEffect(() => {
-    setServes(baseServes);
-  }, [baseServes, recipe.id]);
+    setServes(isAiImport ? 4 : baseServes);
+  }, [baseServes, isAiImport, recipe.id]);
 
-  const displaySteps = recipeSteps ?? [];
+  const displaySteps = React.useMemo<StepItem[]>(() => {
+    if (aiEditPreview) {
+      return aiEditPreview.steps;
+    }
+
+    if (isAiImport && aiRecipeSession) {
+      return aiRecipeSession.recipe.steps.map((step, index) => ({
+        id: `ai-step-${index + 1}`,
+        number: index + 1,
+        text: normalizeAiStepText(step),
+        tip: '',
+      }));
+    }
+
+    return recipeSteps ?? [];
+  }, [aiEditPreview, aiRecipeSession, isAiImport, recipeSteps]);
   const displayTips = React.useMemo(() => {
+    if (isAiImport || aiEditPreview) {
+      return [];
+    }
+
     const tips = displaySteps
       .map((step) => (typeof step.tip === 'string' ? step.tip.trim() : ''))
       .filter((tip): tip is string => tip.length > 0);
 
     return Array.from(new Set(tips));
-  }, [displaySteps]);
+  }, [aiEditPreview, displaySteps, isAiImport]);
 
-  const recipeIsSaved = isSaved(recipe.id);
-  const displayCookbooks = getRecipeCookbooks(recipe.id);
+  const displayRecipeName = aiEditPreview?.name ?? displayRecipe.name;
+  const displayRecipeDescription = aiEditPreview?.description ?? displayRecipe.description;
+  const displayRecipeTimeMinutes = aiEditPreview?.timeMinutes ?? displayRecipe.timeMinutes;
+
+  const recipeIsSaved = isAiImport ? false : isSaved(recipe.id);
+  const displayCookbooks = isAiImport ? [] : getRecipeCookbooks(recipe.id);
   const displayCookbookBadges = React.useMemo(() => {
     if (!recipeIsSaved) {
       return [];
@@ -230,6 +419,12 @@ export default function RecipeDetailScreen() {
   }, [displayCookbooks, recipeIsSaved, t]);
 
   function handleBack() {
+    if (isAiImport) {
+      clearAIRecipeSession();
+      router.replace('/(tabs)/recipe');
+      return;
+    }
+
     if (hasSearchReturnContext) {
       router.replace({
         pathname: '/search-results',
@@ -252,12 +447,132 @@ export default function RecipeDetailScreen() {
   }
 
   function handleSaveRecipe() {
+    if (aiEditPreview) {
+      saveRecipe({
+        ...displayRecipe,
+        name: aiEditPreview.name,
+        description: aiEditPreview.description,
+        timeMinutes: aiEditPreview.timeMinutes,
+      });
+      return;
+    }
+
+    if (isAiImport && recipeFromAiSession) {
+      saveRecipe(recipeFromAiSession);
+      return;
+    }
+
     saveRecipe(recipe);
   }
 
   function handleDeleteSavedRecipe() {
     removeSavedRecipe(recipe.id);
     setDeleteConfirmVisible(false);
+  }
+
+  function openAiEditModal(type: 'swap' | 'optimize') {
+    setAiEditType(type);
+    setAiEditPrompt('');
+    setShowAiSuccessModal(false);
+    setAiEditModalVisible(true);
+  }
+
+  async function handleStartAiEdit() {
+    const trimmedPrompt = aiEditPrompt.trim();
+    if (!trimmedPrompt) {
+      return;
+    }
+
+    const normalizedLanguage = String(locale || '').toLowerCase().startsWith('vi') ? 'vi' : 'en';
+    const ingredientsForPrompt =
+      recipeIngredients && recipeIngredients.length > 0
+        ? recipeIngredients.map((item) => `${item.name} (${item.quantityLabel})`)
+        : [recipe.name];
+
+    const currentStepsText =
+      displaySteps.length > 0
+        ? displaySteps
+            .map((step, index) => {
+              const text = String(step.text || '').trim();
+              return `${index + 1}. ${text}`;
+            })
+            .join('\n')
+        : 'No current steps';
+
+    const systemRequestPrefix =
+      aiEditType === 'swap'
+        ? 'Adjust ingredients based on user request while preserving full recipe format.'
+        : 'Optimize and refine cooking steps based on user request while preserving full recipe format.';
+
+    const specificNote = [
+      systemRequestPrefix,
+      `User request: ${trimmedPrompt}`,
+      `Current recipe: ${recipe.name}`,
+      'Current steps:',
+      currentStepsText,
+    ].join('\n');
+
+    setAiEditLoading(true);
+    try {
+      const response = await generateRecipeFromInstruction({
+        ingredients: ingredientsForPrompt,
+        preference: {
+          specific_note: specificNote,
+        },
+        language: normalizedLanguage,
+      });
+
+      const nextPreview: AiEditPreview = {
+        name: response.dish?.trim() || displayRecipe.name,
+        description: displayRecipe.description,
+        timeMinutes: parseAiTimeMinutes(response.time) || displayRecipe.timeMinutes,
+        ingredients: response.ingredients.map((ingredient) => ({
+          emoji: '🥘',
+          name: ingredient,
+          qty: '',
+          bg: '#F3F4F6',
+        })),
+        steps: buildAiDraftSteps(String(displayRecipe.id), response.steps),
+      };
+
+      setAiEditPreview(nextPreview);
+
+      const recipeIdNumber = Number(recipe.id);
+      upsertRecipeDraft({
+        recipeId: String(recipe.id),
+        recipe: {
+          name: nextPreview.name,
+          totalTime: nextPreview.timeMinutes,
+          calories: Number.isFinite(recipe.calories) ? recipe.calories : 0,
+          protein: Number((apiRecipeData as { protein?: number | string | null } | undefined)?.protein ?? 0),
+          carbs: Number((apiRecipeData as { carbs?: number | string | null } | undefined)?.carbs ?? 0),
+          fats: Number((apiRecipeData as { fats?: number | string | null } | undefined)?.fats ?? 0),
+        },
+        ingredients: buildAiDraftIngredients(String(recipe.id), response.ingredients),
+        steps: buildAiDraftSteps(String(recipeIdNumber), response.steps),
+      });
+
+      setAiEditModalVisible(false);
+      requestAnimationFrame(() => setShowAiSuccessModal(true));
+    } catch {
+      Alert.alert(
+        t('recipe.errorTitle') || 'Lỗi',
+        'Không thể thay đổi công thức. Vui lòng thử lại.'
+      );
+    } finally {
+      setAiEditLoading(false);
+    }
+  }
+
+  if (isAiImportRoute && !isAiImportReady) {
+    return (
+      <SafeAreaView className="flex-1 items-center justify-center bg-background" edges={['top']}>
+        <ActivityIndicator size="large" color="#CE232A" />
+        <VietnamText className="mt-4 text-base font-semibold text-gray-700">
+          {t('cookbookDetail.aiAnalyzing')}
+        </VietnamText>
+      </SafeAreaView>
+    );
   }
 
   return (
@@ -278,32 +593,34 @@ export default function RecipeDetailScreen() {
               <Icon as={ArrowLeftIcon} size={20} className="text-white" />
             </CircleButton>
 
-            <View className="flex-row gap-3">
-              <CircleButton
-                variant="ghost"
-                className="h-10 w-10 items-center justify-center rounded-full bg-black/35"
-                onPress={() =>
-                  router.push({
-                    pathname: '/(tabs)/recipe-edit',
-                    params: {
-                      recipeId: recipe.id,
-                      from: source,
-                      ...(returnQuery ? { returnQuery } : {}),
-                    },
-                  })
-                }>
-                <Icon as={PencilIcon} size={18} className="text-white" />
-              </CircleButton>
-
-              {recipeIsSaved ? (
+            {isAiImport ? <View className="h-10 w-10" /> : (
+              <View className="flex-row gap-3">
                 <CircleButton
                   variant="ghost"
                   className="h-10 w-10 items-center justify-center rounded-full bg-black/35"
-                  onPress={() => setDeleteConfirmVisible(true)}>
-                  <Icon as={XIcon} size={18} className="text-white" />
+                  onPress={() =>
+                    router.push({
+                      pathname: '/(tabs)/recipe-edit',
+                      params: {
+                        recipeId: recipe.id,
+                        from: source,
+                        ...(returnQuery ? { returnQuery } : {}),
+                      },
+                    })
+                  }>
+                  <Icon as={PencilIcon} size={18} className="text-white" />
                 </CircleButton>
-              ) : null}
-            </View>
+
+                {recipeIsSaved ? (
+                  <CircleButton
+                    variant="ghost"
+                    className="h-10 w-10 items-center justify-center rounded-full bg-black/35"
+                    onPress={() => setDeleteConfirmVisible(true)}>
+                    <Icon as={XIcon} size={18} className="text-white" />
+                  </CircleButton>
+                ) : null}
+              </View>
+            )}
           </View>
 
           <View className="absolute bottom-4 right-4">
@@ -317,8 +634,8 @@ export default function RecipeDetailScreen() {
         </View>
 
         <View className="-mt-4 rounded-t-3xl bg-background px-4 pt-5">
-          <VietnamText className="mb-2 text-2xl font-bold text-gray-900">{recipe.name}</VietnamText>
-          <VietnamText className="mb-4 text-sm text-gray-500">{recipe.description}</VietnamText>
+          <VietnamText className="mb-2 text-2xl font-bold text-gray-900">{displayRecipeName}</VietnamText>
+          <VietnamText className="mb-4 text-sm text-gray-500">{displayRecipeDescription}</VietnamText>
 
           <View className="mb-4 flex-row rounded-2xl border border-gray-200">
             <NutritionStat value={String(recipe.calories)} label={t('recipeDetail.calories')} emoji="🔥" />
@@ -331,7 +648,7 @@ export default function RecipeDetailScreen() {
             <View className="flex-row items-center gap-2">
               <VietnamText className="text-sm font-semibold text-gray-800">{t('other.time')}:</VietnamText>
               <VietnamText className="text-sm text-gray-600">
-                {recipe.timeMinutes} {t('searchResults.minute')}
+                {displayRecipeTimeMinutes} {t('searchResults.minute')}
               </VietnamText>
             </View>
             <View className="flex-row items-center gap-2">
@@ -398,17 +715,17 @@ export default function RecipeDetailScreen() {
 
           <VietnamText className="mb-2 text-sm text-gray-500">{t('ingredients.mainIngredients')}</VietnamText>
 
-          {isRecipeIngredientsLoading ? (
+          {isAiImport ? null : isRecipeIngredientsLoading ? (
             <View className="items-center py-6">
               <ActivityIndicator size="small" color="#00B075" />
             </View>
-          ) : recipeIngredients && recipeIngredients.length > 0 ? (
-            recipeIngredients.map((ingredient) => (
+          ) : displayIngredientRows.length > 0 ? (
+            displayIngredientRows.map((ingredient) => (
               <IngredientRow
-                key={`${ingredient.recipeId}-${ingredient.ingredientId}`}
+                key={ingredient.key}
                 emoji={ingredient.emoji}
                 name={ingredient.name}
-                qty={ingredient.quantityLabel}
+                qty={ingredient.qty}
                 bg={ingredient.bg}
               />
             ))
@@ -417,7 +734,7 @@ export default function RecipeDetailScreen() {
           )}
 
           <View className="mt-5 rounded-full p-0.5" style={{ borderWidth: 1.5 }}>
-            <RoundedButton variant="ghost">
+            <RoundedButton variant="ghost" onPress={() => openAiEditModal('swap')}>
               <Icon as={SparklesIcon} size={18} />
               <VietnamText className="text-base font-semibold">
                 {t('ingredients.swapIngredients')}
@@ -441,7 +758,7 @@ export default function RecipeDetailScreen() {
           </View>
 
           <View className="mb-5 rounded-full" style={{ borderWidth: 1.5 }}>
-            <RoundedButton variant="ghost">
+            <RoundedButton variant="ghost" onPress={() => openAiEditModal('optimize')}>
               <Icon as={SparklesIcon} size={18} />
               <VietnamText className="text-base font-semibold">{t('steps.optimizeSteps')}</VietnamText>
             </RoundedButton>
@@ -474,7 +791,14 @@ export default function RecipeDetailScreen() {
           <Icon as={ShareIcon} size={20} />
         </CircleButton>
 
-        {recipeIsSaved ? (
+        {isAiImport ? (
+          <RoundedButton className="flex-1" size="lg" onPress={handleSaveRecipe}>
+            <View className="h-8 w-8 items-center justify-center rounded-full">
+              <Icon as={Bookmark} size={16} color="white" />
+            </View>
+            <VietnamText className="text-lg font-bold text-white">{t('recipe.saveRecipe')}</VietnamText>
+          </RoundedButton>
+        ) : recipeIsSaved ? (
           <RoundedButton
             className="flex-1"
             size="lg"
@@ -502,6 +826,33 @@ export default function RecipeDetailScreen() {
           </RoundedButton>
         )}
       </View>
+
+      <Modal
+        visible={showAiSuccessModal}
+        transparent
+        animationType="fade"
+        statusBarTranslucent
+        onRequestClose={() => setShowAiSuccessModal(false)}>
+        <View className="flex-1 items-center justify-center bg-black/45 px-6">
+          <View className="w-full rounded-[28px] bg-white p-6">
+            <VietnamText className="text-center text-2xl font-bold text-gray-900">
+              {t('recipe.successTitle')}
+            </VietnamText>
+
+            <VietnamText className="mt-4 text-center text-base leading-7 text-gray-600">
+              {t('recipe.successAnalyzed', {
+                source: aiRecipeSession?.sourceLabel ?? 'AI',
+              })}
+            </VietnamText>
+
+            <Pressable
+              onPress={() => setShowAiSuccessModal(false)}
+              className="mt-6 items-center justify-center rounded-full bg-[#CE232A] py-3.5">
+              <VietnamText className="text-base font-bold text-white">{t('aiRecipe.ok')}</VietnamText>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
 
       <Modal visible={imageVisible} transparent animationType="fade" statusBarTranslucent>
         <View style={{ flex: 1, backgroundColor: 'black' }}>
@@ -628,6 +979,61 @@ export default function RecipeDetailScreen() {
                 </VietnamText>
               </RoundedButton>
             </View>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
+
+      <Modal
+        visible={aiEditModalVisible}
+        transparent
+        animationType="fade"
+        statusBarTranslucent
+        onRequestClose={() => setAiEditModalVisible(false)}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          className="flex-1 items-center justify-center bg-black/45 px-6">
+          <View className="w-full max-h-[82%] rounded-[28px] bg-white p-5">
+            <View className="mb-3 flex-row items-center justify-between">
+              <VietnamText className="text-lg font-bold text-[#1F2937]">
+                {aiEditType === 'swap' ? 'Swap ingredient' : 'Optimize steps'}
+              </VietnamText>
+              <Pressable
+                onPress={() => setAiEditModalVisible(false)}
+                className="h-9 w-9 items-center justify-center rounded-full bg-[#F0F1F3]">
+                <Icon as={XIcon} size={16} className="text-[#69696F]" />
+              </Pressable>
+            </View>
+
+            <VietnamText className="mb-3 text-sm text-gray-600">
+              Nhập thay đổi bạn muốn, sau đó bấm Start now để AI xử lý bằng instruction API.
+            </VietnamText>
+
+            <View className="mb-4 min-h-[120px] rounded-[14px] border border-[#16814E] bg-white p-3.5">
+              <TextInput
+                multiline
+                textAlignVertical="top"
+                placeholder="Ví dụ: đổi thịt bò thành đậu hũ, giảm vị cay, rút gọn còn 20 phút"
+                placeholderTextColor="#9CA3AF"
+                className="flex-1 text-[15px] leading-[22px] text-[#374151]"
+                style={{ fontFamily: 'BeVietnamPro_400Regular' }}
+                value={aiEditPrompt}
+                onChangeText={setAiEditPrompt}
+              />
+            </View>
+
+            <Pressable
+              onPress={handleStartAiEdit}
+              disabled={aiEditLoading || aiEditPrompt.trim().length === 0}
+              className="mb-4 items-center justify-center rounded-full bg-[#CE232A] py-3.5 disabled:opacity-50">
+              {aiEditLoading ? (
+                <ActivityIndicator size="small" color="white" />
+              ) : (
+                <VietnamText className="text-[16px] font-bold text-white tracking-wider">
+                  Start now
+                </VietnamText>
+              )}
+            </Pressable>
+
           </View>
         </KeyboardAvoidingView>
       </Modal>

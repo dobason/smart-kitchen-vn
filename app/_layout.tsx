@@ -25,6 +25,7 @@ import { LocaleProvider } from '@/providers/locale-provider';
 import { IngredientsProvider } from '@/providers/ingredients-provider';
 import { SavedRecipesProvider } from '@/providers/saved-recipes-provider';
 import { UserRecipeEditsProvider } from '@/providers/user-recipe-edits-provider';
+import { AIRecipeSessionProvider } from '@/providers/ai-recipe-session-provider';
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -48,15 +49,17 @@ export default function RootLayout() {
       <LocaleProvider>
         <IngredientsProvider>
           <SavedRecipesProvider>
-            <ClerkProvider publishableKey={clerkPublishableKey} tokenCache={tokenCache}>
-              <UserRecipeEditsProvider>
-                <ThemeProvider value={NAV_THEME['light']}>
-                  <StatusBar style="dark" />
-                  <Routes />
-                  <PortalHost />
-                </ThemeProvider>
-              </UserRecipeEditsProvider>
-            </ClerkProvider>
+            <AIRecipeSessionProvider>
+              <ClerkProvider publishableKey={clerkPublishableKey} tokenCache={tokenCache}>
+                <UserRecipeEditsProvider>
+                  <ThemeProvider value={NAV_THEME['light']}>
+                    <StatusBar style="dark" />
+                    <Routes />
+                    <PortalHost />
+                  </ThemeProvider>
+                </UserRecipeEditsProvider>
+              </ClerkProvider>
+            </AIRecipeSessionProvider>
           </SavedRecipesProvider>
         </IngredientsProvider>
       </LocaleProvider>
@@ -109,6 +112,7 @@ function Routes() {
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="search-results" options={{ headerShown: false }} />
         <Stack.Screen name="ai-recipe" options={{ headerShown: false }} />
+        <Stack.Screen name="ai-recipe-result" options={{ headerShown: false }} />
         <Stack.Screen
           name="recipe-generating"
           options={{ headerShown: false, gestureEnabled: false }}
