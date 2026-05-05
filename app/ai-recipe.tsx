@@ -17,7 +17,7 @@ import { ActivityIndicator, Pressable, ScrollView, TextInput, View } from 'react
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAllIngredients } from '@/hooks/use-top-ingredients';
 import { IngredientApiItem, IngredientItem } from '@/types/ingredient';
-
+import { useAIRecipeContext } from '@/context/ai-recipe-context';
 import { useTags } from '@/hooks/use-tags';
 
 function toggleInList(value: string, current: string[]) {
@@ -40,6 +40,9 @@ export default function AIRecipeScreen() {
   const { t, locale } = useLocale();
   const router = useRouter();
   const { aiIngredientIds, setAiIngredientIds } = useIngredients();
+
+  // Context chứa mutation useGenerateRecipe — dùng chung với recipe-generating screen
+  const { generate, isPending, reset } = useAIRecipeContext();
 
   const { ingredients: allIngredients } = useAllIngredients();
 
@@ -84,10 +87,62 @@ export default function AIRecipeScreen() {
   }
 
   function handleGenerateRecipe() {
-    if (!canGenerate) {
-      return;
-    }
+    if (!canGenerate || isPending) return;
 
+    // Đặt lại kết quả cũ trước khi sinh công thức mới
+    reset();
+
+    // Lấy tên hiển thị của các nguyên liệu đã chọn
+    const ingredientNames = selectedIngredients.map((i) =>
+      getIngredientDisplayName(i, locale)
+    );
+
+    // Lấy tên các tag đã chọn để gửi lên AI Server dưới dạng text
+    const getTagNames = (ids: string[]) =>
+      ids
+        .map((id) => tags.find((tag) => String(tag.id) === id)?.name ?? '')
+        .filter(Boolean)
+        .join(', ');
+
+    // Xây dựng preference từ các lựa chọn trên màn hình
+    const preference = {
+      ...(selectedDiet.length > 0 && { dietary_restrictions: getTagNames(selectedDiet) }),
+      ...(selectedCuisine.length > 0 && { cuisine_preferences: getTagNames(selectedCuisine) }),
+      ...(selectedAllergenFree.length > 0 && {
+        flavor_profiles: selectedAllergenFree.join(', '),
+      }),
+      ...(selectedTime && { time_constraints: `${selectedTime} minutes` }),
+      ...((extraCommand.trim() || selectedCookware.length > 0 || selectedDishTypes.length > 0) && {
+        specific_note: [
+          selectedCookware.length > 0 && `Cookware: ${getTagNames(selectedCookware)}`,
+          selectedDishTypes.length > 0 && `Dish type: ${getTagNames(selectedDishTypes)}`,
+          extraCommand.trim() && extraCommand.trim(),
+        ]
+          .filter(Boolean)
+          .join('. '),
+      }),
+    };
+
+    // Gọi API — kết quả sẽ có trong context.recipe sau khi thành công
+    generate(
+      {
+        ingredients: ingredientNames,
+        preference: Object.keys(preference).length > 0 ? preference : undefined,
+        language: locale === 'vi' ? 'vi' : 'en',
+      },
+      {
+        onSuccess: () => {
+          // Sau khi API trả về thành công, navigate sang màn hình kết quả
+          router.replace('./recipe-generating');
+        },
+        onError: () => {
+          // Vẫn navigate để màn hình generating hiển thị lỗi
+          router.replace('./recipe-generating');
+        },
+      }
+    );
+
+    // Navigate ngay để hiển thị animation trong khi chờ API
     router.push('./recipe-generating');
   }
 

@@ -1,13 +1,13 @@
 import { VietnamText } from '@/components/in-app-ui/vietnam-text';
 import { useLocale } from '@/hooks/use-locale';
+import { useAIRecipeContext } from '@/context/ai-recipe-context';
 import { useRouter } from 'expo-router';
 import * as React from 'react';
-import { Animated, Easing, Modal, Pressable, StyleSheet, View } from 'react-native';
+import { Animated, Easing, Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 const BRAND_RED = '#CE232A';
 const SCREEN_BG = '#FCE9EC';
-const GENERATING_DURATION_MS = 20000;
 const ACTION_CYCLE_MS = 6200;
 
 function instantReset(value: Animated.Value) {
@@ -22,12 +22,17 @@ export default function AIRecipeGeneratingScreen() {
   const { t } = useLocale();
   const router = useRouter();
 
-  const [showDoneModal, setShowDoneModal] = React.useState(false);
+  // Lấy trạng thái thực tế từ mutation (gọ bỏ timer giả)
+  const { isPending, isError, errorMessage, recipe } = useAIRecipeContext();
+
+  // Modal chỉ hiển thị khi API đã trả về (thành công hoặc lỗi)
+  const showDoneModal = !isPending && (!!recipe || isError);
 
   const actionCycle = React.useRef(new Animated.Value(0)).current;
   const steamCycle = React.useRef(new Animated.Value(0)).current;
   const durationProgress = React.useRef(new Animated.Value(0)).current;
 
+  // Animation nồi nấu và hơi nước chạy vô tận khi đang chờ
   React.useEffect(() => {
     const actionLoop = Animated.loop(
       Animated.sequence([
@@ -63,25 +68,28 @@ export default function AIRecipeGeneratingScreen() {
     };
   }, [actionCycle, steamCycle]);
 
+  // Thanh progress dựa trên isPending: tiến dần khi đang chờ, dừng khi xong
   React.useEffect(() => {
-    const progressAnimation = Animated.timing(durationProgress, {
-      toValue: 1,
-      duration: GENERATING_DURATION_MS,
-      easing: Easing.linear,
-      useNativeDriver: false,
-    });
-
-    progressAnimation.start();
-
-    const doneTimeout = setTimeout(() => {
-      setShowDoneModal(true);
-    }, GENERATING_DURATION_MS);
-
-    return () => {
-      clearTimeout(doneTimeout);
-      progressAnimation.stop();
-    };
-  }, [durationProgress]);
+    if (isPending) {
+      // Dưới 10 giây, tiến đến 85% (giữ chỗ cho server response)
+      const progressAnimation = Animated.timing(durationProgress, {
+        toValue: 0.85,
+        duration: 10000,
+        easing: Easing.out(Easing.quad),
+        useNativeDriver: false,
+      });
+      progressAnimation.start();
+      return () => progressAnimation.stop();
+    } else {
+      // Khi xong: chạy nhanh đến 100%
+      Animated.timing(durationProgress, {
+        toValue: 1,
+        duration: 400,
+        easing: Easing.out(Easing.quad),
+        useNativeDriver: false,
+      }).start();
+    }
+  }, [isPending, durationProgress]);
 
   const boardRotate = actionCycle.interpolate({
     inputRange: [0, 0.1, 0.2, 0.27, 1],
@@ -278,8 +286,8 @@ export default function AIRecipeGeneratingScreen() {
   });
 
   const handleConfirm = React.useCallback(() => {
-    setShowDoneModal(false);
-    router.replace('/(tabs)');
+    // Navigate sang màn hình chi tiết AI để xem đầy đủ công thức
+    router.replace('/(tabs)/ai-recipe-detail');
   }, [router]);
 
   return (
@@ -452,14 +460,34 @@ export default function AIRecipeGeneratingScreen() {
       <Modal visible={showDoneModal} animationType="fade" transparent statusBarTranslucent>
         <View style={styles.modalBackdrop}>
           <View style={styles.modalCard}>
-            <VietnamText style={styles.modalTitle}>{t('aiRecipe.generatedDoneTitle')}</VietnamText>
-            <VietnamText style={styles.modalDescription}>
-              {t('aiRecipe.generatedDoneDescription')}
-            </VietnamText>
-
-            <Pressable onPress={handleConfirm} style={styles.modalButton}>
-              <VietnamText style={styles.modalButtonText}>{t('aiRecipe.ok')}</VietnamText>
-            </Pressable>
+            {isError ? (
+              // Trường hợp lỗi
+              <>
+                <VietnamText style={styles.modalTitle}>🚫 Đã xảy ra lỗi</VietnamText>
+                <VietnamText style={styles.modalDescription}>
+                  {errorMessage ?? 'Không thể kết nối với AI Server. Vui lòng kiểm tra kết nối mạng và thử lại.'}
+                </VietnamText>
+                <Pressable onPress={() => router.replace('./ai-recipe')} style={styles.modalButton}>
+                  <VietnamText style={styles.modalButtonText}>Thử lại</VietnamText>
+                </Pressable>
+              </>
+            ) : (
+              // Trường hợp thành công — chỉ hiển thị tên món + nút CTA
+              // Nội dung chi tiết (nguyên liệu, bước nấu) được xem ở màn hình ai-recipe-detail
+              <>
+                <VietnamText style={styles.modalTitle}>
+                  🍽 {recipe?.name ?? 'Công thức đã sẵn sàng!'}
+                </VietnamText>
+                <VietnamText style={styles.modalDescription}>
+                  AI đã tạo xong công thức cho bạn. Nhấn bên dưới để xem đầy đủ!
+                </VietnamText>
+                <Pressable onPress={handleConfirm} style={[styles.modalButton, { marginTop: 8 }]}>
+                  <VietnamText style={styles.modalButtonText}>
+                    Xem công thức đầy đủ →
+                  </VietnamText>
+                </Pressable>
+              </>
+            )}
           </View>
         </View>
       </Modal>
@@ -801,4 +829,24 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 19,
   },
+  modalMeta: {
+    color: '#6B7280',
+    fontSize: 14,
+    textAlign: 'center',
+    marginBottom: 14,
+  },
+  modalSectionTitle: {
+    color: '#111827',
+    fontSize: 16,
+    fontWeight: '700' as const,
+    marginTop: 14,
+    marginBottom: 6,
+  },
+  modalListItem: {
+    color: '#374151',
+    fontSize: 14,
+    lineHeight: 22,
+    marginBottom: 2,
+  },
 });
+

@@ -1,4 +1,5 @@
 import { CircleButton } from '@/components/in-app-ui/circle-button';
+import * as SecureStore from 'expo-secure-store';
 import { IngredientRow } from '@/components/in-app-ui/ingredient-row';
 import { NutritionStat } from '@/components/in-app-ui/nutrition-stat';
 import { RoundedButton } from '@/components/in-app-ui/rounded-button';
@@ -128,6 +129,8 @@ export default function RecipeDetailScreen() {
     );
   }, [apiRecipeData]);
 
+
+
   const recipeFromApi = React.useMemo<SearchRecipeItem | undefined>(() => {
     if (!apiRecipeData) {
       return undefined;
@@ -195,6 +198,37 @@ export default function RecipeDetailScreen() {
   );
 
   const recipe = recipeFromApi ?? recipeFromSaved ?? recipeFromCatalog ?? recipeFromParams ?? SEARCH_RECIPES[0];
+
+  React.useEffect(() => {
+    const loadSavedNote = async () => {
+      if (!recipe?.id) return;
+      try {
+        const savedNote = await SecureStore.getItemAsync(`recipe_note_${recipe.id}`);
+        if (savedNote !== null) {
+          setNoteText(savedNote);
+        } else {
+          // Reset về rỗng nếu công thức này chưa có ghi chú
+          setNoteText('');
+        }
+      } catch (e) {
+        console.error('Failed to load note', e);
+      }
+    };
+    
+    loadSavedNote();
+  }, [recipe?.id]);
+
+  const handleCloseNoteModal = async () => {
+    setNoteModalVisible(false);
+    if (recipe?.id) {
+      try {
+        await SecureStore.setItemAsync(`recipe_note_${recipe.id}`, noteText);
+      } catch (e) {
+        console.error('Failed to save note', e);
+      }
+    }
+  };
+
   const { data: recipeSteps } = useStepList(recipe.id);
   const { data: recipeIngredients, isLoading: isRecipeIngredientsLoading } =
     useRecipeIngredientList(recipe.id, serves, baseServes);
@@ -204,13 +238,36 @@ export default function RecipeDetailScreen() {
   }, [baseServes, recipe.id]);
 
   const displaySteps = recipeSteps ?? [];
+
+  const finalIngredients = recipe?.aiIngredients
+    ? recipe.aiIngredients.map((ing: any, idx: number) => ({
+        recipeId: recipe.id,
+        ingredientId: idx,
+        name: typeof ing === 'string' ? ing : ing.name || '',
+        quantityLabel: typeof ing === 'string' ? '' : ing.amount || '',
+        emoji: '🍲',
+        bg: '#F0FDF4',
+      }))
+    : recipeIngredients;
+
+  const finalSteps = recipe?.aiSteps
+    ? recipe.aiSteps.map((text: string, idx: number) => ({
+        id: String(idx),
+        text,
+        tip: '',
+        number: idx + 1,
+      }))
+    : displaySteps;
+
+  const isFinalIngredientsLoading = recipe?.aiIngredients ? false : isRecipeIngredientsLoading;
+
   const displayTips = React.useMemo(() => {
-    const tips = displaySteps
+    const tips = finalSteps
       .map((step) => (typeof step.tip === 'string' ? step.tip.trim() : ''))
       .filter((tip): tip is string => tip.length > 0);
 
     return Array.from(new Set(tips));
-  }, [displaySteps]);
+  }, [finalSteps]);
 
   const recipeIsSaved = isSaved(recipe.id);
   const displayCookbooks = getRecipeCookbooks(recipe.id);
@@ -398,12 +455,12 @@ export default function RecipeDetailScreen() {
 
           <VietnamText className="mb-2 text-sm text-gray-500">{t('ingredients.mainIngredients')}</VietnamText>
 
-          {isRecipeIngredientsLoading ? (
+          {isFinalIngredientsLoading ? (
             <View className="items-center py-6">
               <ActivityIndicator size="small" color="#00B075" />
             </View>
-          ) : recipeIngredients && recipeIngredients.length > 0 ? (
-            recipeIngredients.map((ingredient) => (
+          ) : finalIngredients && finalIngredients.length > 0 ? (
+            finalIngredients.map((ingredient) => (
               <IngredientRow
                 key={`${ingredient.recipeId}-${ingredient.ingredientId}`}
                 emoji={ingredient.emoji}
@@ -430,12 +487,12 @@ export default function RecipeDetailScreen() {
           </VietnamText>
 
           <View className="mb-4 rounded-2xl bg-amber-50 p-4">
-            {displaySteps.map((step, index) => (
+            {finalSteps.map((step, index) => (
               <StepCard
                 key={step.id ?? String(index)}
                 {...step}
                 number={step.number ?? index + 1}
-                isLast={index === displaySteps.length - 1}
+                isLast={index === finalSteps.length - 1}
               />
             ))}
           </View>
@@ -569,14 +626,18 @@ export default function RecipeDetailScreen() {
         transparent
         animationType="fade"
         statusBarTranslucent
-        onRequestClose={() => setNoteModalVisible(false)}>
+        onRequestClose={handleCloseNoteModal}>
         <KeyboardAvoidingView 
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          className="flex-1 justify-center items-center bg-black/45 px-6"
+          className="flex-1"
         >
-          <View className="w-full items-center">
-            {/* Top Icon */}
-            <View
+          <Pressable 
+            className="flex-1 justify-center items-center bg-black/45 px-6"
+            onPress={handleCloseNoteModal}
+          >
+            <Pressable className="w-full items-center">
+              {/* Top Icon */}
+              <View
               className="rounded-full bg-white z-10" 
               style={{ 
                 padding: 6, 
@@ -597,9 +658,9 @@ export default function RecipeDetailScreen() {
             <View className="w-full rounded-[28px] bg-white p-6 pt-[60px]">
               {/* Close Button */}
               <CircleButton
-                onPress={() => setNoteModalVisible(false)}
-                className="absolute right-4 top-4 h-8 w-8 items-center justify-center rounded-full">
-                <Icon as={XIcon} size={16} className="text-[#69696F]" />
+                onPress={handleCloseNoteModal}
+                className="absolute right-4 top-4 h-8 w-8 items-center justify-center rounded-full bg-white">
+                <Icon as={XIcon} size={16} />
               </CircleButton>
 
               {/* Content */}
@@ -613,7 +674,6 @@ export default function RecipeDetailScreen() {
                   textAlignVertical="top"
                   placeholderTextColor="#9CA3AF"
                   className="flex-1 text-[15px] leading-[22px] text-[#374151]"
-                  style={{ fontFamily: 'BeVietnamPro_400Regular' }}
                   value={noteText}
                   onChangeText={setNoteText}
                 />
@@ -621,14 +681,15 @@ export default function RecipeDetailScreen() {
 
               <RoundedButton 
                 className="w-full rounded-full items-center justify-center"
-                onPress={() => setNoteModalVisible(false)}
+                onPress={handleCloseNoteModal}
               >
                 <VietnamText className="text-[16px] font-bold text-white tracking-wider">
                   {t('cookbookDetail.confirm')}
                 </VietnamText>
               </RoundedButton>
             </View>
-          </View>
+            </Pressable>
+          </Pressable>
         </KeyboardAvoidingView>
       </Modal>
     </SafeAreaView>

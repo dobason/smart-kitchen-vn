@@ -16,6 +16,8 @@ import { useSavedRecipes } from '@/hooks/use-saved-recipes';
 import type { CookbookItem } from '@/context/saved-recipes-context';
 import { useAuth } from '@clerk/clerk-expo';
 import { useCookbooks, useCreateCookbook, useUpdateCookbook, useDeleteCookbook } from '@/hooks/use-cookbook';
+import { useAIRecipeContext } from '@/context/ai-recipe-context';
+import { detectIngredients } from '@/services/aiRecipeServices';
 
 function normalizeRecipeSearchText(value: string) {
   return value
@@ -37,6 +39,8 @@ export default function RecipeScreen() {
   const createCookbookMutation = useCreateCookbook();
   const updateCookbookMutation = useUpdateCookbook();
   const deleteCookbookMutation = useDeleteCookbook();
+
+  const { generate } = useAIRecipeContext();
 
   const {
     savedRecipes,
@@ -156,15 +160,13 @@ export default function RecipeScreen() {
     }
 
     try {
-      // Dùng mutateAsync của React Query
       await createCookbookMutation.mutateAsync({ 
-   name: newBookName, 
-   userId: "user_3BbkvYViAMYnHhHcNQ7eWXdLyG1" 
-});
+          name: newBookName, 
+          userId: userId 
+      }); 
       setNewBookName('');
       setIsAddModalVisible(false);
       } catch (error: any) {
-      // IN RA LỖI CHI TIẾT ĐỂ BẮT BỆNH
       console.log("==== LỖI TẠO SỔ TAY ====");
       console.log(error.response?.data || error.message || error);
       
@@ -201,27 +203,51 @@ export default function RecipeScreen() {
     );
   };
 
-  const simulateAILoading = (actionName: string) => {
+  const processImageToRecipe = async (imageUri: string) => {
     setIsLoadingAI(true);
-    setTimeout(() => {
+    try {
+      // 1. Nhận diện nguyên liệu từ ảnh
+      const { ingredients } = await detectIngredients(imageUri, 'vi');
+      
+      if (!ingredients || ingredients.length === 0) {
+         throw new Error("Không nhận diện được nguyên liệu thực phẩm trong ảnh.");
+      }
+
+      // 2. Truyền thẳng vào hàm generate của Context AI
+      generate({ ingredients, language: 'vi' });
+
+      // 3. Tắt trạng thái loading & đóng bottom sheet
       setIsLoadingAI(false);
-      setIsImportVisible(false); 
-      Alert.alert(i18n.t('recipe.successTitle'), i18n.t('recipe.successAnalyzed', { source: actionName }));
-    }, 3000);
+      setIsImportVisible(false);
+
+      // 4. Chuyển sang màn hình chờ sinh công thức
+      router.push('/recipe-generating');
+      
+    } catch (error: any) {
+      setIsLoadingAI(false);
+      Alert.alert(
+        i18n.t('recipe.errorTitle'),
+        error.message || "Không thể nhận diện ảnh. Vui lòng thử lại với ảnh đồ ăn rõ nét hơn."
+      );
+    }
   };
 
   const handleCameraPress = async () => {
     const permission = await ImagePicker.requestCameraPermissionsAsync();
     if (!permission.granted) { Alert.alert(i18n.t('recipe.errorTitle'), i18n.t('recipe.errorCameraPermission')); return; }
     const result = await ImagePicker.launchCameraAsync({ allowsEditing: true, aspect: [4, 3], quality: 0.8 });
-    if (!result.canceled) simulateAILoading(i18n.t('recipe.aiSourceCamera'));
+    if (!result.canceled && result.assets && result.assets[0]) {
+      await processImageToRecipe(result.assets[0].uri);
+    }
   };
 
   const handlePhotoPress = async () => {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permission.granted) { Alert.alert(i18n.t('recipe.errorTitle'), i18n.t('recipe.errorPhotoPermission')); return; }
     const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images, allowsEditing: true, aspect: [4, 3], quality: 0.8 });
-    if (!result.canceled) simulateAILoading(i18n.t('recipe.aiSourcePhotoLibrary'));
+    if (!result.canceled && result.assets && result.assets[0]) {
+      await processImageToRecipe(result.assets[0].uri);
+    }
   };
 
   return (

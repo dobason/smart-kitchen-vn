@@ -326,7 +326,7 @@ export default function CookbookDetailScreen() {
               <Pressable
                 onPress={() => setIsMoveSheetVisible(false)}
                 className="h-10 w-10 items-center justify-center rounded-full bg-[#ECECEF]">
-                <Icon as={X} size={22} className="text-[#6E6E76]" />
+                <Icon as={X} size={25} className="text-[#6E6E76]" />
               </Pressable>
             </View>
 
@@ -340,7 +340,10 @@ export default function CookbookDetailScreen() {
                 </VietnamText>
               </View>
             ) : (
-              <View className="gap-3">
+              <ScrollView
+                style={{ maxHeight: 320 }}
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={{ gap: 12 }}>
                 {destinationCookbooks.map((destination) => {
                   const isSelected = selectedDestinationIds.includes(destination.id);
                   const displayName = destination.name;
@@ -349,15 +352,15 @@ export default function CookbookDetailScreen() {
                     <Pressable
                       key={destination.id}
                       onPress={() => toggleDestinationSelection(destination.id)}
-                      className={`flex-row items-center justify-between rounded-2xl px-4 py-4 ${
+                      className={`flex-row items-center rounded-2xl px-4 py-4 ${
                         isSelected ? 'bg-[#FBECEE]' : 'bg-[#F3F3F6]'
                       }`}>
-                      <VietnamText className="text-2xl font-semibold text-[#1C1C1E]">
+                      <VietnamText className="mr-3 flex-1 text-2xl font-semibold text-[#1C1C1E]">
                         {displayName}
                       </VietnamText>
 
                       <View
-                        className={`h-9 w-9 items-center justify-center rounded-md border-2 ${
+                        className={`h-9 w-9 shrink-0 self-center items-center justify-center rounded-md border-2 ${
                           isSelected
                             ? 'border-[#CE232A] bg-[#CE232A]'
                             : 'border-[#A7A7AC] bg-transparent'
@@ -367,7 +370,7 @@ export default function CookbookDetailScreen() {
                     </Pressable>
                   );
                 })}
-              </View>
+              </ScrollView>
             )}
 
             <Pressable

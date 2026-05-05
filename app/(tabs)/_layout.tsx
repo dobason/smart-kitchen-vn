@@ -69,6 +69,10 @@ export default function TabsLayout() {
         name="cookbook-detail"
         options={{ headerShown: false, href: null }}
       />
+      <Tabs.Screen
+        name="ai-recipe-detail"
+        options={{ headerShown: false, href: null }}
+      />
     </Tabs>
   );
 }

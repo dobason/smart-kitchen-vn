@@ -16,6 +16,7 @@ import { RoundedButton } from '@/components/in-app-ui/rounded-button';
 import { CircleButton } from '@/components/in-app-ui/circle-button';
 import { useLocale } from '@/hooks/use-locale';
 import { useStepList } from '@/hooks/use-step';
+import { useSavedRecipes } from '@/hooks/use-saved-recipes';
 
 interface CookingStepScreenProps {
   /** 1-based current step index (defaults to 1 for demo) */
@@ -38,7 +39,23 @@ export default function CookingStepScreen({ currentStep = 1 }: CookingStepScreen
   const [showSuccess, setShowSuccess] = React.useState(false);
   const { data: apiSteps, isLoading } = useStepList(recipeId);
 
-  const steps = apiSteps ?? [];
+  const { getSavedRecipeById } = useSavedRecipes();
+  const savedRecipe = typeof recipeId === 'string' ? getSavedRecipeById(recipeId) : undefined;
+  const isAiRecipe = typeof recipeId === 'string' && recipeId.startsWith('ai-');
+
+  const aiSteps = React.useMemo(() => {
+    if (isAiRecipe && savedRecipe?.aiSteps) {
+      return savedRecipe.aiSteps.map((text: string, idx: number) => ({
+        id: String(idx),
+        text,
+        tip: '',
+      }));
+    }
+    return null;
+  }, [isAiRecipe, savedRecipe?.aiSteps]);
+
+  const steps = isAiRecipe ? (aiSteps ?? []) : (apiSteps ?? []);
+  const finalIsLoading = isAiRecipe ? false : isLoading;
 
   const totalSteps = steps.length;
   const stepData = steps[step - 1];
@@ -142,7 +159,7 @@ export default function CookingStepScreen({ currentStep = 1 }: CookingStepScreen
       </View>
 
       {/* ── Content ── */}
-      {isLoading ? (
+      {finalIsLoading ? (
         <View className="flex-1 items-center justify-center">
           <ActivityIndicator size="large" color="#00B075" />
         </View>

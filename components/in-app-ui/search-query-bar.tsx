@@ -33,8 +33,8 @@ export function SearchQueryBar({
         />
         <Pressable
           onPress={() => Keyboard.dismiss()}
-          className="h-9 w-9 items-center justify-center rounded-full bg-[#CE232A]">
-          <Icon as={Search} size={16} className="text-white" />
+          className="h-9 w-9 items-center justify-center rounded-full bg-[#DCDDDE]">
+          <Icon as={Search} size={20} color="#000000" />
         </Pressable>
       </View>
     </View>

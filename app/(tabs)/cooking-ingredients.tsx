@@ -12,6 +12,7 @@ import { CircleButton } from '@/components/in-app-ui/circle-button';
 import { IngredientRow } from '@/components/in-app-ui/ingredient-row';
 import { useLocale } from '@/hooks/use-locale';
 import { useRecipeIngredientList } from '@/hooks/use-recipe-ingredients';
+import { useSavedRecipes } from '@/hooks/use-saved-recipes';
 
 type CookingIngredientsParams = {
   recipeId?: string | string[];
@@ -43,6 +44,27 @@ export default function CookingIngredientsScreen() {
     serves,
     baseServes
   );
+
+  const { getSavedRecipeById } = useSavedRecipes();
+  const savedRecipe = typeof recipeId === 'string' ? getSavedRecipeById(recipeId) : undefined;
+  const isAiRecipe = typeof recipeId === 'string' && recipeId.startsWith('ai-');
+  
+  const aiIngredients = React.useMemo(() => {
+    if (isAiRecipe && savedRecipe?.aiIngredients) {
+      return savedRecipe.aiIngredients.map((ing: any, idx: number) => ({
+        recipeId: recipeId,
+        ingredientId: idx,
+        name: typeof ing === 'string' ? ing : ing.name || '',
+        quantityLabel: typeof ing === 'string' ? '' : ing.amount || '',
+        emoji: '🍲',
+        bg: '#F0FDF4',
+      }));
+    }
+    return null;
+  }, [isAiRecipe, savedRecipe?.aiIngredients, recipeId]);
+
+  const finalIngredients = isAiRecipe ? aiIngredients : recipeIngredients;
+  const finalIsLoading = isAiRecipe ? false : isLoading;
 
   const goToRecipeDetail = React.useCallback(() => {
     if (recipeId) {
@@ -104,12 +126,12 @@ export default function CookingIngredientsScreen() {
         </VietnamText>
 
         {/* Ingredient list */}
-        {isLoading ? (
+        {finalIsLoading ? (
           <View className="items-center py-10">
             <ActivityIndicator size="small" color="#00B075" />
           </View>
-        ) : recipeIngredients && recipeIngredients.length > 0 ? (
-          recipeIngredients.map((ingredient) => (
+        ) : finalIngredients && finalIngredients.length > 0 ? (
+          finalIngredients.map((ingredient) => (
             <IngredientRow
               key={`${ingredient.recipeId}-${ingredient.ingredientId}`}
               emoji={ingredient.emoji}

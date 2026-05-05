@@ -25,6 +25,7 @@ import { LocaleProvider } from '@/providers/locale-provider';
 import { IngredientsProvider } from '@/providers/ingredients-provider';
 import { SavedRecipesProvider } from '@/providers/saved-recipes-provider';
 import { UserRecipeEditsProvider } from '@/providers/user-recipe-edits-provider';
+import { AIRecipeProvider } from '@/context/ai-recipe-context';
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -50,11 +51,13 @@ export default function RootLayout() {
           <SavedRecipesProvider>
             <ClerkProvider publishableKey={clerkPublishableKey} tokenCache={tokenCache}>
               <UserRecipeEditsProvider>
-                <ThemeProvider value={NAV_THEME['light']}>
-                  <StatusBar style="dark" />
-                  <Routes />
-                  <PortalHost />
-                </ThemeProvider>
+                <AIRecipeProvider>
+                  <ThemeProvider value={NAV_THEME['light']}>
+                    <StatusBar style="dark" />
+                    <Routes />
+                    <PortalHost />
+                  </ThemeProvider>
+                </AIRecipeProvider>
               </UserRecipeEditsProvider>
             </ClerkProvider>
           </SavedRecipesProvider>
@@ -64,10 +67,8 @@ export default function RootLayout() {
   );
 }
 
-SplashScreen.preventAutoHideAsync();
-SplashScreen.setOptions({
-  duration: 1000,
-  fade: true,
+SplashScreen.preventAutoHideAsync().catch(() => {
+  // Ignore error if splash screen is not registered (e.g., during fast refresh)
 });
 
 function Routes() {
@@ -86,7 +87,9 @@ function Routes() {
 
   React.useEffect(() => {
     if (isLoaded && (isLoadedFont || errorFont)) {
-      SplashScreen.hideAsync();
+      SplashScreen.hideAsync().catch(() => {
+        // Ignore error if splash screen is already hidden
+      });
     }
   }, [isLoaded, isLoadedFont, errorFont]);
 

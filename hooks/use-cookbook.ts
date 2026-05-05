@@ -25,7 +25,7 @@ export function useCookbookRecipes(cookbookId: string) {
         const recipe = item.recipe ?? item;
         return {
           id: String(recipe.id),
-          name: recipe.recipesName ?? '',
+          name: recipe.name ?? recipe.recipesName ?? recipe.dish ?? '',
           description: recipe.description ?? '',
           calories: recipe.calories ?? 0,
           timeMinutes: recipe.totalTime ?? 0,

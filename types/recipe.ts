@@ -12,6 +12,8 @@ export type SearchRecipeItem = {
   imageUrl: string;
   tags: string[];
   cookware: string[];
+  aiIngredients?: any[];
+  aiSteps?: any[];
 };
 
 export type RecipeDetail = {

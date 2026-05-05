@@ -35,13 +35,17 @@ export function RecipeCard({ item, isSaved, onToggleSave, showSaveButton = true 
       </View>
 
       <View className="p-3">
-        <VietnamText className="min-h-[48px] text-[20px] font-semibold leading-6 text-[#121212]" numberOfLines={2}>
-          {item.name}
+        <VietnamText className="min-h-[48px] text-[18px] font-bold leading-6 text-[#121212]" numberOfLines={2}>
+          {item.name || item.description || "Món ăn mới"}
         </VietnamText>
 
-        <VietnamText className="mt-1 min-h-[34px] text-xs text-[#777780]" numberOfLines={2}>
-          {item.description}
-        </VietnamText>
+        {item.name && item.description ? (
+          <VietnamText className="mt-1 min-h-[34px] text-xs text-[#777780]" numberOfLines={2}>
+            {item.description}
+          </VietnamText>
+        ) : (
+          <View className="mt-1 min-h-[34px]" />
+        )}
 
         <View className="mt-2 gap-1.5">
           <View className="self-start rounded-full bg-[#FFF5E8] px-2.5 py-1">
